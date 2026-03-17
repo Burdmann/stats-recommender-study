@@ -1,0 +1,3 @@
+./run_microbench_outliers_range_seconds.sh
+./run_microbench_outliers_range_minutes.sh
+./run_microbench_outliers_range_hours.sh

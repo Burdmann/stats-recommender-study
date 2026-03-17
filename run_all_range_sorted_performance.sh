@@ -1,0 +1,3 @@
+./run_microbench_sorted_range_seconds_performance.sh
+./run_microbench_sorted_range_minutes_performance.sh
+./run_microbench_sorted_range_hours_performance.sh

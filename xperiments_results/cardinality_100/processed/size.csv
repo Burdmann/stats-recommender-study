@@ -1,0 +1,3 @@
+Name,Unit,Table_name,Min/max,Min/max clusters,Bloom filter,Dictionary,Min/max clusters (1000x),Bloom filter (1000x),Dictionary (1000x)
+Size,B,sensor_records,50781120,453123840,441405120,68359200,2210931840,3957021120,288085200
+Max Size,B,sensor_records,208,1856,1808,280,16256,16208,2080

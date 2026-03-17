@@ -1,0 +1,3 @@
+Name,Unit,Table_name,Min/max,Min/max clusters,Min/max clusters (1000x)
+Size,B,sensor_records,50781120,453123840,3968739840
+Max Size,B,sensor_records,208,1856,16256

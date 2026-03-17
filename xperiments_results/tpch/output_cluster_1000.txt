@@ -1,0 +1,495 @@
+┌──────────────┬──────────────┬───────────────┬───────────────────┬─────────────────────┬───────────────────────┬────────────────────┬────────────────────┬──────────────────────┬─────────────┐
+│ l_returnflag │ l_linestatus │    sum_qty    │  sum_base_price   │   sum_disc_price    │      sum_charge       │      avg_qty       │     avg_price      │       avg_disc       │ count_order │
+│   varchar    │   varchar    │ decimal(38,2) │   decimal(38,2)   │    decimal(38,4)    │     decimal(38,6)     │       double       │       double       │        double        │    int64    │
+├──────────────┼──────────────┼───────────────┼───────────────────┼─────────────────────┼───────────────────────┼────────────────────┼────────────────────┼──────────────────────┼─────────────┤
+│ A            │ F            │ 3775127758.00 │  5660776097194.45 │  5377736398183.9374 │  5592847429515.927026 │ 25.499370423275426 │  38236.11698430489 │ 0.050002243530929025 │   148047881 │
+│ N            │ F            │   98553062.00 │   147771098385.98 │   140384965965.0348 │   145999793032.775829 │ 25.501556956882876 │   38237.1993888045 │  0.04998528433805397 │     3864590 │
+│ N            │ O            │ 7436302976.00 │ 11150725681373.59 │ 10593195308234.8523 │ 11016932248183.655467 │ 25.500009404374193 │ 38237.227646360945 │  0.04999791831562552 │   291619617 │
+│ R            │ F            │ 3775724970.00 │  5661603032745.34 │  5378513563915.4097 │  5593662252666.916161 │  25.50006628406532 │ 38236.697258452965 │  0.05000130433965413 │   148067261 │
+└──────────────┴──────────────┴───────────────┴───────────────────┴─────────────────────┴───────────────────────┴────────────────────┴────────────────────┴──────────────────────┴─────────────┘
+┌───────────────┬────────────────────┬────────────────┬───────────┬────────────────┬──────────────────────────────────────────┬─────────────────┬────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│   s_acctbal   │       s_name       │     n_name     │ p_partkey │     p_mfgr     │                s_address                 │     s_phone     │                                             s_comment                                              │
+│ decimal(15,2) │      varchar       │    varchar     │   int64   │    varchar     │                 varchar                  │     varchar     │                                              varchar                                               │
+├───────────────┼────────────────────┼────────────────┼───────────┼────────────────┼──────────────────────────────────────────┼─────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│       9999.70 │ Supplier#000239544 │ UNITED KINGDOM │   6739531 │ Manufacturer#4 │ 1UCMu3TLyUThghoeZ8arg6cV3Mr              │ 33-509-584-9496 │ y against the pending, final packages. fluffily                                                    │
+│       9999.65 │ Supplier#000143654 │ FRANCE         │   2393647 │ Manufacturer#3 │ kJjo119CzmTjMWx3wtinBzb1M1TO1IiJZtR1     │ 16-166-504-5864 │ are quickly along the quickly bold escap                                                           │
+│       9999.49 │ Supplier#000615014 │ GERMANY        │  12365001 │ Manufacturer#3 │ Xo0xcyhnIKUs0WM                          │ 17-780-902-4027 │ pinto beans nag furiously i                                                                        │
+│       9999.28 │ Supplier#000494480 │ ROMANIA        │  17244462 │ Manufacturer#3 │ KdpYAP2EDtNA NrNE0CYS7usfwv F            │ 29-756-312-1779 │ dolites. requests wake. slyly final packa                                                          │
+│       9998.87 │ Supplier#000826281 │ ROMANIA        │  14326252 │ Manufacturer#3 │ gGkEf9qHPHLg8V1aMBf                      │ 29-775-451-4774 │ ly alongside of the instructions. slyly even requests are according to the                         │
+│       9998.56 │ Supplier#000039514 │ UNITED KINGDOM │   7539499 │ Manufacturer#2 │ M6dRVABIGLJAMkC1CGF0ZTiy8BRLeBA          │ 33-317-828-7758 │ ans cajole except the regular frets. blithely special accounts haggle final fox                    │
+│       9997.89 │ Supplier#000319666 │ RUSSIA         │  19319665 │ Manufacturer#1 │ 91yNuY s3DmxI5xisgQyK5R                  │ 32-972-151-6038 │ refully regular orbits are furiously along the unusual, bold foxes.                                │
+│       9997.85 │ Supplier#000718770 │ ROMANIA        │    718769 │ Manufacturer#1 │ ZZTXvDgzoKUsBjoBJIm3m7E22BB7W3ddD9q 6 tm │ 29-663-409-2865 │ ven, final requests wake dogged, special deposits.                                                 │
+│       9997.83 │ Supplier#000348318 │ FRANCE         │   9348317 │ Manufacturer#4 │ rwLDwIolqK,QdBH                          │ 16-718-707-5676 │ olites use doggedly according to the carefully even excuses. slyly pending pinto                   │
+│       9997.73 │ Supplier#000329974 │ RUSSIA         │   4079969 │ Manufacturer#3 │ NgyiQOCBzm                               │ 32-268-488-7178 │ ions are furiously regular deposits. blithely special accoun                                       │
+│       9997.46 │ Supplier#000906546 │ FRANCE         │   1406543 │ Manufacturer#2 │ Re1ZXj7AQ2pkvA4XYA3hSYJC                 │ 16-249-122-4511 │  carefully. furiously special theo                                                                 │
+│       9997.20 │ Supplier#000487664 │ FRANCE         │   2737657 │ Manufacturer#2 │ s8Jl8b2F50TmwxdbGpTp                     │ 16-714-518-5435 │ ilent packages against the expre                                                                   │
+│       9997.17 │ Supplier#000123140 │ ROMANIA        │   5373124 │ Manufacturer#2 │ dS,AbIeVACEsHukj0oF8EiT5LYNF1otyGduYJC   │ 29-567-411-4572 │ ffily express pinto beans boost carefully ironic packages. quickly special accounts haggle         │
+│       9997.06 │ Supplier#000725417 │ GERMANY        │  10225396 │ Manufacturer#1 │ ,,I9vBX0fMu7H1uTk                        │ 17-577-582-2010 │ furiously sly pinto beans. even deposits haggle. f                                                 │
+│       9996.45 │ Supplier#000795554 │ ROMANIA        │  14795553 │ Manufacturer#2 │ B9nruTrrsz9rTDZ,oxUxfhGK8ofYbw           │ 29-305-384-2702 │ t the carefully unusual accou                                                                      │
+│       9995.96 │ Supplier#000566208 │ FRANCE         │   9816180 │ Manufacturer#5 │ aeDi86Qt0k0C p6r10tABETLyu1PHj0pLht4bRV  │ 16-665-147-8314 │ c instructions. ironic hocke                                                                       │
+│       9995.96 │ Supplier#000629520 │ FRANCE         │  13129493 │ Manufacturer#3 │ HHEMDuFnY6zVhhuKZDSb,0OF04A9             │ 16-785-547-3814 │ s. furiously final deposits across the expre                                                       │
+│       9995.93 │ Supplier#000388258 │ UNITED KINGDOM │   6138251 │ Manufacturer#2 │ A6pSStkixOGTXhFX                         │ 33-829-188-2160 │ ve accounts are blithely express, express dependencies.                                            │
+│       9995.79 │ Supplier#000998425 │ FRANCE         │    248424 │ Manufacturer#4 │ zHCgm,8 DBYFRFBw8bW,EeCDcdeTlYMQr        │ 16-228-926-9937 │ its sleep slyly express dependencies. pending, regu                                                │
+│       9995.42 │ Supplier#000220794 │ ROMANIA        │  12470757 │ Manufacturer#1 │ HvuyoaekR55LhTV9IHYg                     │ 29-557-942-9023 │ en dolphins nag against the quickly final ideas. requests against t                                │
+│          ·    │         ·          │    ·           │      ·    │       ·        │          ·                               │        ·        │                                  ·                                                                 │
+│          ·    │         ·          │    ·           │      ·    │       ·        │          ·                               │        ·        │                                  ·                                                                 │
+│          ·    │         ·          │    ·           │      ·    │       ·        │          ·                               │        ·        │                                  ·                                                                 │
+│       9980.49 │ Supplier#000971427 │ ROMANIA        │   1221423 │ Manufacturer#2 │ tz16B8B82TQMlvTc9igJddHcR701             │ 29-714-548-4045 │ efully ironic accounts-- carefully regular hockey players sleep quickly about the furiousl         │
+│       9979.50 │ Supplier#000458742 │ ROMANIA        │   9208732 │ Manufacturer#2 │ fWjBe5ZDVJBR9tEwdz6C                     │ 29-460-746-6456 │ its. furiously final deposits according to the requests sle                                        │
+│       9979.34 │ Supplier#000335566 │ ROMANIA        │  11335565 │ Manufacturer#4 │ 9agj7tgnTgCl z                           │ 29-120-111-4388 │ theodolites sleep blithely pinto beans. accounts aroun                                             │
+│       9979.04 │ Supplier#000966284 │ GERMANY        │   9216256 │ Manufacturer#4 │ ZVU231RHTKaBw8jmO4Dvin85lxBsnREj8        │ 17-946-544-5166 │ iously unusual accounts a                                                                          │
+│       9978.88 │ Supplier#000113445 │ FRANCE         │  12363408 │ Manufacturer#5 │ R4n2vA0VU g0KLynPI7H                     │ 16-261-874-6958 │ mong the carefully quiet accounts slee                                                             │
+│       9978.82 │ Supplier#000221713 │ ROMANIA        │  19721674 │ Manufacturer#4 │ ZJ2t14yZTMNJ IEmAX8,XQPt68L2w2jdJ        │ 29-143-199-8338 │ ide of the ironic, unusual packages. quickly even tithes nag unu                                   │
+│       9978.78 │ Supplier#000118448 │ FRANCE         │    368447 │ Manufacturer#1 │ IsUx9h4zQ frTbFHmUemrFQSx                │ 16-978-504-3922 │ ly express instructions sleep quietly besides the deposits. final instruc                          │
+│       9978.78 │ Supplier#000118448 │ FRANCE         │   1118447 │ Manufacturer#3 │ IsUx9h4zQ frTbFHmUemrFQSx                │ 16-978-504-3922 │ ly express instructions sleep quietly besides the deposits. final instruc                          │
+│       9978.78 │ Supplier#000118448 │ FRANCE         │  12368411 │ Manufacturer#1 │ IsUx9h4zQ frTbFHmUemrFQSx                │ 16-978-504-3922 │ ly express instructions sleep quietly besides the deposits. final instruc                          │
+│       9978.10 │ Supplier#000485455 │ ROMANIA        │  17485454 │ Manufacturer#2 │ zTlXQ,tRmUn40Vv                          │ 29-315-378-1870 │ nts cajole furiously with the slowly special att                                                   │
+│       9977.85 │ Supplier#000385307 │ UNITED KINGDOM │  18635252 │ Manufacturer#2 │ qo5ndgKc6E4C                             │ 33-105-512-8982 │  accounts boost daringly about the special asymptotes. furiously quick requests boo                │
+│       9977.78 │ Supplier#000558710 │ RUSSIA         │   3308706 │ Manufacturer#2 │ QSVlFamsnyUA1lVIm9lC7kFbyp08l MKvECdZU   │ 32-190-876-7346 │ structions-- express, careful notornis use accounts. carefully sp                                  │
+│       9977.78 │ Supplier#000558710 │ RUSSIA         │  13058683 │ Manufacturer#2 │ QSVlFamsnyUA1lVIm9lC7kFbyp08l MKvECdZU   │ 32-190-876-7346 │ structions-- express, careful notornis use accounts. carefully sp                                  │
+│       9977.12 │ Supplier#000218385 │ UNITED KINGDOM │   2468378 │ Manufacturer#1 │ 0nOUmiOvuAacnMGUKV0Lf4T31C4yTwy G        │ 33-681-192-6225 │ kly foxes. blithely ironic accounts haggle furiously. slyly final decoys according to the express  │
+│       9977.06 │ Supplier#000175556 │ ROMANIA        │  16175555 │ Manufacturer#4 │ bDl Hs,GGVtayIB5lDB,QpWDURB,7GHa         │ 29-765-974-1131 │ riously carefully careful grouches. pai                                                            │
+│       9976.15 │ Supplier#000249831 │ ROMANIA        │   3249830 │ Manufacturer#3 │ lEs5ux7FADoZsnUk62VYcI9YiwkX,TskI        │ 29-187-368-9234 │ into beans dazzle carefully. final ins                                                             │
+│       9975.74 │ Supplier#000846320 │ RUSSIA         │   8096295 │ Manufacturer#4 │ ,ZwPdKJX1qmMnOQN                         │ 32-487-239-6035 │ furiously express ideas sleep slyly requests. acc                                                  │
+│       9975.69 │ Supplier#000378812 │ FRANCE         │  15628766 │ Manufacturer#1 │ tQ4eGlGNnY0pkYNRVPQ498bsjnr7             │ 16-867-261-3212 │ for the blithely unusual accounts are slyly even foxes. bold, express accoun                       │
+│       9975.67 │ Supplier#000634390 │ ROMANIA        │  13134363 │ Manufacturer#1 │ zHDCa7MaLJ                               │ 29-665-426-1647 │ ic, express frets haggle q                                                                         │
+│       9975.53 │ Supplier#000310136 │ ROMANIA        │  10810115 │ Manufacturer#5 │ VNWONA5Sr B                              │ 29-977-903-6199 │ after the ironic pinto beans sleep about the furiously fi                                          │
+├───────────────┴────────────────────┴────────────────┴───────────┴────────────────┴──────────────────────────────────────────┴─────────────────┴────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 100 rows (40 shown)                                                                                                                                                                                                                      8 columns │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌────────────┬───────────────┬─────────────┬────────────────┐
+│ l_orderkey │    revenue    │ o_orderdate │ o_shippriority │
+│   int64    │ decimal(38,4) │    date     │     int32      │
+├────────────┼───────────────┼─────────────┼────────────────┤
+│  249739810 │   492136.8537 │ 1995-02-28  │              0 │
+│  165214338 │   485645.5293 │ 1995-03-09  │              0 │
+│  507274210 │   485256.2467 │ 1995-03-10  │              0 │
+│  202071367 │   474746.4068 │ 1995-03-12  │              0 │
+│   37307463 │   474325.1938 │ 1995-02-06  │              0 │
+│  461984355 │   468002.5274 │ 1995-03-13  │              0 │
+│  100810368 │   467932.7645 │ 1995-02-28  │              0 │
+│   74015523 │   467786.8027 │ 1995-03-14  │              0 │
+│  402772582 │   463367.0665 │ 1995-03-10  │              0 │
+│  367111712 │   462559.3977 │ 1995-03-01  │              0 │
+├────────────┴───────────────┴─────────────┴────────────────┤
+│ 10 rows                                         4 columns │
+└───────────────────────────────────────────────────────────┘
+┌─────────────────┬─────────────┐
+│ o_orderpriority │ order_count │
+│     varchar     │    int64    │
+├─────────────────┼─────────────┤
+│ 1-URGENT        │     1051801 │
+│ 2-HIGH          │     1051366 │
+│ 3-MEDIUM        │     1051587 │
+│ 4-NOT SPECIFIED │     1050950 │
+│ 5-LOW           │     1051725 │
+└─────────────────┴─────────────┘
+┌───────────┬─────────────────┐
+│  n_name   │     revenue     │
+│  varchar  │  decimal(38,4)  │
+├───────────┼─────────────────┤
+│ VIETNAM   │ 5310749966.8670 │
+│ INDIA     │ 5296094837.7503 │
+│ JAPAN     │ 5282184528.8254 │
+│ CHINA     │ 5270934901.5602 │
+│ INDONESIA │ 5270340980.4608 │
+└───────────┴─────────────────┘
+┌──────────────────┐
+│     revenue      │
+│  decimal(38,4)   │
+├──────────────────┤
+│ 12330426888.4637 │
+└──────────────────┘
+┌─────────────┬─────────────┬────────┬─────────────────┐
+│ supp_nation │ cust_nation │ l_year │     revenue     │
+│   varchar   │   varchar   │ int64  │  decimal(38,4)  │
+├─────────────┼─────────────┼────────┼─────────────────┤
+│ FRANCE      │ GERMANY     │   1995 │ 5296106289.7407 │
+│ FRANCE      │ GERMANY     │   1996 │ 5313955237.5650 │
+│ GERMANY     │ FRANCE      │   1995 │ 5286060012.2108 │
+│ GERMANY     │ FRANCE      │   1996 │ 5324729138.8922 │
+└─────────────┴─────────────┴────────┴─────────────────┘
+┌────────┬──────────────────────┐
+│ o_year │      mkt_share       │
+│ int64  │        double        │
+├────────┼──────────────────────┤
+│   1995 │ 0.039535108776109315 │
+│   1996 │  0.03897424492526502 │
+└────────┴──────────────────────┘
+┌────────────────┬────────┬─────────────────┐
+│     nation     │ o_year │   sum_profit    │
+│    varchar     │ int64  │  decimal(38,4)  │
+├────────────────┼────────┼─────────────────┤
+│ ALGERIA        │   1998 │ 2746388473.8032 │
+│ ALGERIA        │   1997 │ 4705096214.1934 │
+│ ALGERIA        │   1996 │ 4691101028.3880 │
+│ ALGERIA        │   1995 │ 4692240612.2209 │
+│ ALGERIA        │   1994 │ 4677512644.2049 │
+│ ALGERIA        │   1993 │ 4684367583.8281 │
+│ ALGERIA        │   1992 │ 4704266160.0314 │
+│ ARGENTINA      │   1998 │ 2718513010.8517 │
+│ ARGENTINA      │   1997 │ 4646318596.6846 │
+│ ARGENTINA      │   1996 │ 4656102598.0412 │
+│ ARGENTINA      │   1995 │ 4652753173.2283 │
+│ ARGENTINA      │   1994 │ 4645991799.5327 │
+│ ARGENTINA      │   1993 │ 4643401137.5627 │
+│ ARGENTINA      │   1992 │ 4617848896.7718 │
+│ BRAZIL         │   1998 │ 2731140677.1163 │
+│ BRAZIL         │   1997 │ 4675931143.5076 │
+│ BRAZIL         │   1996 │ 4665397071.9817 │
+│ BRAZIL         │   1995 │ 4661653435.2637 │
+│ BRAZIL         │   1994 │ 4664829056.3807 │
+│ BRAZIL         │   1993 │ 4675246060.5211 │
+│   ·            │     ·  │        ·        │
+│   ·            │     ·  │        ·        │
+│   ·            │     ·  │        ·        │
+│ UNITED KINGDOM │   1997 │ 4687915843.3827 │
+│ UNITED KINGDOM │   1996 │ 4725596237.9521 │
+│ UNITED KINGDOM │   1995 │ 4692146767.0496 │
+│ UNITED KINGDOM │   1994 │ 4717398081.8118 │
+│ UNITED KINGDOM │   1993 │ 4694183885.2941 │
+│ UNITED KINGDOM │   1992 │ 4722609721.7765 │
+│ UNITED STATES  │   1998 │ 2744344335.0383 │
+│ UNITED STATES  │   1997 │ 4652698592.5866 │
+│ UNITED STATES  │   1996 │ 4670553955.7057 │
+│ UNITED STATES  │   1995 │ 4659218769.7598 │
+│ UNITED STATES  │   1994 │ 4671044724.0807 │
+│ UNITED STATES  │   1993 │ 4680519402.4766 │
+│ UNITED STATES  │   1992 │ 4707714157.3208 │
+│ VIETNAM        │   1998 │ 2741387136.2468 │
+│ VIETNAM        │   1997 │ 4661928954.8541 │
+│ VIETNAM        │   1996 │ 4690535970.8003 │
+│ VIETNAM        │   1995 │ 4692078285.1287 │
+│ VIETNAM        │   1994 │ 4705541885.2493 │
+│ VIETNAM        │   1993 │ 4708733491.5609 │
+│ VIETNAM        │   1992 │ 4681498238.7580 │
+├────────────────┴────────┴─────────────────┤
+│ 175 rows (40 shown)             3 columns │
+└───────────────────────────────────────────┘
+┌───────────┬────────────────────┬───────────────┬───────────────┬────────────────┬──────────────────────────────────────────┬─────────────────┬──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ c_custkey │       c_name       │    revenue    │   c_acctbal   │     n_name     │                c_address                 │     c_phone     │                                                      c_comment                                                       │
+│   int64   │      varchar       │ decimal(38,4) │ decimal(15,2) │    varchar     │                 varchar                  │     varchar     │                                                       varchar                                                        │
+├───────────┼────────────────────┼───────────────┼───────────────┼────────────────┼──────────────────────────────────────────┼─────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│   7450894 │ Customer#007450894 │   936768.8469 │        927.18 │ ARGENTINA      │ Kub3yOhSWLuc MTLe8owZ spwzrOvVlX8WQJwuE  │ 11-833-256-7879 │ the furiously unusual foxes! platelets nag boldly above the quickly bold accounts. furiously                         │
+│   9739771 │ Customer#009739771 │   842966.5285 │       1286.48 │ JORDAN         │ zoTOSQ1TrpuUDmCk9f                       │ 23-281-450-4794 │ boost quickly. never dogged instructions boost quickly ironic requests. pinto beans sleep carefully across           │
+│   4571035 │ Customer#004571035 │   838705.6168 │       6704.13 │ UNITED KINGDOM │ Z,inL0muZQK8AiEm3qme9CBjuYIO0JTfH        │ 33-138-285-3770 │ ecial theodolites wake slyly across the never silent ideas. final foxes around the carefully regular                 │
+│    637855 │ Customer#000637855 │   812034.3778 │       2674.86 │ MOZAMBIQUE     │ BV7zGwFIOkc                              │ 26-852-120-2850 │ ges. express, special dolphins cajole around the slyly regular accounts. fu                                          │
+│  10781974 │ Customer#010781974 │   801735.5176 │       5079.77 │ ROMANIA        │ pwYB0N97ySprr4vi5UZ382q0U8WCPp           │ 29-651-722-6239 │ sits haggle evenly. express packages sl                                                                              │
+│  11361613 │ Customer#011361613 │   800558.4337 │       4644.71 │ INDONESIA      │ I4gKJjA4BV6syYz                          │ 19-344-539-9187 │ l, special dependencies. carefully regular instructions use about the carefully bold accounts. pending accou         │
+│   1259743 │ Customer#001259743 │   793274.7846 │       2592.74 │ ETHIOPIA       │ 35Mr0In QWvDgyLt8UYPECuBEllYNShLI        │ 15-733-636-6732 │ y express requests cajole furiously alongside of the carefull                                                        │
+│   5154136 │ Customer#005154136 │   787191.1959 │       1028.97 │ MOROCCO        │ 30OHoO9k5s,HrKS3a6k9fLVsXa               │ 25-841-379-9394 │ affix carefully blithely unusual requests. unusual ideas b                                                           │
+│  14986552 │ Customer#014986552 │   781645.8638 │       2678.94 │ ARGENTINA      │ zFVtpT4Zo,                               │ 11-671-762-3613 │ s. packages haggle carefully at the ironic braids. blithely regular pinto beans cajole slyly.                        │
+│   2905816 │ Customer#002905816 │   778729.4414 │       5085.53 │ UNITED STATES  │ QOfcBYPRbq                               │ 34-217-584-5820 │ s under the regular sheaves sleep blithely final platelets. dolphins sleep across the stealthily special ideas. furi │
+│   6184141 │ Customer#006184141 │   772721.0973 │       5901.88 │ BRAZIL         │ 3CxIFtsmlpESaUQzurlTV                    │ 12-563-743-4211 │ eodolites according to the carefully final accounts use carefully slyly ironic instructions. b                       │
+│   7852024 │ Customer#007852024 │   769688.6616 │       1197.57 │ INDIA          │ ZrF1h1tpKbH9j5cVtnD3NMJFtE1my05S86WiWU09 │ 18-141-580-3886 │  blithely ironic notornis cajole according to the quickly even requests! quickly re                                  │
+│   7183231 │ Customer#007183231 │   768455.8796 │       -683.01 │ INDIA          │ Ds83MjPovIdahJd                          │ 18-270-127-8463 │ ial pinto beans among the furiously special deposits haggle quickly after the ironic, final deposits. regular theodo │
+│   1627651 │ Customer#001627651 │   768300.3006 │       3059.82 │ MOROCCO        │ PBXh8ZQR2xTOpgQo 7FBfI EZGZ BnD          │ 25-732-202-4862 │ ts are alongside of the requests. carefully regular accounts above the ironic deposits integrate slyly pendi         │
+│  13624771 │ Customer#013624771 │   767856.1562 │       -168.68 │ IRAN           │  uekVASYAlR1fqAFoJwcgndQAF               │ 20-919-886-5399 │ unts wake furiously above the carefully special instruction                                                          │
+│  13896424 │ Customer#013896424 │   760957.6214 │       3798.91 │ INDONESIA      │ PzqffgfQ7p                               │ 19-494-837-4503 │  the quickly furious deposits. packages after the furiously unusual instructions hang slyly iron                     │
+│   4926817 │ Customer#004926817 │   758756.8533 │       5462.22 │ RUSSIA         │ 4RbwBrzz6eHCI                            │ 32-610-751-1595 │ against the furiously regular ideas. carefully e                                                                     │
+│    319150 │ Customer#000319150 │   757235.8949 │       3257.68 │ IRAN           │ GZg5Tg1XIJUOKHxb6C,I4h7PrwFiwitvn        │ 20-837-276-7259 │ deposits. regular accounts nag. slyly ironic idea                                                                    │
+│   5894188 │ Customer#005894188 │   756482.0641 │       3062.00 │ BRAZIL         │ ,b 3YYdbkOsSZdSEekTT,Dk8dljn 4aUkzEE9M3  │ 12-372-345-6045 │ slyly regular pinto beans integrate s                                                                                │
+│   3387028 │ Customer#003387028 │   755937.5757 │       3726.64 │ ETHIOPIA       │ IWj4CTUBet5tE                            │ 15-880-219-8399 │ ests sleep furiously among the furiously regular p                                                                   │
+├───────────┴────────────────────┴───────────────┴───────────────┴────────────────┴──────────────────────────────────────────┴─────────────────┴──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 20 rows                                                                                                                                                                                                                                                   8 columns │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌────────────┬───────────────┐
+│ ps_partkey │     value     │
+│   int64    │ decimal(38,2) │
+├────────────┴───────────────┤
+│           0 rows           │
+└────────────────────────────┘
+┌────────────┬─────────────────┬────────────────┐
+│ l_shipmode │ high_line_count │ low_line_count │
+│  varchar   │     int128      │     int128     │
+├────────────┼─────────────────┼────────────────┤
+│ MAIL       │          623115 │         934713 │
+│ SHIP       │          622979 │         934534 │
+└────────────┴─────────────────┴────────────────┘
+┌─────────┬──────────┐
+│ c_count │ custdist │
+│  int64  │  int64   │
+├─────────┼──────────┤
+│       0 │  5000179 │
+│      10 │   677129 │
+│       9 │   663272 │
+│      11 │   632721 │
+│       8 │   590190 │
+│      12 │   564376 │
+│      13 │   493876 │
+│      19 │   476012 │
+│      18 │   468917 │
+│      20 │   466214 │
+│       7 │   463524 │
+│      17 │   450162 │
+│      14 │   444360 │
+│      21 │   435413 │
+│      16 │   430482 │
+│      15 │   424816 │
+│      22 │   388554 │
+│      23 │   331104 │
+│       6 │   317746 │
+│      24 │   270153 │
+│       · │      ·   │
+│       · │      ·   │
+│       · │      ·   │
+│      28 │    77613 │
+│      29 │    51770 │
+│       3 │    34604 │
+│      30 │    32654 │
+│      31 │    19981 │
+│      32 │    11764 │
+│       2 │     9920 │
+│      33 │     6711 │
+│      34 │     3606 │
+│      35 │     2015 │
+│       1 │     1858 │
+│      36 │     1063 │
+│      37 │      563 │
+│      38 │      244 │
+│      39 │      133 │
+│      40 │       62 │
+│      41 │       23 │
+│      42 │       18 │
+│      43 │        5 │
+│      44 │        1 │
+├─────────┴──────────┤
+│ 45 rows  2 columns │
+│ (40 shown)         │
+└────────────────────┘
+┌────────────────────┐
+│   promo_revenue    │
+│       double       │
+├────────────────────┤
+│ 16.640357433254103 │
+└────────────────────┘
+┌───────────┬────────────────────┬─────────────────────────┬─────────────────┬───────────────┐
+│ s_suppkey │       s_name       │        s_address        │     s_phone     │ total_revenue │
+│   int64   │      varchar       │         varchar         │     varchar     │ decimal(38,4) │
+├───────────┼────────────────────┼─────────────────────────┼─────────────────┼───────────────┤
+│      8831 │ Supplier#000008831 │ Iwi3KgIdN84qDIVccoeA,NG │ 17-307-245-8592 │  2385908.0563 │
+└───────────┴────────────────────┴─────────────────────────┴─────────────────┴───────────────┘
+┌──────────┬───────────────────────────┬────────┬──────────────┐
+│ p_brand  │          p_type           │ p_size │ supplier_cnt │
+│ varchar  │          varchar          │ int32  │    int64     │
+├──────────┼───────────────────────────┼────────┼──────────────┤
+│ Brand#14 │ SMALL BRUSHED BRASS       │     45 │          596 │
+│ Brand#34 │ ECONOMY BURNISHED STEEL   │     23 │          592 │
+│ Brand#44 │ PROMO POLISHED NICKEL     │     49 │          592 │
+│ Brand#54 │ LARGE BURNISHED STEEL     │     36 │          584 │
+│ Brand#14 │ ECONOMY BRUSHED COPPER    │     19 │          580 │
+│ Brand#13 │ STANDARD BRUSHED BRASS    │     45 │          579 │
+│ Brand#21 │ PROMO POLISHED TIN        │     36 │          579 │
+│ Brand#12 │ STANDARD BRUSHED TIN      │      9 │          576 │
+│ Brand#32 │ STANDARD ANODIZED COPPER  │     14 │          576 │
+│ Brand#32 │ STANDARD BURNISHED STEEL  │     36 │          576 │
+│ Brand#54 │ STANDARD BRUSHED TIN      │     49 │          576 │
+│ Brand#25 │ ECONOMY POLISHED BRASS    │     36 │          575 │
+│ Brand#54 │ LARGE PLATED STEEL        │      9 │          574 │
+│ Brand#12 │ MEDIUM BURNISHED STEEL    │     36 │          572 │
+│ Brand#22 │ PROMO POLISHED TIN        │     23 │          572 │
+│ Brand#25 │ LARGE ANODIZED NICKEL     │      3 │          572 │
+│ Brand#51 │ SMALL PLATED STEEL        │     36 │          572 │
+│ Brand#25 │ STANDARD PLATED NICKEL    │     19 │          571 │
+│ Brand#15 │ SMALL ANODIZED STEEL      │     36 │          570 │
+│ Brand#12 │ ECONOMY BURNISHED TIN     │     14 │          568 │
+│    ·     │          ·                │      · │           ·  │
+│    ·     │          ·                │      · │           ·  │
+│    ·     │          ·                │      · │           ·  │
+│ Brand#54 │ LARGE PLATED COPPER       │     36 │          308 │
+│ Brand#54 │ PROMO BRUSHED NICKEL      │      9 │          308 │
+│ Brand#11 │ STANDARD BURNISHED NICKEL │     36 │          304 │
+│ Brand#31 │ PROMO BRUSHED NICKEL      │     19 │          304 │
+│ Brand#35 │ PROMO BRUSHED BRASS       │     23 │          304 │
+│ Brand#51 │ ECONOMY ANODIZED STEEL    │     19 │          304 │
+│ Brand#55 │ MEDIUM BURNISHED COPPER   │     45 │          304 │
+│ Brand#54 │ ECONOMY PLATED COPPER     │     19 │          302 │
+│ Brand#24 │ LARGE PLATED STEEL        │     45 │          300 │
+│ Brand#34 │ ECONOMY PLATED BRASS      │     36 │          300 │
+│ Brand#53 │ MEDIUM BRUSHED STEEL      │     45 │          300 │
+│ Brand#54 │ LARGE POLISHED STEEL      │     36 │          296 │
+│ Brand#52 │ PROMO BRUSHED BRASS       │      9 │          295 │
+│ Brand#21 │ MEDIUM BRUSHED NICKEL     │     49 │          292 │
+│ Brand#34 │ PROMO ANODIZED STEEL      │      3 │          288 │
+│ Brand#14 │ STANDARD PLATED BRASS     │     23 │          287 │
+│ Brand#52 │ STANDARD BURNISHED TIN    │     45 │          283 │
+│ Brand#25 │ SMALL PLATED NICKEL       │      9 │          280 │
+│ Brand#13 │ STANDARD POLISHED NICKEL  │     49 │          276 │
+│ Brand#55 │ SMALL POLISHED STEEL      │     49 │          272 │
+├──────────┴───────────────────────────┴────────┴──────────────┤
+│ 27840 rows (40 shown)                              4 columns │
+└──────────────────────────────────────────────────────────────┘
+┌───────────────────┐
+│    avg_yearly     │
+│      double       │
+├───────────────────┤
+│ 32087018.99857143 │
+└───────────────────┘
+┌────────────────────┬───────────┬────────────┬─────────────┬───────────────┬─────────────────┐
+│       c_name       │ c_custkey │ o_orderkey │ o_orderdate │ o_totalprice  │ sum(l_quantity) │
+│      varchar       │   int64   │   int64    │    date     │ decimal(15,2) │  decimal(38,2)  │
+├────────────────────┼───────────┼────────────┼─────────────┼───────────────┼─────────────────┤
+│ Customer#011472112 │  11472112 │  458304292 │ 1998-02-05  │     591036.15 │          322.00 │
+│ Customer#012090925 │  12090925 │  501322081 │ 1995-02-04  │     586945.44 │          319.00 │
+│ Customer#001392379 │   1392379 │  332381222 │ 1998-01-24  │     575600.00 │          311.00 │
+│ Customer#013458721 │  13458721 │  333307747 │ 1997-12-19  │     572334.88 │          319.00 │
+│ Customer#008643083 │   8643083 │   84927619 │ 1997-06-29  │     571417.48 │          316.00 │
+│ Customer#010543705 │  10543705 │  163142919 │ 1996-06-10  │     569798.10 │          313.00 │
+│ Customer#000026377 │     26377 │  586594688 │ 1992-04-14  │     569044.84 │          311.00 │
+│ Customer#005914657 │   5914657 │   55799200 │ 1996-02-11  │     568754.48 │          327.00 │
+│ Customer#011461310 │  11461310 │   20662370 │ 1992-07-22  │     566353.20 │          315.00 │
+│ Customer#007682894 │   7682894 │  532736640 │ 1993-07-22  │     563532.16 │          316.00 │
+│ Customer#012070685 │  12070685 │   34201984 │ 1997-06-18  │     563492.49 │          322.00 │
+│ Customer#012878113 │  12878113 │   42290181 │ 1997-11-26  │     563479.57 │          318.00 │
+│ Customer#000506836 │    506836 │  116567399 │ 1992-03-21  │     563342.71 │          319.00 │
+│ Customer#012848143 │  12848143 │  501771233 │ 1994-12-06  │     562642.03 │          317.00 │
+│ Customer#003493022 │   3493022 │  182898470 │ 1996-01-09  │     561296.06 │          318.00 │
+│ Customer#013083751 │  13083751 │   28077922 │ 1996-10-27  │     560893.88 │          319.00 │
+│ Customer#006580315 │   6580315 │  343593507 │ 1994-05-20  │     560058.60 │          321.00 │
+│ Customer#009427249 │   9427249 │   48881602 │ 1993-09-19  │     559502.82 │          327.00 │
+│ Customer#009995401 │   9995401 │  530897159 │ 1994-05-02  │     558771.77 │          305.00 │
+│ Customer#006094567 │   6094567 │  156159680 │ 1994-11-15  │     558037.12 │          308.00 │
+│         ·          │      ·    │      ·     │     ·       │         ·     │             ·   │
+│         ·          │      ·    │      ·     │     ·       │         ·     │             ·   │
+│         ·          │      ·    │      ·     │     ·       │         ·     │             ·   │
+│ Customer#013677323 │  13677323 │  387783079 │ 1992-04-22  │     535504.63 │          316.00 │
+│ Customer#004965692 │   4965692 │  250733185 │ 1994-06-12  │     535482.20 │          306.00 │
+│ Customer#004663856 │   4663856 │  159914310 │ 1996-09-12  │     535322.28 │          315.00 │
+│ Customer#014560954 │  14560954 │  420830819 │ 1994-03-05  │     534940.24 │          301.00 │
+│ Customer#003555572 │   3555572 │  190167361 │ 1994-08-29  │     534477.19 │          304.00 │
+│ Customer#000299162 │    299162 │  303098309 │ 1996-01-28  │     534421.58 │          315.00 │
+│ Customer#005747806 │   5747806 │  540886884 │ 1994-04-14  │     534288.51 │          314.00 │
+│ Customer#013094119 │  13094119 │  111128577 │ 1995-05-09  │     534239.89 │          316.00 │
+│ Customer#008259454 │   8259454 │  546232737 │ 1997-12-07  │     534055.44 │          303.00 │
+│ Customer#000090529 │     90529 │  112311041 │ 1998-01-22  │     534035.86 │          307.00 │
+│ Customer#004938865 │   4938865 │  595346338 │ 1996-08-18  │     533883.75 │          310.00 │
+│ Customer#012726752 │  12726752 │   92511430 │ 1995-03-06  │     533441.05 │          318.00 │
+│ Customer#009638569 │   9638569 │   16783360 │ 1998-02-16  │     533372.62 │          308.00 │
+│ Customer#000437614 │    437614 │  569537412 │ 1992-01-07  │     533305.85 │          305.00 │
+│ Customer#011219830 │  11219830 │  156065860 │ 1996-07-03  │     533119.17 │          325.00 │
+│ Customer#005060768 │   5060768 │  255829888 │ 1997-03-18  │     533054.97 │          308.00 │
+│ Customer#014112568 │  14112568 │  280056096 │ 1997-01-30  │     532881.87 │          313.00 │
+│ Customer#012373496 │  12373496 │   61135843 │ 1993-01-30  │     532734.68 │          303.00 │
+│ Customer#007910675 │   7910675 │  158520577 │ 1992-02-29  │     532689.01 │          304.00 │
+│ Customer#013106491 │  13106491 │   88925410 │ 1995-01-10  │     532631.76 │          310.00 │
+├────────────────────┴───────────┴────────────┴─────────────┴───────────────┴─────────────────┤
+│ 100 rows (40 shown)                                                               6 columns │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+┌────────────────┐
+│    revenue     │
+│ decimal(38,4)  │
+├────────────────┤
+│ 298937728.8820 │
+└────────────────┘
+┌────────────────────┬──────────────────────────────────────────┐
+│       s_name       │                s_address                 │
+│      varchar       │                 varchar                  │
+├────────────────────┼──────────────────────────────────────────┤
+│ Supplier#000000091 │ 35WVnU7GLNbQDcc2TARavGtk6RB6ZCd46UAY     │
+│ Supplier#000000157 │ 1EmkCApL5iF                              │
+│ Supplier#000000197 │ 3oYqODDUGH3XsHXmPuzYHW5NLU3,ONZl         │
+│ Supplier#000000205 │ Alrx5TN,hdnG                             │
+│ Supplier#000000287 │ UQR8bUA4V2HxVbw9K                        │
+│ Supplier#000000354 │ wSLcCW40Q8                               │
+│ Supplier#000000361 │ MSi62aEN53KaoRAiaH4GEo3EsKMXSwpPGU       │
+│ Supplier#000000402 │ JR8vWoCteJtJg3okRpt0r28KEo               │
+│ Supplier#000000555 │ 8Lp0QWPLFXrJrX1sTWkAEdzUsh5ke            │
+│ Supplier#000000640 │ FwwyFbgz7c hHViKGT0OB                    │
+│ Supplier#000000710 │ MZR2bxctPrbC2vHho0CbuOBkLJMpqOwghC       │
+│ Supplier#000000736 │ GUIYDfv5xCxLgDx6KQ8khY ntVVnFqmfMKIgT    │
+│ Supplier#000000761 │ tF8fMGa6HY4 w77mDwT4rO21kxwe7uTSYNW      │
+│ Supplier#000000848 │ zuWWhrxl0hEvZ                            │
+│ Supplier#000000884 │ QEJm8KMHQ8                               │
+│ Supplier#000000887 │ y mQ7NHjVbdqnbYr9 L                      │
+│ Supplier#000000935 │ JHRSOterYgt4MTNo7cupTzA,6MoNw 4          │
+│ Supplier#000000975 │ 1qorM1ypBdwgPVuf6sMCKuF9D1rJN1iCTXKmalSt │
+│ Supplier#000001033 │ rUuZb1VUz5kGPWnB5t6vYYD0oKi              │
+│ Supplier#000001367 │ XY28GmOq3efOxOzBMmMLdmWjMpo              │
+│         ·          │              ·                           │
+│         ·          │              ·                           │
+│         ·          │              ·                           │
+│ Supplier#000998612 │ zHpZXJr5eCOwQPzAVTg8wrvibF7KW nN4j3507   │
+│ Supplier#000998641 │ JjyYb IDXcOBnC70JfDOWGVSdqK kn,7wXr1JjoI │
+│ Supplier#000998649 │ rd2G ,WlhxY ZnhPNq                       │
+│ Supplier#000998806 │ Lclu8XA9hlcraJaC5HOw48R                  │
+│ Supplier#000999018 │  FvQK5Rze9ZIeCe4mcawqR                   │
+│ Supplier#000999053 │ qcYOLiC8bs4A63LkzNPZ5qp7p agxAd49s,oSNg  │
+│ Supplier#000999060 │ wo63zq3d132CUaM6zVuAz9nxp,Ye68j,U4tylwoO │
+│ Supplier#000999102 │ 1sHEzLjNkqgoxC8KBEJ2f6WKDKw              │
+│ Supplier#000999326 │ ,,zr9KcTaAUmpHb1JcSSxZ                   │
+│ Supplier#000999337 │ VnGUdSsjIATX0fs3gO2G8sXwHwn1w,Mm47NZ7    │
+│ Supplier#000999483 │ XU6WZY,sik6pxYU I6cbcz                   │
+│ Supplier#000999500 │ 2m7lg1cIWo4hMnC                          │
+│ Supplier#000999508 │ PLmOK4dLunC5S4dAvyuSFy                   │
+│ Supplier#000999655 │ fv39kM82OlADcRcUBPKHRxkw22M3KQMQ46pma4x  │
+│ Supplier#000999661 │ GlE2haNVQdO,bw                           │
+│ Supplier#000999675 │ E4qONdjV3qHOb3URsPhOql                   │
+│ Supplier#000999771 │ CXBlz MUB,sC8e1 H                        │
+│ Supplier#000999776 │ h2qm04,8fXkNH0HN,jMGhYjVyZ2,e,PHDeT      │
+│ Supplier#000999808 │  25e,X0DdaP g70en                        │
+│ Supplier#000999859 │ 94DZw9robupm0WZk0VoUeYGDWb               │
+├────────────────────┴──────────────────────────────────────────┤
+│ 17971 rows (40 shown)                               2 columns │
+└───────────────────────────────────────────────────────────────┘
+┌────────────────────┬─────────┐
+│       s_name       │ numwait │
+│      varchar       │  int64  │
+├────────────────────┼─────────┤
+│ Supplier#000747754 │      26 │
+│ Supplier#000458746 │      25 │
+│ Supplier#000571158 │      25 │
+│ Supplier#000107007 │      24 │
+│ Supplier#000410726 │      24 │
+│ Supplier#000084585 │      23 │
+│ Supplier#000112694 │      23 │
+│ Supplier#000142113 │      23 │
+│ Supplier#000152064 │      23 │
+│ Supplier#000209763 │      23 │
+│ Supplier#000388227 │      23 │
+│ Supplier#000407925 │      23 │
+│ Supplier#000560459 │      23 │
+│ Supplier#000694752 │      23 │
+│ Supplier#000703020 │      23 │
+│ Supplier#000729149 │      23 │
+│ Supplier#000891339 │      23 │
+│ Supplier#000975089 │      23 │
+│ Supplier#000000380 │      22 │
+│ Supplier#000035755 │      22 │
+│         ·          │       · │
+│         ·          │       · │
+│         ·          │       · │
+│ Supplier#000349163 │      20 │
+│ Supplier#000372217 │      20 │
+│ Supplier#000379187 │      20 │
+│ Supplier#000392259 │      20 │
+│ Supplier#000398512 │      20 │
+│ Supplier#000414004 │      20 │
+│ Supplier#000423101 │      20 │
+│ Supplier#000435864 │      20 │
+│ Supplier#000444400 │      20 │
+│ Supplier#000444741 │      20 │
+│ Supplier#000478679 │      20 │
+│ Supplier#000484714 │      20 │
+│ Supplier#000516332 │      20 │
+│ Supplier#000520712 │      20 │
+│ Supplier#000523584 │      20 │
+│ Supplier#000523677 │      20 │
+│ Supplier#000547932 │      20 │
+│ Supplier#000559301 │      20 │
+│ Supplier#000559552 │      20 │
+│ Supplier#000599009 │      20 │
+├────────────────────┴─────────┤
+│ 100 rows (40 shown)2 columns │
+└──────────────────────────────┘
+┌───────────┬─────────┬───────────────┐
+│ cntrycode │ numcust │  totacctbal   │
+│  varchar  │  int64  │ decimal(38,2) │
+├───────────┼─────────┼───────────────┤
+│ 13        │   90748 │  679530260.80 │
+│ 17        │   91314 │  685030261.91 │
+│ 18        │   91293 │  684593250.42 │
+│ 23        │   90359 │  677680422.77 │
+│ 29        │   91124 │  683683023.65 │
+│ 30        │   91358 │  685118386.83 │
+│ 31        │   90553 │  678671645.35 │
+└───────────┴─────────┴───────────────┘
