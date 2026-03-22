@@ -5,17 +5,12 @@ import os
 NUM_TABLES = int(sys.argv[1])
 NUM_QUERIES = int(sys.argv[2])
 NUM_ITERATIONS = int(sys.argv[3])
-in_files = sys.argv[4:]
+rest = sys.argv[4:]
+names,in_files = rest[::2],rest[1::2]
 
 ATTACHED = True # FIXME:
 NUM_STATS = len(in_files)
 QUERIES_START = 2*NUM_TABLES+2 + (2 if ATTACHED else 0)
-# names = ["Min/max","Min/max clusters","Bloom filter"]
-names = ["Min/max","Min/max clusters (10x)","Min/max clusters (100x)","Min/max clusters (1000x)"]
-# names = ["R50","R100","R200","R400","C50","C100","C200","C400"]
-# names = ["Min/max","Min/max clusters","Bloom filter","Prune everything"]
-# names = ["200","500","1K","2K","5K","10K"]
-# names = ["100","200","500","1K","2K","5K"]
 
 times = [[] for _ in range(NUM_STATS)]
 

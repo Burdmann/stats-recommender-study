@@ -25,7 +25,10 @@ namespace duckdb {
 constexpr static uint32_t K = 1;
 constexpr static uint32_t BLOCK_COUNT = 1;
 // constexpr static uint32_t BLOCK_SIZE = 200; // the unit here is word lengths (64 bits)
-constexpr static uint32_t BLOCK_SIZE = LARGE_ADDITIONAL_STATS ? 2000 : 200; // the unit here is word lengths (64 bits)
+constexpr static uint32_t BLOCK_SIZE = ADDITIONAL_STATS_SCALE_LEVEL == 0   ? 20
+                                       : ADDITIONAL_STATS_SCALE_LEVEL == 1 ? 200
+                                                                           : 2000;
+; // the unit here is word lengths (64 bits)
 
 class BloomUtil {
 public:

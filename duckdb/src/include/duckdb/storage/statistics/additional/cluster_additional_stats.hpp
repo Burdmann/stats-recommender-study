@@ -19,7 +19,9 @@
 namespace duckdb {
 
 // constexpr static uint32_t MAX_NUMBER_OF_CLUSTERS = 100;
-constexpr static uint32_t MAX_NUMBER_OF_CLUSTERS = LARGE_ADDITIONAL_STATS ? 1000 : 100;
+constexpr static uint32_t MAX_NUMBER_OF_CLUSTERS = ADDITIONAL_STATS_SCALE_LEVEL == 0   ? 10
+                                                   : ADDITIONAL_STATS_SCALE_LEVEL == 1 ? 100
+                                                                                       : 1000;
 #define CLUSTER_MAX_STRING_MINMAX_SIZE 8
 
 template <class T>

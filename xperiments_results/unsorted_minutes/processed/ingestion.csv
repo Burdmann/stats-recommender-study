@@ -1,2 +1,0 @@
-Name,Unit,Table_name,Min/max,Min/max clusters,Bloom filter,Dictionary,Min/max clusters (1000x),Bloom filter (1000x),Dictionary (1000x)
-Ingestion,s,tbl,132.6181,314.82428,114.51192,102.55942,274.27698,108.61478,112.22371

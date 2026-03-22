@@ -1,3 +1,0 @@
-./run_all_range_unsorted_performance.sh
-./run_all_range_outliers_performance.sh
-./run_all_range_sorted_performance.sh

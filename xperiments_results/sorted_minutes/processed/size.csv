@@ -1,3 +1,0 @@
-Name,Unit,Table_name,Min/max,Min/max clusters,Bloom filter,Dictionary
-Size,B,tbl,50781120,162885024,441405120,80465952
-Max Size,B,tbl,208,1056,1808,384

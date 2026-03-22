@@ -1,0 +1,9 @@
+./experiments/base_runners/run_experiments_range.sh sorted_range_seconds ./experiments/sql/range/sql_queries_sorted_range_seconds.sql 1 1000 0
+./experiments/base_runners/run_experiments_range.sh sorted_range_minutes ./experiments/sql/range/sql_queries_sorted_range_minutes.sql 1 1000 0
+./experiments/base_runners/run_experiments_range.sh sorted_range_hours ./experiments/sql/range/sql_queries_sorted_range_hours.sql 1 1000 0
+./experiments/base_runners/run_experiments_range.sh outliers_range_seconds ./experiments/sql/range/sql_queries_outliers_range_seconds.sql 1 1000 0
+./experiments/base_runners/run_experiments_range.sh outliers_range_minutes ./experiments/sql/range/sql_queries_outliers_range_minutes.sql 1 1000 0
+./experiments/base_runners/run_experiments_range.sh outliers_range_hours ./experiments/sql/range/sql_queries_outliers_range_hours.sql 1 1000 0
+./experiments/base_runners/run_experiments_range.sh unsorted_range_seconds ./experiments/sql/range/sql_queries_unsorted_range_seconds.sql 1 1000 0
+./experiments/base_runners/run_experiments_range.sh unsorted_range_minutes ./experiments/sql/range/sql_queries_unsorted_range_minutes.sql 1 1000 0
+./experiments/base_runners/run_experiments_range.sh unsorted_range_hours ./experiments/sql/range/sql_queries_unsorted_range_hours.sql 1 1000 0
