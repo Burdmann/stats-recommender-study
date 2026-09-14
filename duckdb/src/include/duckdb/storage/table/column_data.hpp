@@ -27,6 +27,8 @@
 #include "duckdb/storage/statistics/additional/always_prune_additional_stats.hpp"
 #include "duckdb/storage/statistics/additional/dictionary_additional_stats.hpp"
 
+#define ADDITIONAL_STATS EmptyAdditionalStats // remove this
+
 namespace duckdb {
 class ColumnData;
 class ColumnSegment;
@@ -303,19 +305,16 @@ public:
 		//     stderr,
 		//     "%lx,%lu,%lu,START_INITIALISE_ADDITIONAL_STATS,\"{\"\"stats\"\":\"\"%p\"\",\"\"type\"\":\"\"%s\"\"}\"\n",
 		//     Util::session_id, Util::command_count, start_time, &stats, ADDITIONAL_STATS<T>::GetStaticName());
-		// std::cout << "INITIALISE STATS FOR PARTITION -- min: " << stats.stats_union.numeric_data.min.value_.integer
-		//           << " max: " << stats.stats_union.numeric_data.max.value_.integer << " type: " <<
-		//           stats.type.ToString()
-		//           << std::endl;
+
 		stats.additional_stats = new ADDITIONAL_STATS<T>(temp_storage);
-		// printf("Column_data %p (%p,%p) GETS %p\n", this, &stats, &this->stats->statistics, stats.additional_stats);
-		AdditionalStats<T> &astats = *((ADDITIONAL_STATS<T> *)stats.additional_stats);
+
+		AdditionalStats<T> *astats = ((AdditionalStats<T> *)stats.additional_stats);
 		temp_storage.clear();
 		fprintf(stderr,
 		        "%lx,%lu,%lu,END_INITIALISE_ADDITIONAL_STATS,\"{\"\"stats\"\":\"\"%p\"\",\"\"type\"\":\"\"%s\"\","
 		        "\"\"size\"\":%lu,\"\"start_time\"\":%lu}\"\n",
-		        Util::session_id, Util::command_count, Util::GetTime(), &stats, ADDITIONAL_STATS<T>::GetStaticName(),
-		        astats.Size(&astats), start_time);
+		        Util::session_id, Util::command_count, Util::GetTime(), &stats, astats->name, astats->Size(astats),
+		        start_time);
 	}
 
 	void InitStats(BaseStatistics &stats) {
@@ -389,7 +388,7 @@ public:
 		if (stats.additional_stats == NULL) {
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 		}
-		ADDITIONAL_STATS<T> &astats = *((ADDITIONAL_STATS<T> *)stats.additional_stats);
+		AdditionalStats<T> &astats = *((AdditionalStats<T> *)stats.additional_stats);
 		uint64_t start_time = Util::GetTime();
 		FilterPropagateResult result = astats.Query(&astats, comparison_type, constant);
 		// if (result == FilterPropagateResult::NO_PRUNING_POSSIBLE) {
@@ -443,7 +442,7 @@ public:
 	static inline FilterPropagateResult RangeQueryAdditionalStats(BaseStatistics &stats, const T start, const T end) {
 		if (stats.additional_stats == NULL)
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
-		ADDITIONAL_STATS<T> &astats = *((ADDITIONAL_STATS<T> *)stats.additional_stats);
+		AdditionalStats<T> &astats = *((AdditionalStats<T> *)stats.additional_stats);
 		uint64_t start_time = Util::GetTime();
 		FilterPropagateResult result = astats.QueryRange(&astats, start, end);
 		// fprintf(stderr,

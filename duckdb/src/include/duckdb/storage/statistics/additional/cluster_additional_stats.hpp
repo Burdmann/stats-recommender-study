@@ -18,10 +18,6 @@
 
 namespace duckdb {
 
-// constexpr static uint32_t MAX_NUMBER_OF_CLUSTERS = 100;
-constexpr static uint32_t MAX_NUMBER_OF_CLUSTERS = ADDITIONAL_STATS_SCALE_LEVEL == 0   ? 10
-                                                   : ADDITIONAL_STATS_SCALE_LEVEL == 1 ? 100
-                                                                                       : 1000;
 #define CLUSTER_MAX_STRING_MINMAX_SIZE 8
 
 template <class T>
@@ -30,6 +26,7 @@ private:
 	unsigned int cluster_count = 0;
 	std::vector<T> min_values;
 	std::vector<T> max_values;
+	uint max_clusters;
 	static bool ConstantExactRange(T min, T max, T constant) {
 		return Equals::Operation(constant, min) && Equals::Operation(constant, max);
 	}
@@ -41,7 +38,8 @@ public:
 	static inline const char *GetStaticName() {
 		return "cluster";
 	}
-	inline ClusterAdditionalStats(std::vector<T> &data) {
+	inline ClusterAdditionalStats(std::vector<T> &data, uint cluster_count) {
+		this->max_clusters = max_clusters;
 		this->name = GetStaticName();
 		this->Initialise = &Initialise_implementation;
 		this->Query = &Query_implementation;
@@ -75,7 +73,7 @@ public:
 		std::vector<int> idxs;
 		std::sort(gaps.begin(), gaps.end(), std::greater<std::pair<T, int>>());
 
-		for (int i = 0; i < std::min((unsigned long)gaps.size(), (unsigned long)(MAX_NUMBER_OF_CLUSTERS - 1)); i++) {
+		for (int i = 0; i < std::min((unsigned long)gaps.size(), (unsigned long)(nstats->max_clusters - 1)); i++) {
 			if (gaps[i].first == zero)
 				break;
 			idxs.push_back(gaps[i].second);
@@ -208,6 +206,7 @@ private:
 	unsigned int cluster_count = 0;
 	std::vector<data_array> min_values;
 	std::vector<data_array> max_values;
+	uint max_clusters;
 	static bool ConstantExactRange(std::string min, std::string max, std::string constant) {
 		return Equals::Operation(constant, min) && Equals::Operation(constant, max);
 	}
@@ -247,7 +246,8 @@ public:
 	static inline const char *GetStaticName() {
 		return "cluster";
 	}
-	inline ClusterAdditionalStats(std::vector<std::string> &data) {
+	inline ClusterAdditionalStats(std::vector<std::string> &data, uint max_clusters) {
+		this->max_clusters = max_clusters;
 		this->name = GetStaticName();
 		this->Initialise = &Initialise_implementation;
 		this->Query = &Query_implementation;
@@ -280,7 +280,7 @@ public:
 		std::vector<int> idxs;
 		std::sort(gaps.begin(), gaps.end(), std::greater<std::pair<unsigned long long, int>>());
 
-		for (int i = 0; i < std::min((unsigned long)gaps.size(), (unsigned long)(MAX_NUMBER_OF_CLUSTERS - 1)); i++) {
+		for (int i = 0; i < std::min((unsigned long)gaps.size(), (unsigned long)(nstats->max_clusters - 1)); i++) {
 			if (gaps[i].first == 0)
 				break;
 			idxs.push_back(gaps[i].second);

@@ -21,22 +21,19 @@
 
 namespace duckdb {
 
-// to allow use of dictionaries only where there are few enough items in a partition
-constexpr static uint32_t MAX_NUMBER_OF_ITEMS = ADDITIONAL_STATS_SCALE_LEVEL == 0   ? 7
-                                                : ADDITIONAL_STATS_SCALE_LEVEL == 1 ? 58
-                                                                                    : 540;
-
 template <class T>
 class DictionaryAdditionalStats : public AdditionalStats<T> {
 private:
 	bool valid = true;
 	std::unordered_set<T> dictionary;
+	uint max_items;
 
 public:
 	static inline const char *GetStaticName() {
 		return "dictionary";
 	}
-	inline DictionaryAdditionalStats(std::vector<T> &data) {
+	inline DictionaryAdditionalStats(std::vector<T> &data, uint max_items) {
+		this->max_items = max_items;
 		this->name = GetStaticName();
 		this->Initialise = &Initialise_implementation;
 		this->Query = &Query_implementation;
@@ -51,10 +48,10 @@ public:
 		DictionaryAdditionalStats<T> *nstats = (DictionaryAdditionalStats<T> *)stats;
 		for (T item : data) {
 			nstats->dictionary.insert(item);
-			if (nstats->dictionary.size() > MAX_NUMBER_OF_ITEMS)
+			if (nstats->dictionary.size() > nstats->max_items)
 				break;
 		}
-		if (nstats->dictionary.size() > MAX_NUMBER_OF_ITEMS) {
+		if (nstats->dictionary.size() > nstats->max_items) {
 			nstats->valid = false;
 			nstats->dictionary.clear();
 			nstats->dictionary.rehash(1);

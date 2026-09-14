@@ -23,15 +23,19 @@ namespace duckdb {
 // following numbers are chosen based on https://www.vldb.org/pvldb/vol12/p502-lang.pdf
 // for register-sized blocks
 constexpr static uint32_t K = 1;
-constexpr static uint32_t BLOCK_COUNT = 1;
-// constexpr static uint32_t BLOCK_SIZE = 200; // the unit here is word lengths (64 bits)
-constexpr static uint32_t BLOCK_SIZE = ADDITIONAL_STATS_SCALE_LEVEL == 0   ? 20
-                                       : ADDITIONAL_STATS_SCALE_LEVEL == 1 ? 200
-                                                                           : 2000;
 ; // the unit here is word lengths (64 bits)
 
 class BloomUtil {
 public:
+	uint BLOCK_COUNT;
+	uint BLOCK_SIZE;
+
+public:
+	BloomUtil(uint BLOCK_COUNT, uint BLOCK_SIZE) {
+		this->BLOCK_COUNT = BLOCK_COUNT;
+		this->BLOCK_SIZE = BLOCK_SIZE;
+	}
+
 	// https://github.com/PeterScott/murmur3
 	static inline uint64_t rotl64(uint64_t x, int8_t r) {
 		return (x << r) | (x >> (64 - r));
@@ -157,13 +161,13 @@ public:
 		return MurmurHash3_x64_128(&h, sizeof(size_t), 1);
 	}
 
-	static inline uint64_t *GetBlock(uint32_t h1, uint32_t h2, uint64_t *bit_array) {
-		uint32_t block_idx = h1 % BLOCK_COUNT;
-		uint32_t byte_idx = block_idx * BLOCK_SIZE;
+	inline uint64_t *GetBlock(uint32_t h1, uint32_t h2, uint64_t *bit_array) {
+		uint32_t block_idx = h1 % this->BLOCK_COUNT;
+		uint32_t byte_idx = block_idx * this->BLOCK_SIZE;
 		return bit_array + byte_idx;
 	}
 	template <class T>
-	static inline bool QueryUtil(T value, uint64_t *bit_array) {
+	inline bool QueryUtil(T value, uint64_t *bit_array) {
 		size_t h = hash(value);
 		uint32_t h1 = h & ((1ull << 32) - 1);
 		uint32_t h2 = h >> 32;
@@ -171,7 +175,7 @@ public:
 		bool result = true;
 		uint64_t *block = GetBlock(h1, h2, bit_array);
 		for (int i = 1; i <= K; i++) {
-			uint32_t bit_pos = (h1 + i * h2) % (64 * BLOCK_SIZE);
+			uint32_t bit_pos = (h1 + i * h2) % (64 * this->BLOCK_SIZE);
 			uint64_t bit_idx = bit_pos % 64;
 			uint64_t byte_idx = bit_pos / 64;
 			result = result && ((block[byte_idx] >> bit_idx) & 1);
@@ -179,7 +183,7 @@ public:
 		return result;
 	}
 	template <class T>
-	static inline void Insert(T new_value, uint64_t *bit_array) {
+	inline void Insert(T new_value, uint64_t *bit_array) {
 		size_t h = hash(new_value);
 		uint32_t h1 = h & ((1ull << 32) - 1);
 		uint32_t h2 = h >> 32;
@@ -189,7 +193,7 @@ public:
 
 		// chosse k bits within the block to set
 		for (int i = 1; i <= K; i++) {
-			uint32_t bit_pos = (h1 + i * h2) % (64 * BLOCK_SIZE);
+			uint32_t bit_pos = (h1 + i * h2) % (64 * this->BLOCK_SIZE);
 			uint64_t bit_idx = bit_pos % 64;
 			uint64_t byte_idx = bit_pos / 64;
 			block[byte_idx] |= (1ull << bit_idx);
@@ -200,13 +204,18 @@ public:
 template <class T>
 class BloomAdditionalStats : public AdditionalStats<T> {
 private:
-	uint64_t bit_array[BLOCK_COUNT * BLOCK_SIZE];
+	std::vector<uint64_t> bit_array;
+	uint k, block_size, num_blocks;
+	BloomUtil util;
 
 public:
 	static inline const char *GetStaticName() {
 		return "bloom";
 	}
-	inline BloomAdditionalStats(std::vector<T> &data) {
+	inline BloomAdditionalStats(std::vector<T> &data, uint k, uint block_size, uint num_blocks) {
+		this->k = k;
+		this->util = BloomUtil(num_blocks, block_size);
+		bit_array.resize(block_size * num_blocks, 0);
 		this->name = GetStaticName();
 		this->Initialise = &Initialise_implementation;
 		this->Query = &Query_implementation;
@@ -220,13 +229,9 @@ public:
 
 	inline static void Initialise_implementation(std::vector<T> &data, AdditionalStats<T> *stats) {
 		BloomAdditionalStats<T> *nstats = (BloomAdditionalStats<T> *)stats;
-		std::fill(nstats->bit_array, nstats->bit_array + (BLOCK_COUNT * BLOCK_SIZE), 0);
+		std::fill(nstats->bit_array.begin(), nstats->bit_array.end(), 0);
 		for (T element : data) {
-			// if (*(uint64_t *)&element == 1768979491171) {
-			// 	printf("INSERTED 1768979491171 INTO %p\n", stats);
-			// }
-			// std::cout << "INSERTED " << *(uint64_t *)((void *)(&element)) << std::endl;
-			BloomUtil::Insert(element, nstats->bit_array);
+			nstats->util.Insert(element, nstats->bit_array);
 		}
 	}
 
@@ -236,10 +241,7 @@ public:
 		case ExpressionType::COMPARE_EQUAL:
 		case ExpressionType::COMPARE_NOT_DISTINCT_FROM: {
 			BloomAdditionalStats<T> *nstats = (BloomAdditionalStats<T> *)stats;
-			if (BloomUtil::QueryUtil(constant, nstats->bit_array)) {
-				// if (*(uint64_t *)&constant == 1768979491171) {
-				// 	printf("POSITIVE FOR 1768979491171 FROM %p\n", stats);
-				// }
+			if (nstats->util.QueryUtil(constant, nstats->bit_array)) {
 				return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 			}
 
