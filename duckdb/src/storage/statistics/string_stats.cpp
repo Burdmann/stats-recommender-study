@@ -39,14 +39,29 @@ BaseStatistics StringStats::CreateEmpty(LogicalType type) {
 	return result;
 }
 
+static StringStatsData EmptyStringStatsData() {
+	StringStatsData string_data;
+	for (idx_t i = 0; i < StringStatsData::MAX_STRING_MINMAX_SIZE; i++) {
+		string_data.min[i] = 0;
+		string_data.max[i] = 0xFF;
+	}
+	string_data.max_string_length = 0;
+	string_data.has_max_string_length = false;
+	string_data.has_unicode = true;
+	return string_data;
+}
+static StringStatsData empty_string_stats_data = EmptyStringStatsData();
+
 StringStatsData &StringStats::GetDataUnsafe(BaseStatistics &stats) {
 	D_ASSERT(stats.GetStatsType() == StatisticsType::STRING_STATS);
-	return stats.stats_union.string_data;
+	return empty_string_stats_data;
+	// return stats.stats_union.string_data;
 }
 
 const StringStatsData &StringStats::GetDataUnsafe(const BaseStatistics &stats) {
 	D_ASSERT(stats.GetStatsType() == StatisticsType::STRING_STATS);
-	return stats.stats_union.string_data;
+	return empty_string_stats_data;
+	// return stats.stats_union.string_data;
 }
 
 bool StringStats::HasMaxStringLength(const BaseStatistics &stats) {

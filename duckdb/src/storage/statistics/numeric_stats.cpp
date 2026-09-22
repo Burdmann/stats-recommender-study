@@ -24,14 +24,25 @@ BaseStatistics NumericStats::CreateEmpty(LogicalType type) {
 	return result;
 }
 
+static NumericStatsData EmptyNumericStatsData() {
+
+	NumericStatsData numeric_data;
+	numeric_data.has_min = false;
+	numeric_data.has_max = false;
+	return numeric_data;
+}
+static NumericStatsData empty_numeric_stats_data = EmptyNumericStatsData();
+
 NumericStatsData &NumericStats::GetDataUnsafe(BaseStatistics &stats) {
 	D_ASSERT(stats.GetStatsType() == StatisticsType::NUMERIC_STATS);
-	return stats.stats_union.numeric_data;
+	return empty_numeric_stats_data;
+	// return stats.stats_union.numeric_data;
 }
 
 const NumericStatsData &NumericStats::GetDataUnsafe(const BaseStatistics &stats) {
 	D_ASSERT(stats.GetStatsType() == StatisticsType::NUMERIC_STATS);
-	return stats.stats_union.numeric_data;
+	return empty_numeric_stats_data;
+	// return stats.stats_union.numeric_data;
 }
 
 void NumericStats::Merge(BaseStatistics &stats, const BaseStatistics &other) {

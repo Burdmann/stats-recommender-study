@@ -46,7 +46,7 @@ BaseStatistics::BaseStatistics(BaseStatistics &&other) noexcept {
 	has_null = other.has_null;
 	has_no_null = other.has_no_null;
 	distinct_count = other.distinct_count;
-	stats_union = other.stats_union;
+	// stats_union = other.stats_union;
 	id = other.id;
 	additional_stats = other.additional_stats;
 	std::swap(child_stats, other.child_stats);
@@ -57,7 +57,7 @@ BaseStatistics &BaseStatistics::operator=(BaseStatistics &&other) noexcept {
 	has_null = other.has_null;
 	has_no_null = other.has_no_null;
 	distinct_count = other.distinct_count;
-	stats_union = other.stats_union;
+	// stats_union = other.stats_union;
 	id = other.id;
 	additional_stats = other.additional_stats;
 	std::swap(child_stats, other.child_stats);
@@ -229,7 +229,7 @@ BaseStatistics BaseStatistics::CreateEmpty(LogicalType type) {
 void BaseStatistics::Copy(const BaseStatistics &other) {
 	D_ASSERT(GetType() == other.GetType());
 	CopyBase(other);
-	stats_union = other.stats_union;
+	// stats_union = other.stats_union;
 	switch (GetStatsType()) {
 	case StatisticsType::LIST_STATS:
 		ListStats::Copy(*this, other);
@@ -396,7 +396,7 @@ string BaseStatistics::ToString() const {
 	auto has_n_n = has_no_null ? "true" : "false";
 	string result =
 	    StringUtil::Format("%s%s", StringUtil::Format("[Has Null: %s, Has No Null: %s]", has_n, has_n_n),
-	                       distinct_count > 0 ? StringUtil::Format("[Approx Unique: %lld]", distinct_count) : "");
+		                   distinct_count > 0 ? StringUtil::Format("[Approx Unique: %lld]", distinct_count) : "");
 	switch (GetStatsType()) {
 	case StatisticsType::NUMERIC_STATS:
 		result = NumericStats::ToString(*this) + result;
