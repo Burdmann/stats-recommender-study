@@ -21,13 +21,13 @@
 #include "duckdb/common/atomic_ptr.hpp"
 #include "duckdb/util/util.hpp"
 
-#include "duckdb/storage/statistics/additional/empty_additional_stats.hpp"
-#include "duckdb/storage/statistics/additional/cluster_additional_stats.hpp"
-#include "duckdb/storage/statistics/additional/bloom_additional_stats.hpp"
-#include "duckdb/storage/statistics/additional/always_prune_additional_stats.hpp"
-#include "duckdb/storage/statistics/additional/dictionary_additional_stats.hpp"
-
-#define ADDITIONAL_STATS EmptyAdditionalStats // remove this
+#include "duckdb/storage/statistics/additional/additional_stats.hpp"
+// #include "duckdb/storage/statistics/additional/empty_additional_stats.hpp"
+// #include "duckdb/storage/statistics/additional/cluster_additional_stats.hpp"
+// #include "duckdb/storage/statistics/additional/bloom_additional_stats.hpp"
+// #include "duckdb/storage/statistics/additional/always_prune_additional_stats.hpp"
+// #include "duckdb/storage/statistics/additional/dictionary_additional_stats.hpp"
+#include "duckdb/storage/statistics/additional/stats_set.hpp"
 
 namespace duckdb {
 class ColumnData;
@@ -306,7 +306,7 @@ public:
 		//     "%lx,%lu,%lu,START_INITIALISE_ADDITIONAL_STATS,\"{\"\"stats\"\":\"\"%p\"\",\"\"type\"\":\"\"%s\"\"}\"\n",
 		//     Util::session_id, Util::command_count, start_time, &stats, ADDITIONAL_STATS<T>::GetStaticName());
 
-		stats.additional_stats = new ADDITIONAL_STATS<T>(temp_storage);
+		stats.additional_stats = StatisticsSet::construct<T>(temp_storage, STATISTIC_TYPE::MIN_MAX);
 
 		AdditionalStats<T> *astats = ((AdditionalStats<T> *)stats.additional_stats);
 		temp_storage.clear();

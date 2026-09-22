@@ -31,6 +31,10 @@ public:
 	uint BLOCK_SIZE;
 
 public:
+	BloomUtil() {
+		this->BLOCK_COUNT = 0;
+		this->BLOCK_SIZE = 0;
+	}
 	BloomUtil(uint BLOCK_COUNT, uint BLOCK_SIZE) {
 		this->BLOCK_COUNT = BLOCK_COUNT;
 		this->BLOCK_SIZE = BLOCK_SIZE;
@@ -231,7 +235,7 @@ public:
 		BloomAdditionalStats<T> *nstats = (BloomAdditionalStats<T> *)stats;
 		std::fill(nstats->bit_array.begin(), nstats->bit_array.end(), 0);
 		for (T element : data) {
-			nstats->util.Insert(element, nstats->bit_array);
+			nstats->util.Insert(element, nstats->bit_array.data());
 		}
 	}
 
@@ -241,7 +245,7 @@ public:
 		case ExpressionType::COMPARE_EQUAL:
 		case ExpressionType::COMPARE_NOT_DISTINCT_FROM: {
 			BloomAdditionalStats<T> *nstats = (BloomAdditionalStats<T> *)stats;
-			if (nstats->util.QueryUtil(constant, nstats->bit_array)) {
+			if (nstats->util.QueryUtil(constant, nstats->bit_array.data())) {
 				return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 			}
 
