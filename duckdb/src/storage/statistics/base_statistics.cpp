@@ -385,8 +385,8 @@ BaseStatistics BaseStatistics::Deserialize(Deserializer &deserializer) {
 			break;
 		}
 	});
-	stats.id = deserializer.ReadProperty<uint64_t>(104, "id");
-	stats.additional_stats = (void *)deserializer.ReadProperty<uint64_t>(105, "additional_stats");
+	stats.id = deserializer.ReadPropertyWithExplicitDefault<uint64_t>(104, "id", stats.id);
+	stats.additional_stats = (void *)deserializer.ReadPropertyWithDefault<uint64_t>(105, "additional_stats");
 
 	return stats;
 }

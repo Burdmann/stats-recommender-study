@@ -45,7 +45,6 @@ FilterPropagateResult ConstantFilter::CheckStatistics(BaseStatistics &stats) con
 		// no non-null values are possible: always false
 		return FilterPropagateResult::FILTER_ALWAYS_FALSE;
 	}
-	FilterPropagateResult result;
 	D_ASSERT(constant.type().id() == stats.GetType().id());
 	switch (constant.type().InternalType()) {
 	case PhysicalType::UINT8:
@@ -60,46 +59,12 @@ FilterPropagateResult ConstantFilter::CheckStatistics(BaseStatistics &stats) con
 	case PhysicalType::INT128:
 	case PhysicalType::FLOAT:
 	case PhysicalType::DOUBLE:
-		result = NumericStats::CheckZonemap(stats, comparison_type, array_ptr<const Value>(&constant, 1));
-		break;
 	case PhysicalType::VARCHAR:
-		result = StringStats::CheckZonemap(stats, comparison_type, array_ptr<const Value>(&constant, 1));
 		break;
 	default:
 		return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 	}
-	if (result == FilterPropagateResult::FILTER_ALWAYS_TRUE) {
-		// the numeric filter is always true, but the column can have NULL values
-		// we can't prune the filter
-		if (stats.CanHaveNull()) {
-			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
-		}
-	}
-	FilterPropagateResult new_result = result;
-	if (result == FilterPropagateResult::NO_PRUNING_POSSIBLE)
-		new_result =
-		    ColumnData::QueryAdditionalStats(stats, comparison_type, constant.type().InternalType(), &constant);
-
-	// printf("%p: %d\n", &stats, (int)new_result);
-
-	// if (stats.is_rowgroup && new_result != FilterPropagateResult::FILTER_ALWAYS_FALSE) {
-	// 	scanned_partitions.insert(stats.id);
-	// 	// std::cout << "CHECK " << stats.id << " min: " << stats.stats_union.numeric_data.min.value_.integer
-	// 	//           << " max: " << stats.stats_union.numeric_data.max.value_.integer << " " << stats.type.ToString()
-	// 	//           << " result: " << (int)result << " is_rowgroup: " << stats.is_rowgroup
-	// 	//           << " constant: " << constant.GetValueUnsafe<int>() << std::endl;
-	// 	// std::cout << "CHECK " << stats.id << " min: " << stats.stats_union.numeric_data.min.value_.ubigint
-	// 	//           << " max: " << stats.stats_union.numeric_data.max.value_.ubigint << " " << stats.type.ToString()
-	// 	//           << " result: " << (int)result << " is_rowgroup: " << stats.is_rowgroup
-	// 	//           << " constant: " << constant.GetValueUnsafe<int64_t>() << std::endl;
-	// }
-	// std::cout << "CHECK " << stats.id << " min: " << stats.stats_union.numeric_data.min.value_.integer
-	//           << " max: " << stats.stats_union.numeric_data.max.value_.integer << " " << stats.type.ToString()
-	//           << " result before additional: " << (int)result << " result after additional: " << (int)new_result
-	//           << " is_rowgroup: " << stats.is_rowgroup << " constant: " << constant.GetValueUnsafe<int>() <<
-	//           std::endl;
-
-	return new_result;
+	return ColumnData::QueryAdditionalStats(stats, comparison_type, constant.type().InternalType(), &constant);
 }
 
 string ConstantFilter::ToString(const string &column_name) const {

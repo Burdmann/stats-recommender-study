@@ -263,7 +263,7 @@ public:
 
 	inline static size_t Size_implementation(AdditionalStats<T> *stats) {
 		BloomAdditionalStats<T> *nstats = (BloomAdditionalStats<T> *)stats;
-		return sizeof(*nstats);
+		return sizeof(*nstats) + sizeof(uint64_t) * nstats->bit_array.capacity();
 	}
 	inline static void Serialise_implementation(AdditionalStats<T> *stats, Serializer &serializer) {
 	}

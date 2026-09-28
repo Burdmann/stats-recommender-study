@@ -1,3 +1,4 @@
 {
-  "cmake.sourceDirectory": "/home/alex/stats-recommender-study/duckdb"
+  "cmake.sourceDirectory": "/home/alex/stats-recommender-study/duckdb",
+  "chat.disableAIFeatures": false
 }

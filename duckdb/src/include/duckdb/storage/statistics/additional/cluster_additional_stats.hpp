@@ -39,7 +39,7 @@ public:
 		return "cluster";
 	}
 	inline ClusterAdditionalStats(std::vector<T> &data, uint cluster_count) {
-		this->max_clusters = max_clusters;
+		this->max_clusters = cluster_count;
 		this->name = GetStaticName();
 		this->Initialise = &Initialise_implementation;
 		this->Query = &Query_implementation;

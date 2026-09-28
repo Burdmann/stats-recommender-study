@@ -1,0 +1,13 @@
+SET threads TO 1;
+ATTACH 'test.db' (ROW_GROUP_SIZE 8192);
+USE test;
+CREATE TABLE tbl(a INT, b INT, c INT);
+COPY tbl FROM 'test.csv' (FORMAT 'csv', delimiter ',', header 1);
+RESET threads;
+SELECT * FROM tbl WHERE a = 100;
+SELECT * FROM tbl WHERE b = 100;
+SELECT * FROM tbl WHERE a = 1000;
+SELECT * FROM tbl WHERE b = 1000;
+SELECT * FROM tbl WHERE a = 10000;
+SELECT * FROM tbl WHERE b = 10000;
+SELECT * FROM tbl WHERE c = 10000;

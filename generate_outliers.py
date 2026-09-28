@@ -3,8 +3,8 @@ import numpy as np
 
 in_file = sys.argv[1]
 out_file = sys.argv[2]
-LEN = sys.argv[3]
-OUTLIER_GAP = sys.argv[4]
+LEN = int(sys.argv[3])
+OUTLIER_GAP = int(sys.argv[4])
 NUM_OUTLIERS = LEN//OUTLIER_GAP
 # data = [None]*LEN
 data = np.ndarray((LEN,2),dtype=np.uint64)

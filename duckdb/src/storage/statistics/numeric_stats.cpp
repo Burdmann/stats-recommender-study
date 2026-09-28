@@ -278,8 +278,8 @@ FilterPropagateResult NumericStats::CheckZonemap(const BaseStatistics &stats, Ex
 	}
 }
 
-bool NumericStats::IsConstant(const BaseStatistics &stats) {
-	return NumericStats::Max(stats) <= NumericStats::Min(stats);
+bool NumericStats::IsConstant(const BaseStatistics &) {
+	return false;
 }
 
 void SetNumericValueInternal(const Value &input, const LogicalType &type, NumericValueUnion &val, bool &has_val) {
@@ -390,18 +390,12 @@ bool NumericStats::HasMinMax(const BaseStatistics &stats) {
 	       NumericStats::Min(stats) <= NumericStats::Max(stats);
 }
 
-bool NumericStats::HasMin(const BaseStatistics &stats) {
-	if (stats.GetType().id() == LogicalTypeId::SQLNULL) {
-		return false;
-	}
-	return NumericStats::GetDataUnsafe(stats).has_min;
+bool NumericStats::HasMin(const BaseStatistics &) {
+	return false;
 }
 
-bool NumericStats::HasMax(const BaseStatistics &stats) {
-	if (stats.GetType().id() == LogicalTypeId::SQLNULL) {
-		return false;
-	}
-	return NumericStats::GetDataUnsafe(stats).has_max;
+bool NumericStats::HasMax(const BaseStatistics &) {
+	return false;
 }
 
 Value NumericStats::Min(const BaseStatistics &stats) {

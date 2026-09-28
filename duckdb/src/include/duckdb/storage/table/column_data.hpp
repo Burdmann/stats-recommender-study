@@ -299,81 +299,82 @@ public:
 	}
 
 	template <class T>
-	void InitAdditionalStats(std::vector<T> &temp_storage, BaseStatistics &stats) {
+	void InitAdditionalStats(std::vector<T> &temp_storage, BaseStatistics &stats, idx_t index, int column) {
 		uint64_t start_time = Util::GetTime();
 		// fprintf(
 		//     stderr,
 		//     "%lx,%lu,%lu,START_INITIALISE_ADDITIONAL_STATS,\"{\"\"stats\"\":\"\"%p\"\",\"\"type\"\":\"\"%s\"\"}\"\n",
 		//     Util::session_id, Util::command_count, start_time, &stats, ADDITIONAL_STATS<T>::GetStaticName());
-
-		stats.additional_stats = StatisticsSet::construct<T>(temp_storage, STATISTIC_TYPE::MIN_MAX);
+		stats.additional_stats = StatisticsSet::construct<T>(temp_storage, StatisticsSet::default_type);
 
 		AdditionalStats<T> *astats = ((AdditionalStats<T> *)stats.additional_stats);
 		temp_storage.clear();
+		auto table_identifier = info.GetTableName();
 		fprintf(stderr,
-		        "%lx,%lu,%lu,END_INITIALISE_ADDITIONAL_STATS,\"{\"\"stats\"\":\"\"%p\"\",\"\"type\"\":\"\"%s\"\","
-		        "\"\"size\"\":%lu,\"\"start_time\"\":%lu}\"\n",
-		        Util::session_id, Util::command_count, Util::GetTime(), &stats, astats->name, astats->Size(astats),
-		        start_time);
+		        "%lx,%lu,%lu,END_INITIALISE_ADDITIONAL_STATS,\"{\"\"table_id\"\":\"\"%s\"\",\"\"rowgroup\"\":%lu,"
+		        "\"\"column\"\":%d,\"\"type\"\":"
+		        "\"\"%s\"\",\"\"size\"\":%lu,\"\"start_time\"\":%lu}\"\n",
+		        Util::session_id, Util::command_count, Util::GetTime(), table_identifier.c_str(), index, column,
+		        astats->name, astats->Size(astats), start_time);
 	}
 
-	void InitStats(BaseStatistics &stats) {
+	void InitStats(BaseStatistics &stats, idx_t index, int column) {
 		map_mutex.lock();
 		switch (type.InternalType()) {
 		case PhysicalType::BOOL:
-			InitAdditionalStats(bool_temp_vectors[this], stats);
+			InitAdditionalStats(bool_temp_vectors[this], stats, index, column);
 			bool_temp_vectors.erase(this);
 			break;
 		case PhysicalType::INT8:
-			InitAdditionalStats(int8_temp_vectors[this], stats);
+			InitAdditionalStats(int8_temp_vectors[this], stats, index, column);
 			int8_temp_vectors.erase(this);
 			break;
 		case PhysicalType::INT16:
-			InitAdditionalStats(int16_temp_vectors[this], stats);
+			InitAdditionalStats(int16_temp_vectors[this], stats, index, column);
 			int16_temp_vectors.erase(this);
 			break;
 		case PhysicalType::INT32:
-			InitAdditionalStats(int32_temp_vectors[this], stats);
+			InitAdditionalStats(int32_temp_vectors[this], stats, index, column);
 			int32_temp_vectors.erase(this);
 			break;
 		case PhysicalType::INT64:
-			InitAdditionalStats(int64_temp_vectors[this], stats);
+			InitAdditionalStats(int64_temp_vectors[this], stats, index, column);
 			int64_temp_vectors.erase(this);
 			break;
 		case PhysicalType::INT128:
-			InitAdditionalStats(hugeint_temp_vectors[this], stats);
+			InitAdditionalStats(hugeint_temp_vectors[this], stats, index, column);
 			hugeint_temp_vectors.erase(this);
 			break;
 		case PhysicalType::UINT8:
-			InitAdditionalStats(uint8_temp_vectors[this], stats);
+			InitAdditionalStats(uint8_temp_vectors[this], stats, index, column);
 			uint8_temp_vectors.erase(this);
 			break;
 		case PhysicalType::UINT16:
-			InitAdditionalStats(uint16_temp_vectors[this], stats);
+			InitAdditionalStats(uint16_temp_vectors[this], stats, index, column);
 			uint16_temp_vectors.erase(this);
 			break;
 		case PhysicalType::UINT32:
-			InitAdditionalStats(uint32_temp_vectors[this], stats);
+			InitAdditionalStats(uint32_temp_vectors[this], stats, index, column);
 			uint32_temp_vectors.erase(this);
 			break;
 		case PhysicalType::UINT64:
-			InitAdditionalStats(uint64_temp_vectors[this], stats);
+			InitAdditionalStats(uint64_temp_vectors[this], stats, index, column);
 			uint64_temp_vectors.erase(this);
 			break;
 		case PhysicalType::UINT128:
-			InitAdditionalStats(uhugeint_temp_vectors[this], stats);
+			InitAdditionalStats(uhugeint_temp_vectors[this], stats, index, column);
 			uhugeint_temp_vectors.erase(this);
 			break;
 		case PhysicalType::FLOAT:
-			InitAdditionalStats(float_temp_vectors[this], stats);
+			InitAdditionalStats(float_temp_vectors[this], stats, index, column);
 			float_temp_vectors.erase(this);
 			break;
 		case PhysicalType::DOUBLE:
-			InitAdditionalStats(double_temp_vectors[this], stats);
+			InitAdditionalStats(double_temp_vectors[this], stats, index, column);
 			double_temp_vectors.erase(this);
 			break;
 		case PhysicalType::VARCHAR:
-			InitAdditionalStats(string_temp_vectors[this], stats);
+			InitAdditionalStats(string_temp_vectors[this], stats, index, column);
 			string_temp_vectors.erase(this);
 			break;
 		default:
@@ -391,9 +392,6 @@ public:
 		AdditionalStats<T> &astats = *((AdditionalStats<T> *)stats.additional_stats);
 		uint64_t start_time = Util::GetTime();
 		FilterPropagateResult result = astats.Query(&astats, comparison_type, constant);
-		// if (result == FilterPropagateResult::NO_PRUNING_POSSIBLE) {
-		// 	ClusterAdditionalStats<T>::Print(&astats);
-		// }
 		// fprintf(stderr,
 		//         "%lx,%lu,%lu,EVAL_ADDITIONAL_STATISTICS_END,\"{\"\"statistic\"\":\"\"%p\"\",\"\"type\"\":\"\"%s\"\","
 		//         "\"\"start_time\"\":%lu,\"\"result\"\":%u}\"\n",

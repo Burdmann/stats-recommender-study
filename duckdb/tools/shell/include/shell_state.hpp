@@ -125,6 +125,7 @@ public:
 	LargeNumberRendering large_number_rendering = LargeNumberRendering::DEFAULT;
 	//! The command to execute when `-ui` is passed in
 	string ui_command = "CALL start_ui()";
+	uint8_t statistic = 1;
 
 public:
 	void PushOutputMode();

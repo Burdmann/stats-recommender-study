@@ -1,6 +1,8 @@
 import sys
 import random
 
+random.seed(1337)
+
 f = open(sys.argv[1],"w+")
 n = int(sys.argv[2])
 idx = 0

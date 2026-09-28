@@ -18,23 +18,27 @@
 namespace duckdb {
 
 enum class STATISTIC_TYPE : uint8_t {
-	MIN_MAX = 0,
-	CLUSTER_SMALL = 1,
-	CLUSTER_MEDIUM = 2,
-	CLUSTER_LARGE = 3,
-	BLOOM_SMALL = 4,
-	BLOOM_MEDIUM = 5,
-	BLOOM_LARGE = 6,
-	DICTIONARY = 7
+	NONE = 0,
+	MIN_MAX = 1,
+	CLUSTER_SMALL = 2,
+	CLUSTER_MEDIUM = 3,
+	CLUSTER_LARGE = 4,
+	BLOOM_SMALL = 5,
+	BLOOM_MEDIUM = 6,
+	BLOOM_LARGE = 7,
+	DICTIONARY = 8
 };
 
 class StatisticsSet {
 public:
+	static STATISTIC_TYPE default_type;
 	template <class T>
 	static inline AdditionalStats<T> *construct(std::vector<T> &data, STATISTIC_TYPE type) {
 		switch (type) {
-		case STATISTIC_TYPE::MIN_MAX:
+		case STATISTIC_TYPE::NONE:
 			return new EmptyAdditionalStats<T>(data);
+		case STATISTIC_TYPE::MIN_MAX:
+			return new ClusterAdditionalStats<T>(data, 1);
 		case STATISTIC_TYPE::CLUSTER_SMALL:
 			return new ClusterAdditionalStats<T>(data, 10);
 		case STATISTIC_TYPE::CLUSTER_MEDIUM:

@@ -83,6 +83,7 @@
 #include "duckdb/common/box_renderer.hpp"
 #include "duckdb/parser/qualified_name.hpp"
 #include "duckdb/util/util.hpp"
+#include "duckdb/storage/statistics/additional/stats_set.hpp"
 #include "sqlite3.h"
 typedef sqlite3_int64 i64;
 typedef sqlite3_uint64 u64;
@@ -4228,13 +4229,13 @@ static const MetadataCommand metadata_commands[] = {
     {"columns", 1, SetColumnRendering, "", "Column-wise rendering of query results", 0},
 
     {"decimal_sep", 0, SetDecimalSep, "SEP",
-     "Sets the decimal separator used when rendering numbers. Only for duckbox mode.", 3},
+	 "Sets the decimal separator used when rendering numbers. Only for duckbox mode.", 3},
     {"databases", 1, ShowDatabases, "", "List names and files of attached databases", 2},
     {"dump", 0, DumpTable, "?TABLE?",
-     "Render database content as SQL\n   Options:\n     --newlines             Allow unescaped newline characters in "
-     "output\n   TABLE is a LIKE pattern for the tables to dump\n   Additional LIKE patterns can be given in "
-     "subsequent arguments",
-     0},
+	 "Render database content as SQL\n   Options:\n     --newlines             Allow unescaped newline characters in "
+	 "output\n   TABLE is a LIKE pattern for the tables to dump\n   Additional LIKE patterns can be given in "
+	 "subsequent arguments",
+	 0},
     {"echo", 2, ToggleEcho, "on|off", "Turn command echo on or off", 3},
     {"excel", 0, SetOutputExcel, "", "Display the output of next command in spreadsheet", 0},
     {"exit", 0, ExitProcess, "?CODE?", "Exit this program with return-code CODE", 0},
@@ -4249,12 +4250,12 @@ static const MetadataCommand metadata_commands[] = {
     {"indexes", 0, ShowIndexes, "?TABLE?", "Show names of indexes", 0},
     {"indices", 0, ShowIndexes, "?TABLE?", "Show names of indexes", 0},
     {"large_number_rendering", 2, SetLargeNumberRendering, "all|footer|off",
-     "Toggle readable rendering of large numbers (duckbox only)", 0},
+	 "Toggle readable rendering of large numbers (duckbox only)", 0},
     {"log", 2, ToggleLog, "FILE|off", "Turn logging on or off.  FILE can be stderr/stdout", 0},
     {"maxrows", 0, SetMaxRows, "COUNT",
-     "Sets the maximum number of rows for display (default: 40). Only for duckbox mode.", 0},
+	 "Sets the maximum number of rows for display (default: 40). Only for duckbox mode.", 0},
     {"maxwidth", 0, SetMaxWidth, "COUNT",
-     "Sets the maximum width in characters. 0 defaults to terminal width. Only for duckbox mode.", 0},
+	 "Sets the maximum width in characters. 0 defaults to terminal width. Only for duckbox mode.", 0},
     {"mode", 0, SetOutputMode, "MODE ?TABLE?", "Set output mode", 0},
     {"nullvalue", 2, SetNullValue, "STRING", "Use STRING in place of NULL values", 0},
 
@@ -4277,7 +4278,7 @@ static const MetadataCommand metadata_commands[] = {
     {"system", 0, RunShellCommand, "CMD ARGS...", "Run CMD ARGS... in a system shell", 0},
     {"tables", 0, ShowTables, "?TABLE?", "List names of tables matching LIKE pattern TABLE", 2},
     {"thousand_sep", 0, SetThousandSep, "SEP",
-     "Sets the thousand separator used when rendering numbers. Only for duckbox mode.", 4},
+	 "Sets the thousand separator used when rendering numbers. Only for duckbox mode.", 4},
     {"timeout", 0, nullptr, "", "", 5},
     {"timer", 2, ToggleTimer, "on|off", "Turn SQL timer on or off", 0},
     {"ui_command", 0, SetUICommand, "[command]", "Set the UI command", 0},
@@ -4801,7 +4802,8 @@ static const char zOptions[] =
     "   -ui                  launches a web interface using the ui extension (configurable with .ui_command)\n"
     "   -unredacted          allow printing unredacted secrets\n"
     "   -unsigned            allow loading of unsigned extensions\n"
-    "   -version             show DuckDB version\n";
+    "   -version             show DuckDB version\n"
+    "	-statistic			 select which statistic to use\n";
 static void usage(int showDetail) {
 	utf8_printf(stderr,
 	            "Usage: %s [OPTIONS] FILENAME [SQL]\n"
@@ -5016,6 +5018,8 @@ int SQLITE_CDECL wmain(int argc, wchar_t **wargv) {
 			} else {
 				data.openFlags |= DUCKDB_LATEST_STORAGE_VERSION;
 			}
+		} else if (strcmp(z, "-statistic") == 0) {
+			(void)cmdline_option_value(argc, argv, ++i);
 		} else if (strcmp(z, "-bail") == 0) {
 			bail_on_error = true;
 		}
@@ -5185,6 +5189,9 @@ int SQLITE_CDECL wmain(int argc, wchar_t **wargv) {
 			}
 		} else if (strcmp(z, "-storage_version") == 0) {
 			// already processed on start-up
+		} else if (strcmp(z, "-statistic") == 0) {
+			data.statistic = atoi(cmdline_option_value(argc, argv, ++i));
+			duckdb::StatisticsSet::default_type = (duckdb::STATISTIC_TYPE)data.statistic;
 		} else {
 			utf8_printf(stderr, "%s: Error: unknown option: %s\n", program_name, z);
 			raw_printf(stderr, "Use -help for a list of options.\n");
