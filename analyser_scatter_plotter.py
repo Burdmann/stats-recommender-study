@@ -12,7 +12,7 @@ STATISTIC_COLORS = {
 	"BLOOM_SMALL": "cornflowerblue",
 	"BLOOM_MEDIUM": "mediumblue",
 	"BLOOM_LARGE": "darkblue",
-	"DICTIONARY": "olive",
+	"DICTIONARY": "darkviolet",
 }
 
 def main():
