@@ -20,24 +20,23 @@
 
 namespace duckdb {
 
-// following numbers are chosen based on https://www.vldb.org/pvldb/vol12/p502-lang.pdf
-// for register-sized blocks
-constexpr static uint32_t K = 1;
-; // the unit here is word lengths (64 bits)
+// parameters should be chosen based on https://www.vldb.org/pvldb/vol12/p502-lang.pdf
 
 class BloomUtil {
 public:
 	uint BLOCK_COUNT;
-	uint BLOCK_SIZE;
+	uint N;
+	uint K;
 
 public:
 	BloomUtil() {
 		this->BLOCK_COUNT = 0;
-		this->BLOCK_SIZE = 0;
+		this->N = 0;
 	}
-	BloomUtil(uint BLOCK_COUNT, uint BLOCK_SIZE) {
+	BloomUtil(uint BLOCK_COUNT, uint N, uint K) {
 		this->BLOCK_COUNT = BLOCK_COUNT;
-		this->BLOCK_SIZE = BLOCK_SIZE;
+		this->N = N;
+		this->K = K;
 	}
 
 	// https://github.com/PeterScott/murmur3
@@ -167,7 +166,7 @@ public:
 
 	inline uint64_t *GetBlock(uint32_t h1, uint32_t h2, uint64_t *bit_array) {
 		uint32_t block_idx = h1 % this->BLOCK_COUNT;
-		uint32_t byte_idx = block_idx * this->BLOCK_SIZE;
+		uint32_t byte_idx = block_idx * this->N;
 		return bit_array + byte_idx;
 	}
 	template <class T>
@@ -178,8 +177,8 @@ public:
 
 		bool result = true;
 		uint64_t *block = GetBlock(h1, h2, bit_array);
-		for (int i = 1; i <= K; i++) {
-			uint32_t bit_pos = (h1 + i * h2) % (64 * this->BLOCK_SIZE);
+		for (int i = 1; i <= this->K; i++) {
+			uint32_t bit_pos = (h1 + i * h2) % (64 * this->N);
 			uint64_t bit_idx = bit_pos % 64;
 			uint64_t byte_idx = bit_pos / 64;
 			result = result && ((block[byte_idx] >> bit_idx) & 1);
@@ -196,8 +195,8 @@ public:
 		uint64_t *block = GetBlock(h1, h2, bit_array);
 
 		// chosse k bits within the block to set
-		for (int i = 1; i <= K; i++) {
-			uint32_t bit_pos = (h1 + i * h2) % (64 * this->BLOCK_SIZE);
+		for (int i = 1; i <= this->K; i++) {
+			uint32_t bit_pos = (h1 + i * h2) % (64 * this->N);
 			uint64_t bit_idx = bit_pos % 64;
 			uint64_t byte_idx = bit_pos / 64;
 			block[byte_idx] |= (1ull << bit_idx);
@@ -205,21 +204,19 @@ public:
 	}
 };
 
-template <class T>
+// N = block size, M = number of blocks
+template <class T, unsigned int N, unsigned int M>
 class BloomAdditionalStats : public AdditionalStats<T> {
 private:
-	std::vector<uint64_t> bit_array;
-	uint k, block_size, num_blocks;
+	uint64_t bit_array[N * M];
 	BloomUtil util;
 
 public:
 	static inline const char *GetStaticName() {
 		return "bloom";
 	}
-	inline BloomAdditionalStats(std::vector<T> &data, uint k, uint block_size, uint num_blocks) {
-		this->k = k;
-		this->util = BloomUtil(num_blocks, block_size);
-		bit_array.resize(block_size * num_blocks, 0);
+	inline BloomAdditionalStats(std::vector<T> &data, uint k) {
+		this->util = BloomUtil(M, N, k);
 		this->name = GetStaticName();
 		this->Initialise = &Initialise_implementation;
 		this->Query = &Query_implementation;
@@ -228,14 +225,13 @@ public:
 		this->Serialise = &Serialise_implementation;
 		this->Deserialise = &Deserialise_implementation;
 		this->Initialise(data, this);
-		this->type = ADDITIONAL_STATS_TYPE::BLOOM;
 	}
 
 	inline static void Initialise_implementation(std::vector<T> &data, AdditionalStats<T> *stats) {
-		BloomAdditionalStats<T> *nstats = (BloomAdditionalStats<T> *)stats;
-		std::fill(nstats->bit_array.begin(), nstats->bit_array.end(), 0);
+		BloomAdditionalStats<T, N, M> *nstats = (BloomAdditionalStats<T, N, M> *)stats;
+		std::fill(nstats->bit_array, nstats->bit_array + (N * M), 0);
 		for (T element : data) {
-			nstats->util.Insert(element, nstats->bit_array.data());
+			nstats->util.Insert(element, nstats->bit_array);
 		}
 	}
 
@@ -244,8 +240,8 @@ public:
 		switch (comparison_type) {
 		case ExpressionType::COMPARE_EQUAL:
 		case ExpressionType::COMPARE_NOT_DISTINCT_FROM: {
-			BloomAdditionalStats<T> *nstats = (BloomAdditionalStats<T> *)stats;
-			if (nstats->util.QueryUtil(constant, nstats->bit_array.data())) {
+			BloomAdditionalStats<T, N, M> *nstats = (BloomAdditionalStats<T, N, M> *)stats;
+			if (nstats->util.QueryUtil(constant, nstats->bit_array)) {
 				return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 			}
 
@@ -262,8 +258,8 @@ public:
 	}
 
 	inline static size_t Size_implementation(AdditionalStats<T> *stats) {
-		BloomAdditionalStats<T> *nstats = (BloomAdditionalStats<T> *)stats;
-		return sizeof(*nstats) + sizeof(uint64_t) * nstats->bit_array.capacity();
+		BloomAdditionalStats<T, N, M> *nstats = (BloomAdditionalStats<T, N, M> *)stats;
+		return sizeof(*nstats);
 	}
 	inline static void Serialise_implementation(AdditionalStats<T> *stats, Serializer &serializer) {
 	}

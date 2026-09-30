@@ -29,7 +29,6 @@ public:
 		this->Serialise = &Serialise_implementation;
 		this->Deserialise = &Deserialise_implementation;
 		this->Initialise(data, this);
-		this->type = ADDITIONAL_STATS_TYPE::ALWAYS_PRUNE;
 	}
 	inline static void Initialise_implementation(std::vector<T> &data, AdditionalStats<T> *stats) {
 	}

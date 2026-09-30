@@ -17,7 +17,8 @@
 
 namespace duckdb {
 
-enum class STATISTIC_TYPE : uint8_t {
+enum class STATISTIC_TYPE : int8_t {
+	ERROR = -1,
 	NONE = 0,
 	MIN_MAX = 1,
 	CLUSTER_SMALL = 2,
@@ -34,28 +35,42 @@ public:
 	static STATISTIC_TYPE default_type;
 	template <class T>
 	static inline AdditionalStats<T> *construct(std::vector<T> &data, STATISTIC_TYPE type) {
+		AdditionalStats<T> *res;
 		switch (type) {
+		case STATISTIC_TYPE::ERROR:
+			throw std::invalid_argument("Cannot initialise statistics of type -1");
 		case STATISTIC_TYPE::NONE:
-			return new EmptyAdditionalStats<T>(data);
+			res = new EmptyAdditionalStats<T>(data);
+			break;
 		case STATISTIC_TYPE::MIN_MAX:
-			return new ClusterAdditionalStats<T>(data, 1);
+			res = new ClusterAdditionalStats<T, 1>(data);
+			break;
 		case STATISTIC_TYPE::CLUSTER_SMALL:
-			return new ClusterAdditionalStats<T>(data, 10);
+			res = new ClusterAdditionalStats<T, 10>(data);
+			break;
 		case STATISTIC_TYPE::CLUSTER_MEDIUM:
-			return new ClusterAdditionalStats<T>(data, 50);
+			res = new ClusterAdditionalStats<T, 50>(data);
+			break;
 		case STATISTIC_TYPE::CLUSTER_LARGE:
-			return new ClusterAdditionalStats<T>(data, 200);
+			res = new ClusterAdditionalStats<T, 200>(data);
+			break;
 		case STATISTIC_TYPE::BLOOM_SMALL:
-			return new BloomAdditionalStats<T>(data, 1, 20, 1);
+			res = new BloomAdditionalStats<T, 20, 1>(data, 1);
+			break;
 		case STATISTIC_TYPE::BLOOM_MEDIUM:
-			return new BloomAdditionalStats<T>(data, 1, 100, 1);
+			res = new BloomAdditionalStats<T, 100, 1>(data, 1);
+			break;
 		case STATISTIC_TYPE::BLOOM_LARGE:
-			return new BloomAdditionalStats<T>(data, 2, 400, 1);
+			res = new BloomAdditionalStats<T, 400, 1>(data, 2);
+			break;
 		case STATISTIC_TYPE::DICTIONARY:
-			return new DictionaryAdditionalStats<T>(data, 2000);
+			res = new DictionaryAdditionalStats<T, 2000>(data);
+			break;
 		default:
 			return NULL;
 		}
+		res->type = type;
+		return res;
 	}
 };
 } // namespace duckdb

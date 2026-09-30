@@ -12,3 +12,4 @@ done
 
 python3 analyser_processor.py 1 7 1 output/final.csv "NONE" output/0.log "MIN_MAX" output/1.log "CLUSTER_SMALL" output/2.log "CLUSTER_MEDIUM" output/3.log "CLUSTER_LARGE" output/4.log "BLOOM_SMALL" output/5.log "BLOOM_MEDIUM" output/6.log "BLOOM_LARGE" output/7.log "DICTIONARY" output/8.log
 rm test.db
+python analyser_scatter_plotter.py output/final.csv final.png

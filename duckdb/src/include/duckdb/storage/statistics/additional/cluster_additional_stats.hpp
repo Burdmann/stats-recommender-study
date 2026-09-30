@@ -20,13 +20,12 @@ namespace duckdb {
 
 #define CLUSTER_MAX_STRING_MINMAX_SIZE 8
 
-template <class T>
+template <class T, unsigned int N>
 class ClusterAdditionalStats : public AdditionalStats<T> {
 private:
 	unsigned int cluster_count = 0;
-	std::vector<T> min_values;
-	std::vector<T> max_values;
-	uint max_clusters;
+	T min_values[N];
+	T max_values[N];
 	static bool ConstantExactRange(T min, T max, T constant) {
 		return Equals::Operation(constant, min) && Equals::Operation(constant, max);
 	}
@@ -38,8 +37,7 @@ public:
 	static inline const char *GetStaticName() {
 		return "cluster";
 	}
-	inline ClusterAdditionalStats(std::vector<T> &data, uint cluster_count) {
-		this->max_clusters = cluster_count;
+	inline ClusterAdditionalStats(std::vector<T> &data) {
 		this->name = GetStaticName();
 		this->Initialise = &Initialise_implementation;
 		this->Query = &Query_implementation;
@@ -48,11 +46,10 @@ public:
 		this->Serialise = &Serialise_implementation;
 		this->Deserialise = &Deserialise_implementation;
 		this->Initialise(data, this);
-		this->type = ADDITIONAL_STATS_TYPE::CLUSTER;
 	}
 
 	inline static void Initialise_implementation(std::vector<T> &data, AdditionalStats<T> *stats) {
-		ClusterAdditionalStats<T> *nstats = static_cast<ClusterAdditionalStats<T> *>(stats);
+		ClusterAdditionalStats<T, N> *nstats = static_cast<ClusterAdditionalStats<T, N> *>(stats);
 		nstats->cluster_count = 0;
 
 		int size = data.size();
@@ -73,7 +70,7 @@ public:
 		std::vector<int> idxs;
 		std::sort(gaps.begin(), gaps.end(), std::greater<std::pair<T, int>>());
 
-		for (int i = 0; i < std::min((unsigned long)gaps.size(), (unsigned long)(nstats->max_clusters - 1)); i++) {
+		for (int i = 0; i < std::min((unsigned long)gaps.size(), (unsigned long)(N - 1)); i++) {
 			if (gaps[i].first == zero)
 				break;
 			idxs.push_back(gaps[i].second);
@@ -83,20 +80,20 @@ public:
 		std::sort(idxs.begin(), idxs.end());
 		T start = data[0];
 		for (int idx : idxs) {
-			nstats->min_values.push_back(start);
-			nstats->max_values.push_back(data[idx]);
+			nstats->min_values[nstats->cluster_count] = start;
+			nstats->max_values[nstats->cluster_count] = data[idx];
 			start = data[idx + 1];
 			nstats->cluster_count++;
 		}
 
-		nstats->min_values.push_back(start);
-		nstats->max_values.push_back(data.back());
+		nstats->min_values[nstats->cluster_count] = start;
+		nstats->max_values[nstats->cluster_count] = data.back();
 		nstats->cluster_count++;
 	}
 
-	inline static idx_t FindLastIndexBeforePoint_Binary(std::vector<T> &min_values, const T &constant) {
+	inline static idx_t FindLastIndexBeforePoint_Binary(T *min_values, unsigned int len, const T &constant) {
 		idx_t lo = 0;
-		idx_t hi = min_values.size() - 1;
+		idx_t hi = len - 1;
 		idx_t mid;
 		while (lo < hi) {
 			mid = (lo + hi + 1) / 2;
@@ -114,21 +111,21 @@ public:
 		return mid;
 	}
 
-	inline static idx_t FindLastIndexBeforePoint_Linear(std::vector<T> &min_values, const T &constant) {
-		for (int i = 0; i < min_values.size(); i++) {
+	inline static idx_t FindLastIndexBeforePoint_Linear(T *min_values, unsigned int len, const T &constant) {
+		for (int i = 0; i < len; i++) {
 			if (min_values[i] > constant) {
 				return i - 1;
 			}
 		}
-		return min_values.size() - 1;
+		return len - 1;
 	}
 
-	inline static idx_t FindLastIndexBeforePoint(std::vector<T> &min_values, const T &constant) {
-		return FindLastIndexBeforePoint_Linear(min_values, constant);
+	inline static idx_t FindLastIndexBeforePoint(T *min_values, unsigned int len, const T &constant) {
+		return FindLastIndexBeforePoint_Linear(min_values, len, constant);
 	}
 
-	inline static FilterPropagateResult Query_Equal(ClusterAdditionalStats<T> *nstats, const T &constant) {
-		int idx = FindLastIndexBeforePoint(nstats->min_values, constant);
+	inline static FilterPropagateResult Query_Equal(ClusterAdditionalStats<T, N> *nstats, const T &constant) {
+		int idx = FindLastIndexBeforePoint(nstats->min_values, nstats->cluster_count, constant);
 		if (idx == -1) {
 			return FilterPropagateResult::FILTER_ALWAYS_FALSE;
 		} else if (nstats->max_values[idx] >= constant) {
@@ -140,7 +137,7 @@ public:
 
 	inline static FilterPropagateResult Query_implementation(AdditionalStats<T> *stats, ExpressionType &comparison_type,
 	                                                         const T &constant) {
-		ClusterAdditionalStats<T> *nstats = (ClusterAdditionalStats<T> *)stats;
+		ClusterAdditionalStats<T, N> *nstats = (ClusterAdditionalStats<T, N> *)stats;
 		// printf("nstats->cluster_count: %d\n", nstats->cluster_count);
 		if (nstats->cluster_count == 0)
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
@@ -168,10 +165,10 @@ public:
 	}
 	inline static FilterPropagateResult QueryRange_implementation(AdditionalStats<T> *stats, const T &start,
 	                                                              const T &end) {
-		ClusterAdditionalStats<T> *nstats = (ClusterAdditionalStats<T> *)stats;
+		ClusterAdditionalStats<T, N> *nstats = (ClusterAdditionalStats<T, N> *)stats;
 		if (nstats->cluster_count == 0)
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
-		int idx = FindLastIndexBeforePoint(nstats->min_values, start);
+		int idx = FindLastIndexBeforePoint(nstats->min_values, nstats->cluster_count, start);
 		if (idx == -1) {
 			if (nstats->min_values[0] > end) {
 				return FilterPropagateResult::FILTER_ALWAYS_FALSE;
@@ -186,8 +183,8 @@ public:
 		}
 	}
 	inline static size_t Size_implementation(AdditionalStats<T> *stats) {
-		ClusterAdditionalStats<T> *nstats = (ClusterAdditionalStats<T> *)stats;
-		return 2 * sizeof(T) * nstats->cluster_count + sizeof(*nstats);
+		ClusterAdditionalStats<T, N> *nstats = (ClusterAdditionalStats<T, N> *)stats;
+		return sizeof(*nstats);
 	}
 	inline static void Serialise_implementation(AdditionalStats<T> *stats, Serializer &serializer) {
 	}
@@ -200,13 +197,12 @@ public:
 	duckdb::data_t data[CLUSTER_MAX_STRING_MINMAX_SIZE];
 };
 
-template <>
-class ClusterAdditionalStats<std::string> : public AdditionalStats<std::string> {
+template <unsigned int N>
+class ClusterAdditionalStats<std::string, N> : public AdditionalStats<std::string> {
 private:
 	unsigned int cluster_count = 0;
 	std::vector<data_array> min_values;
 	std::vector<data_array> max_values;
-	uint max_clusters;
 	static bool ConstantExactRange(std::string min, std::string max, std::string constant) {
 		return Equals::Operation(constant, min) && Equals::Operation(constant, max);
 	}
@@ -246,8 +242,7 @@ public:
 	static inline const char *GetStaticName() {
 		return "cluster";
 	}
-	inline ClusterAdditionalStats(std::vector<std::string> &data, uint max_clusters) {
-		this->max_clusters = max_clusters;
+	inline ClusterAdditionalStats(std::vector<std::string> &data) {
 		this->name = GetStaticName();
 		this->Initialise = &Initialise_implementation;
 		this->Query = &Query_implementation;
@@ -259,7 +254,7 @@ public:
 	}
 
 	inline static void Initialise_implementation(std::vector<std::string> &data, AdditionalStats<std::string> *stats) {
-		ClusterAdditionalStats<std::string> *nstats = (ClusterAdditionalStats<std::string> *)stats;
+		ClusterAdditionalStats<std::string, N> *nstats = (ClusterAdditionalStats<std::string, N> *)stats;
 		nstats->cluster_count = 0;
 
 		int size = data.size();
@@ -280,7 +275,7 @@ public:
 		std::vector<int> idxs;
 		std::sort(gaps.begin(), gaps.end(), std::greater<std::pair<unsigned long long, int>>());
 
-		for (int i = 0; i < std::min((unsigned long)gaps.size(), (unsigned long)(nstats->max_clusters - 1)); i++) {
+		for (int i = 0; i < std::min((unsigned long)gaps.size(), (unsigned long)(N - 1)); i++) {
 			if (gaps[i].first == 0)
 				break;
 			idxs.push_back(gaps[i].second);
@@ -292,16 +287,16 @@ public:
 		data_array next;
 		ConstructValue(const_data_ptr_cast(data[0].data()), data[0].size(), start.data);
 		for (int idx : idxs) {
-			nstats->min_values.push_back(start);
+			nstats->min_values[nstats->cluster_count] = start;
 			ConstructValue(const_data_ptr_cast(data[idx].data()), data[idx].size(), next.data);
-			nstats->max_values.push_back(next);
+			nstats->max_values[nstats->cluster_count] = next;
 			ConstructValue(const_data_ptr_cast(data[idx + 1].data()), data[idx + 1].size(), start.data);
 			nstats->cluster_count++;
 		}
 
-		nstats->min_values.push_back(start);
+		nstats->min_values[nstats->cluster_count] = start;
 		ConstructValue(const_data_ptr_cast(data.back().data()), data.back().size(), next.data);
-		nstats->max_values.push_back(next);
+		nstats->max_values[nstats->cluster_count] = next;
 		nstats->cluster_count++;
 	}
 
@@ -338,7 +333,7 @@ public:
 	inline static FilterPropagateResult Query_implementation(AdditionalStats<std::string> *stats,
 	                                                         ExpressionType &comparison_type,
 	                                                         const std::string &constant) {
-		ClusterAdditionalStats<std::string> *nstats = (ClusterAdditionalStats<std::string> *)stats;
+		ClusterAdditionalStats<std::string, N> *nstats = (ClusterAdditionalStats<std::string, N> *)stats;
 		// printf("nstats->cluster_count: %d\n", nstats->cluster_count);
 		if (nstats->cluster_count == 0)
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
@@ -368,7 +363,7 @@ public:
 
 	inline static FilterPropagateResult QueryRange_implementation(AdditionalStats<std::string> *stats,
 	                                                              const std::string &start, const std::string &end) {
-		ClusterAdditionalStats<std::string> *nstats = (ClusterAdditionalStats<std::string> *)stats;
+		ClusterAdditionalStats<std::string, N> *nstats = (ClusterAdditionalStats<std::string, N> *)stats;
 		if (nstats->cluster_count == 0)
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 		// TODO: implement
@@ -376,8 +371,8 @@ public:
 	}
 
 	inline static size_t Size_implementation(AdditionalStats<std::string> *stats) {
-		ClusterAdditionalStats<std::string> *nstats = (ClusterAdditionalStats<std::string> *)stats;
-		return 2 * (sizeof(std::string) + CLUSTER_MAX_STRING_MINMAX_SIZE) * nstats->cluster_count + sizeof(*nstats);
+		ClusterAdditionalStats<std::string, N> *nstats = (ClusterAdditionalStats<std::string, N> *)stats;
+		return sizeof(*nstats);
 	}
 	inline static void Serialise_implementation(AdditionalStats<std::string> *stats, Serializer &serializer) {
 	}

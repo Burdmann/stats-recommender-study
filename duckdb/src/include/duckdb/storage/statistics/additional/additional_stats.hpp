@@ -12,27 +12,19 @@
 #include <memory>
 // #include "duckdb/common/serializer/serializer.hpp"
 // #include "duckdb/common/serializer/deserializer.hpp"
-
 namespace duckdb {
+enum class STATISTIC_TYPE : int8_t;
+
 template <class T>
 class EmptyAdditionalStats;
-template <class T>
+template <class T, unsigned int N>
 class ClusterAdditionalStats;
-template <class T>
+template <class T, unsigned int N, unsigned int M>
 class BloomAdditionalStats;
 template <class T>
 class AlwaysPruneAdditionalStats;
-template <class T>
+template <class T, unsigned int N>
 class DictionaryAdditionalStats;
-
-enum class ADDITIONAL_STATS_TYPE : uint8_t {
-	ERROR = 0,
-	EMPTY = 1,
-	CLUSTER = 2,
-	BLOOM = 3,
-	DICTIONARY = 4,
-	ALWAYS_PRUNE = 5,
-};
 
 template <class T>
 class AdditionalStats {
@@ -47,32 +39,11 @@ public:
 		return "error";
 	}
 	const char *name;
-	ADDITIONAL_STATS_TYPE type;
+	STATISTIC_TYPE type;
 
 	AdditionalStats() {
 		this->name = GetStaticName();
-		type = ADDITIONAL_STATS_TYPE::ERROR;
 	}
-	// init
-	// void Initialise(std::vector<T> &data) {
-
-	// }
-	// query
-	// FilterPropagateResult Query() {
-
-	// }
-	// size
-	// size_t Size() {
-
-	// }
-	// serialise
-	// void Serialise() {
-
-	// }
-	// deserialise
-	// void Deserialise() {
-
-	// }
 };
 
 } // namespace duckdb

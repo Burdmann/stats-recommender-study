@@ -21,19 +21,17 @@
 
 namespace duckdb {
 
-template <class T>
+template <class T, unsigned int N>
 class DictionaryAdditionalStats : public AdditionalStats<T> {
 private:
 	bool valid = true;
 	std::unordered_set<T> dictionary;
-	uint max_items;
 
 public:
 	static inline const char *GetStaticName() {
 		return "dictionary";
 	}
-	inline DictionaryAdditionalStats(std::vector<T> &data, uint max_items) {
-		this->max_items = max_items;
+	inline DictionaryAdditionalStats(std::vector<T> &data) {
 		this->name = GetStaticName();
 		this->Initialise = &Initialise_implementation;
 		this->Query = &Query_implementation;
@@ -42,16 +40,15 @@ public:
 		this->Serialise = &Serialise_implementation;
 		this->Deserialise = &Deserialise_implementation;
 		this->Initialise(data, this);
-		this->type = ADDITIONAL_STATS_TYPE::DICTIONARY;
 	}
 	inline static void Initialise_implementation(std::vector<T> &data, AdditionalStats<T> *stats) {
-		DictionaryAdditionalStats<T> *nstats = (DictionaryAdditionalStats<T> *)stats;
+		DictionaryAdditionalStats<T, N> *nstats = (DictionaryAdditionalStats<T, N> *)stats;
 		for (T item : data) {
 			nstats->dictionary.insert(item);
-			if (nstats->dictionary.size() > nstats->max_items)
+			if (nstats->dictionary.size() > N)
 				break;
 		}
-		if (nstats->dictionary.size() > nstats->max_items) {
+		if (nstats->dictionary.size() > N) {
 			nstats->valid = false;
 			nstats->dictionary.clear();
 			nstats->dictionary.rehash(1);
@@ -68,7 +65,7 @@ public:
 	}
 	inline static FilterPropagateResult Query_implementation(AdditionalStats<T> *stats, ExpressionType &comparison_type,
 	                                                         const T &constant) {
-		DictionaryAdditionalStats<T> *nstats = (DictionaryAdditionalStats<T> *)stats;
+		DictionaryAdditionalStats<T, N> *nstats = (DictionaryAdditionalStats<T, N> *)stats;
 
 		switch (comparison_type) {
 		case ExpressionType::COMPARE_EQUAL:
@@ -86,12 +83,12 @@ public:
 		return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 	}
 	inline static size_t Size_implementation(AdditionalStats<T> *stats) {
-		DictionaryAdditionalStats<T> *nstats = (DictionaryAdditionalStats<T> *)stats;
+		DictionaryAdditionalStats<T, N> *nstats = (DictionaryAdditionalStats<T, N> *)stats;
 		return sizeof(*nstats) + nstats->dictionary.bucket_count() * (sizeof(void *)) +
 		       nstats->dictionary.size() * sizeof(T);
 	}
 	inline static void Serialise_implementation(AdditionalStats<T> *stats, Serializer &serializer) {
-		DictionaryAdditionalStats<T> *nstats = (DictionaryAdditionalStats<T> *)stats;
+		DictionaryAdditionalStats<T, N> *nstats = (DictionaryAdditionalStats<T, N> *)stats;
 		serializer.WriteProperty(1001, "dictionary:valid", nstats->valid);
 		serializer.WriteProperty(1002, "dictionary:size", nstats->dictionary.size());
 		for (T item : nstats->dictionary) {
@@ -99,7 +96,7 @@ public:
 		}
 	}
 	inline static void Deserialise_implementation(AdditionalStats<T> *stats, Deserializer &deserializer) {
-		DictionaryAdditionalStats<T> *nstats = (DictionaryAdditionalStats<T> *)stats;
+		DictionaryAdditionalStats<T, N> *nstats = (DictionaryAdditionalStats<T, N> *)stats;
 		nstats->valid = deserializer.template ReadProperty<bool>(1001, "dictionary:valid");
 		auto size = deserializer.template ReadProperty<unsigned int>(1002, "dictionary:size");
 		for (int i = 0; i < size; i++) {

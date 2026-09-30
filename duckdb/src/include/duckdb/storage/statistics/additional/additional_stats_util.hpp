@@ -14,46 +14,23 @@
 #include "duckdb/storage/statistics/additional/dictionary_additional_stats.hpp"
 #include "duckdb/common/serializer/serializer.hpp"
 #include "duckdb/common/serializer/deserializer.hpp"
+#include "duckdb/storage/statistics/additional/stats_set.hpp"
 
 namespace duckdb {
 class AdditionalStatsUtil {
 public:
 	template <class T>
 	static inline void SerialiseStats(Serializer &serializer, AdditionalStats<T> *astats) {
-		serializer.WriteProperty(1000, "additional_stats_type", (uint8_t)((AdditionalStats<uint32_t> *)astats)->type);
+		serializer.WriteProperty(1000, "additional_stats_type", (int8_t)((AdditionalStats<uint32_t> *)astats)->type);
 		astats->Serialise(astats, serializer);
 	}
 	template <class T>
 	static inline AdditionalStats<T> *DeserialiseStats(Deserializer &deserializer) {
-		auto additional_stats_type =
-		    (ADDITIONAL_STATS_TYPE)deserializer.ReadProperty<uint8_t>(1000, "additional_stats_type");
+		auto additional_stats_type = (STATISTIC_TYPE)deserializer.ReadProperty<int8_t>(1000, "additional_stats_type");
 		std::vector<T> empty;
 		AdditionalStats<T> *astats;
-		switch (additional_stats_type) {
-		case ADDITIONAL_STATS_TYPE::ERROR:
-			// throw exception
-			break;
-		case ADDITIONAL_STATS_TYPE::EMPTY:
-			astats = new EmptyAdditionalStats<T>(empty);
-			astats->Deserialise(astats, deserializer);
-			break;
-		case ADDITIONAL_STATS_TYPE::CLUSTER:
-			astats = new ClusterAdditionalStats<T>(empty);
-			astats->Deserialise(astats, deserializer);
-			break;
-		case ADDITIONAL_STATS_TYPE::BLOOM:
-			astats = new BloomAdditionalStats<T>(empty);
-			astats->Deserialise(astats, deserializer);
-			break;
-		case ADDITIONAL_STATS_TYPE::DICTIONARY:
-			astats = new DictionaryAdditionalStats<T>(empty);
-			astats->Deserialise(astats, deserializer);
-			break;
-		case ADDITIONAL_STATS_TYPE::ALWAYS_PRUNE:
-			astats = new AlwaysPruneAdditionalStats<T>(empty);
-			astats->Deserialise(astats, deserializer);
-			break;
-		}
+		astats = StatisticsSet::construct(empty, additional_stats_type);
+		astats->Deserialise(astats, deserializer);
 		return astats;
 	}
 };
