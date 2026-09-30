@@ -79,6 +79,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <fstream>
 #include "duckdb_shell_wrapper.h"
 #include "duckdb/common/box_renderer.hpp"
 #include "duckdb/parser/qualified_name.hpp"
@@ -4803,7 +4804,8 @@ static const char zOptions[] =
     "   -unredacted          allow printing unredacted secrets\n"
     "   -unsigned            allow loading of unsigned extensions\n"
     "   -version             show DuckDB version\n"
-    "	-statistic			 select which statistic to use\n";
+    "	-statistic			 select which statistic to use\n"
+    "	-statistic-file		 file containing the mapping from partition to statistic type";
 static void usage(int showDetail) {
 	utf8_printf(stderr,
 	            "Usage: %s [OPTIONS] FILENAME [SQL]\n"
@@ -4861,6 +4863,81 @@ static char *cmdline_option_value(int argc, char **argv, int i) {
 		exit(1);
 	}
 	return argv[i];
+}
+
+static bool LoadStatisticMapping(const std::string &filename) {
+	std::ifstream input(filename);
+	if (!input.is_open()) {
+		utf8_printf(stderr, "Error: cannot open statistic mapping file '%s'\n", filename.c_str());
+		return false;
+	}
+
+	std::string line;
+	if (!std::getline(input, line)) {
+		utf8_printf(stderr, "Error: statistic mapping file '%s' is empty\n", filename.c_str());
+		return false;
+	}
+	if (!line.empty() && line.back() == '\r') {
+		line.pop_back();
+	}
+	if (line != "table_name,rowgroup,col,statistic") {
+		utf8_printf(stderr, "Error: invalid header in statistic mapping file '%s'\n", filename.c_str());
+		return false;
+	}
+
+	decltype(duckdb::StatisticsSet::mapping) mapping;
+	idx_t line_number = 1;
+	while (std::getline(input, line)) {
+		line_number++;
+		if (!line.empty() && line.back() == '\r') {
+			line.pop_back();
+		}
+		std::string fields[4];
+		size_t start = 0;
+		bool valid = true;
+		for (idx_t i = 0; i < 4; i++) {
+			auto separator = line.find(',', start);
+			if ((i < 3 && separator == std::string::npos) || (i == 3 && separator != std::string::npos)) {
+				valid = false;
+				break;
+			}
+			fields[i] = line.substr(start, separator == std::string::npos ? separator : separator - start);
+			start = separator == std::string::npos ? line.size() : separator + 1;
+		}
+		if (!valid || fields[0].empty()) {
+			utf8_printf(stderr, "Error: malformed statistic mapping at %s:%llu\n", filename.c_str(),
+			            static_cast<unsigned long long>(line_number));
+			return false;
+		}
+
+		int rowgroup;
+		int column;
+		int statistic;
+		try {
+			size_t parsed = 0;
+			rowgroup = std::stoi(fields[1], &parsed);
+			if (parsed != fields[1].size()) {
+				throw std::invalid_argument("invalid rowgroup");
+			}
+			column = std::stoi(fields[2], &parsed);
+			if (parsed != fields[2].size()) {
+				throw std::invalid_argument("invalid column");
+			}
+			statistic = std::stoi(fields[3], &parsed);
+			if (parsed != fields[3].size() || statistic < 0 || statistic > 8) {
+				throw std::invalid_argument("invalid statistic");
+			}
+		} catch (const std::exception &) {
+			utf8_printf(stderr, "Error: invalid numeric value in statistic mapping at %s:%llu\n", filename.c_str(),
+			            static_cast<unsigned long long>(line_number));
+			return false;
+		}
+		mapping[std::make_tuple(fields[0], rowgroup, column)] = static_cast<duckdb::STATISTIC_TYPE>(statistic);
+		printf("mapping[(%s,%u,%u)]=%u\n", fields[0].c_str(), rowgroup, column, statistic);
+	}
+
+	duckdb::StatisticsSet::mapping.swap(mapping);
+	return true;
 }
 
 #ifndef SQLITE_SHELL_IS_UTF8
@@ -5019,6 +5096,8 @@ int SQLITE_CDECL wmain(int argc, wchar_t **wargv) {
 				data.openFlags |= DUCKDB_LATEST_STORAGE_VERSION;
 			}
 		} else if (strcmp(z, "-statistic") == 0) {
+			(void)cmdline_option_value(argc, argv, ++i);
+		} else if (strcmp(z, "-statistic-file") == 0) {
 			(void)cmdline_option_value(argc, argv, ++i);
 		} else if (strcmp(z, "-bail") == 0) {
 			bail_on_error = true;
@@ -5192,6 +5271,13 @@ int SQLITE_CDECL wmain(int argc, wchar_t **wargv) {
 		} else if (strcmp(z, "-statistic") == 0) {
 			data.statistic = atoi(cmdline_option_value(argc, argv, ++i));
 			duckdb::StatisticsSet::default_type = (duckdb::STATISTIC_TYPE)data.statistic;
+		} else if (strcmp(z, "-statistic-file") == 0) {
+			auto filename = std::string(cmdline_option_value(argc, argv, ++i));
+			if (!LoadStatisticMapping(filename)) {
+				free(azCmd);
+				return 1;
+			}
+
 		} else {
 			utf8_printf(stderr, "%s: Error: unknown option: %s\n", program_name, z);
 			raw_printf(stderr, "Use -help for a list of options.\n");

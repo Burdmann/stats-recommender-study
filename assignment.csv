@@ -1,0 +1,7 @@
+table_name,rowgroup,col,statistic
+sensor_records,0,0,1
+sensor_records,0,1,2
+sensor_records,1,0,3
+sensor_records,1,1,4
+sensor_records,2,0,5
+sensor_records,2,1,6

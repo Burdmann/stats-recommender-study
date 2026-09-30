@@ -305,11 +305,11 @@ public:
 		//     stderr,
 		//     "%lx,%lu,%lu,START_INITIALISE_ADDITIONAL_STATS,\"{\"\"stats\"\":\"\"%p\"\",\"\"type\"\":\"\"%s\"\"}\"\n",
 		//     Util::session_id, Util::command_count, start_time, &stats, ADDITIONAL_STATS<T>::GetStaticName());
-		stats.additional_stats = StatisticsSet::construct<T>(temp_storage, StatisticsSet::default_type);
+		auto table_identifier = info.GetTableName();
+		stats.additional_stats = StatisticsSet::construct<T>(temp_storage, table_identifier, index, column);
 
 		AdditionalStats<T> *astats = ((AdditionalStats<T> *)stats.additional_stats);
 		temp_storage.clear();
-		auto table_identifier = info.GetTableName();
 		fprintf(stderr,
 		        "%lx,%lu,%lu,END_INITIALISE_ADDITIONAL_STATS,\"{\"\"table_id\"\":\"\"%s\"\",\"\"rowgroup\"\":%lu,"
 		        "\"\"column\"\":%d,\"\"type\"\":"
