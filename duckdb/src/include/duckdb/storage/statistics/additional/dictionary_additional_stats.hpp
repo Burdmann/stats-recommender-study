@@ -66,13 +66,32 @@ public:
 	inline static FilterPropagateResult Query_implementation(AdditionalStats<T> *stats, ExpressionType &comparison_type,
 	                                                         const T &constant) {
 		DictionaryAdditionalStats<T, N> *nstats = (DictionaryAdditionalStats<T, N> *)stats;
-
+		if (!nstats->valid)
+			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 		switch (comparison_type) {
 		case ExpressionType::COMPARE_EQUAL:
 		case ExpressionType::COMPARE_NOT_DISTINCT_FROM:
-			// std::cout << "QUERIED FOR " << (int64_t)constant << std::endl;
-			if (!nstats->valid || nstats->dictionary.count(constant) > 0)
-				return FilterPropagateResult::NO_PRUNING_POSSIBLE;
+			for (T elem : nstats->dictionary)
+				if (Equals::Operation(elem, constant))
+					return FilterPropagateResult::NO_PRUNING_POSSIBLE;
+			return FilterPropagateResult::FILTER_ALWAYS_FALSE;
+		case ExpressionType::COMPARE_NOTEQUAL:
+		case ExpressionType::COMPARE_DISTINCT_FROM:
+			for (T elem : nstats->dictionary)
+				if (NotEquals::Operation(elem, constant))
+					return FilterPropagateResult::NO_PRUNING_POSSIBLE;
+			return FilterPropagateResult::FILTER_ALWAYS_FALSE;
+		case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
+		case ExpressionType::COMPARE_GREATERTHAN:
+			for (T elem : nstats->dictionary)
+				if (GreaterThanEquals::Operation(elem, constant))
+					return FilterPropagateResult::NO_PRUNING_POSSIBLE;
+			return FilterPropagateResult::FILTER_ALWAYS_FALSE;
+		case ExpressionType::COMPARE_LESSTHAN:
+		case ExpressionType::COMPARE_LESSTHANOREQUALTO:
+			for (T elem : nstats->dictionary)
+				if (LessThanEquals::Operation(elem, constant))
+					return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 			return FilterPropagateResult::FILTER_ALWAYS_FALSE;
 		default:
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
@@ -80,7 +99,13 @@ public:
 	}
 	inline static FilterPropagateResult QueryRange_implementation(AdditionalStats<T> *stats, const T &start,
 	                                                              const T &end) {
-		return FilterPropagateResult::NO_PRUNING_POSSIBLE;
+		DictionaryAdditionalStats<T, N> *nstats = (DictionaryAdditionalStats<T, N> *)stats;
+		if (!nstats->valid)
+			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
+		for (T elem : nstats->dictionary)
+			if (GreaterThanEquals::Operation(elem, start) && LessThanEquals::Operation(elem, end))
+				return FilterPropagateResult::NO_PRUNING_POSSIBLE;
+		return FilterPropagateResult::FILTER_ALWAYS_FALSE;
 	}
 	inline static size_t Size_implementation(AdditionalStats<T> *stats) {
 		DictionaryAdditionalStats<T, N> *nstats = (DictionaryAdditionalStats<T, N> *)stats;

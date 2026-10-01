@@ -430,13 +430,10 @@ FilterPropagateResult RowGroup::CheckRowIdFilter(const TableFilter &filter, idx_
 }
 
 bool RowGroup::CheckZonemap(ScanFilterInfo &filters) {
-	std::vector<bool> contains_lessthan(GetColumnCount());
-	std::vector<bool> contains_greaterthan(GetColumnCount());
-	std::vector<Value> lower_value(GetColumnCount());
-	std::vector<Value> upper_value(GetColumnCount());
 	auto &filter_list = filters.GetFilterList();
 	// new row group - label all filters as up for grabs again
 	filters.CheckAllFilters();
+	bool between_case_skip = false;
 	for (idx_t i = 0; i < filter_list.size(); i++) {
 		auto &entry = filter_list[i];
 		auto &filter = entry.filter;
@@ -461,39 +458,74 @@ bool RowGroup::CheckZonemap(ScanFilterInfo &filters) {
 			// label the filter as always true so we don't need to check it anymore
 			filters.SetFilterAlwaysTrue(i);
 		}
-		// bool between_case_skip = false;
-		// // printf("type: %d\n", (int)filter.filter_type);
-		// if (filter.filter_type == TableFilterType::CONJUNCTION_AND) {
-		// 	auto &and_filter = filter.Cast<ConjunctionAndFilter>();
-		// 	for (auto &child_filter : and_filter.child_filters) {
-		// 		if (child_filter->filter_type == TableFilterType::CONSTANT_COMPARISON) {
-		// 			if (ConstantFilter *comp = dynamic_cast<ConstantFilter *>(child_filter.get())) {
-		// 				if (comp->comparison_type == ExpressionType::COMPARE_GREATERTHANOREQUALTO) {
-		// 					contains_greaterthan[base_column_index] = true;
-		// 					lower_value[base_column_index] = comp->constant;
-		// 				}
-		// 				if (comp->comparison_type == ExpressionType::COMPARE_LESSTHANOREQUALTO) {
-		// 					contains_lessthan[base_column_index] = true;
-		// 					upper_value[base_column_index] = comp->constant;
-		// 				}
-		// 				if (contains_greaterthan[base_column_index] && contains_lessthan[base_column_index]) {
-		// 					// check if the filter is between 2 clusters(if we are using cluster stats)
-		// 					between_case_skip =
-		// 					    ColumnData::RangeQueryAdditionalStats(
-		// 					        GetColumn(base_column_index).stats->statistics,
-		// 					        // state.column_scans[column_idx].current->stats.statistics,
-		// 					        comp->constant.type().InternalType(), lower_value[base_column_index],
-		// 					        upper_value[base_column_index]) == FilterPropagateResult::FILTER_ALWAYS_FALSE;
-		// 					// printf("YES %d\n", (int)between_case_skip);
-		// 				}
-		// 			}
-		// 		}
-		// 	}
-		// }
-		// if (between_case_skip) {
-		// 	// printf("skipped between\n");
-		// 	return false;
-		// }
+		bool has_lower_bound = false;
+		bool has_upper_bound = false;
+		Value lower_value;
+		Value upper_value;
+		vector<const TableFilter *> pending_filters;
+		pending_filters.push_back(&filter);
+		while (!pending_filters.empty()) {
+			auto candidate = pending_filters.back();
+			pending_filters.pop_back();
+			if (candidate->filter_type == TableFilterType::CONJUNCTION_AND) {
+				for (auto &child_filter : candidate->Cast<ConjunctionAndFilter>().child_filters) {
+					pending_filters.push_back(child_filter.get());
+				}
+				continue;
+			}
+			if (candidate->filter_type != TableFilterType::CONSTANT_COMPARISON) {
+				continue;
+			}
+			auto &comparison = candidate->Cast<ConstantFilter>();
+			switch (comparison.comparison_type) {
+			case ExpressionType::COMPARE_GREATERTHAN:
+			case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
+				has_lower_bound = true;
+				lower_value = comparison.constant;
+				break;
+			case ExpressionType::COMPARE_LESSTHAN:
+			case ExpressionType::COMPARE_LESSTHANOREQUALTO:
+				has_upper_bound = true;
+				upper_value = comparison.constant;
+				break;
+			default:
+				break;
+			}
+		}
+
+		if (has_lower_bound && has_upper_bound) {
+			auto &statistics = GetColumn(base_column_index).stats->statistics;
+			auto range_type = statistics.GetType().InternalType();
+			if (lower_value.type().id() == statistics.GetType().id() &&
+			    upper_value.type().id() == statistics.GetType().id()) {
+				switch (range_type) {
+				case PhysicalType::BOOL:
+				case PhysicalType::INT8:
+				case PhysicalType::INT16:
+				case PhysicalType::INT32:
+				case PhysicalType::INT64:
+				case PhysicalType::INT128:
+				case PhysicalType::UINT8:
+				case PhysicalType::UINT16:
+				case PhysicalType::UINT32:
+				case PhysicalType::UINT64:
+				case PhysicalType::UINT128:
+				case PhysicalType::FLOAT:
+				case PhysicalType::DOUBLE:
+				case PhysicalType::VARCHAR:
+					between_case_skip =
+					    ColumnData::RangeQueryAdditionalStats(statistics, range_type, lower_value, upper_value) ==
+					    FilterPropagateResult::FILTER_ALWAYS_FALSE;
+					break;
+				default:
+					break;
+				}
+			}
+		}
+	}
+	if (between_case_skip) {
+		// printf("skipped between\n");
+		return false;
 	}
 	ConstantFilter::scanned_partitions.insert(GetColumn(0).stats->statistics.id);
 	return true;

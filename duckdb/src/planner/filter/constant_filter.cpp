@@ -42,8 +42,14 @@ bool ConstantFilter::Compare(const Value &value) const {
 
 FilterPropagateResult ConstantFilter::CheckStatistics(BaseStatistics &stats) const {
 	if (!stats.CanHaveNoNull()) {
-		// no non-null values are possible: always false
-		return FilterPropagateResult::FILTER_ALWAYS_FALSE;
+		if (comparison_type == ExpressionType::COMPARE_DISTINCT_FROM) {
+			return FilterPropagateResult::FILTER_ALWAYS_TRUE;
+		}
+		return FilterPropagateResult::FILTER_FALSE_OR_NULL;
+	}
+	if (comparison_type == ExpressionType::COMPARE_DISTINCT_FROM && stats.CanHaveNull()) {
+		// Cluster statistics describe non-NULL values and cannot rule out NULL matches.
+		return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 	}
 	D_ASSERT(constant.type().id() == stats.GetType().id());
 	switch (constant.type().InternalType()) {
@@ -64,7 +70,11 @@ FilterPropagateResult ConstantFilter::CheckStatistics(BaseStatistics &stats) con
 	default:
 		return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 	}
-	return ColumnData::QueryAdditionalStats(stats, comparison_type, constant.type().InternalType(), &constant);
+	auto result = ColumnData::QueryAdditionalStats(stats, comparison_type, constant.type().InternalType(), &constant);
+	if (result == FilterPropagateResult::FILTER_ALWAYS_FALSE && stats.CanHaveNull()) {
+		return FilterPropagateResult::FILTER_FALSE_OR_NULL;
+	}
+	return result;
 }
 
 string ConstantFilter::ToString(const string &column_name) const {
