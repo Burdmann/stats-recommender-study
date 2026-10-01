@@ -97,3 +97,4 @@ out_tpcds.txt
 out_tpch.txt
 experiments_results/*
 *.log
+test.db
