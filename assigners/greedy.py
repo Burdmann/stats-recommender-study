@@ -19,7 +19,7 @@ for i,line in enumerate(IN_FILE):
     table_name,rowgroup,col,statistic,statistic_alias,size,pruning_power = line.split(",")
     rowgroup,col,statistic,size = map(int,[rowgroup,col,statistic,size])
     pruning_power = float(pruning_power)
-    pq.append((-pruning_power,pruning_power,table_name,rowgroup,col,statistic,size))
+    pq.append((-pruning_power/size,pruning_power,table_name,rowgroup,col,statistic,size))
 
 IN_FILE.close()
 
@@ -29,8 +29,9 @@ while pq:
     val,pruning_power,table_name,rowgroup,col,statistic,size = heapq.heappop(pq)
     if size > budget or pruning_power < current_pruning_power[(table_name,rowgroup,col)]:
         continue
-    if val < current_pruning_power[(table_name,rowgroup,col)]-pruning_power:
-        heapq.heappush(pq,(current_pruning_power[(table_name,rowgroup,col)]-pruning_power,pruning_power,table_name,rowgroup,col,statistic,size))
+    new_val = -(pruning_power-current_pruning_power[(table_name,rowgroup,col)])/(size-current_size[(table_name,rowgroup,col)])
+    if val != new_val:
+        heapq.heappush(pq,(new_val,pruning_power,table_name,rowgroup,col,statistic,size))
         continue
     budget -= size-current_size[(table_name,rowgroup,col)]
     mapping[(table_name,rowgroup,col)] = statistic
