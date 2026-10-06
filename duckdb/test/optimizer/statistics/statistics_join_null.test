@@ -16,7 +16,7 @@ PRAGMA explain_output = OPTIMIZED_ONLY;
 query II
 EXPLAIN SELECT i1.i FROM integers i1 JOIN integers2 i2 ON i1.i=i2.i ORDER BY 1;
 ----
-logical_opt	<REGEX>:.*EMPTY_RESULT.*
+logical_opt	<!REGEX>:.*EMPTY_RESULT.*
 
 # join is guaranteed to match... except there are null values!
 # we CANNOT convert to a cross product

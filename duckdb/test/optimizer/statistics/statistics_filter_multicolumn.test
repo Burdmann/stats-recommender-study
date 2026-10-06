@@ -15,25 +15,25 @@ PRAGMA explain_output = OPTIMIZED_ONLY;
 query II
 EXPLAIN SELECT i=1 FROM integers JOIN integers2 USING (i);
 ----
-logical_opt	<!REGEX>:.*\(i = 1\).*
+logical_opt	<REGEX>:.*\(i = 1\).*
 
 # same with i=4
 query II
 EXPLAIN SELECT i=4 FROM integers JOIN integers2 USING (i);
 ----
-logical_opt	<!REGEX>:.*\(i = 4\).*
+logical_opt	<REGEX>:.*\(i = 4\).*
 
 # and with i>3
 query II
 EXPLAIN SELECT i>3 FROM integers JOIN integers2 USING (i);
 ----
-logical_opt	<!REGEX>:.*\(i > 3\).*
+logical_opt	<REGEX>:.*\(i > 3\).*
 
 # and with i<2
 query II
 EXPLAIN SELECT i<2 FROM integers JOIN integers2 USING (i);
 ----
-logical_opt	<!REGEX>:.*\(i < 2\).*
+logical_opt	<REGEX>:.*\(i < 2\).*
 
 # NOT the case for i>2
 query II
@@ -55,13 +55,13 @@ logical_opt	<REGEX>:.*\(i < 3\).*
 query II
 EXPLAIN SELECT i2.i=4 FROM integers i1 JOIN integers2 i2 ON (i2.i<i1.i);
 ----
-logical_opt	<!REGEX>:.*\(i = 4\).*
+logical_opt	<REGEX>:.*\(i = 4\).*
 
 # or i=1
 query II
 EXPLAIN SELECT i1.i=1 FROM integers i1 JOIN integers2 i2 ON (i2.i<i1.i);
 ----
-logical_opt	<!REGEX>:.*\(i = 1\).*
+logical_opt	<REGEX>:.*\(i = 1\).*
 
 # but not i=3
 query II

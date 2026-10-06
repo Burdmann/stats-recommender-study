@@ -4,6 +4,8 @@
 
 require parquet
 
+# Numeric min/max statistics are intentionally unavailable in this build.
+
 # we can derive whether all values in a parquet column are NULL
 statement ok
 copy (select null i) to '__TEST_DIR__/all_null.parquet'
@@ -21,7 +23,7 @@ copy (select range i from range(10)) to '__TEST_DIR__/parquet_stats_function1.pa
 query I
 select stats(i) from read_parquet('__TEST_DIR__/parquet_stats_function1.parquet', union_by_name=true) limit 1
 ----
-[Min: 0, Max: 9][Has Null: false, Has No Null: true]
+[Min: NULL, Max: NULL][Has Null: false, Has No Null: true]
 
 # create 100-109 with NULL
 statement ok
@@ -30,7 +32,7 @@ copy (select range i from range(100, 110) union all select null i) to '__TEST_DI
 query I
 select stats(i) from read_parquet('__TEST_DIR__/parquet_stats_function2.parquet', union_by_name=true) limit 1
 ----
-[Min: 100, Max: 109][Has Null: true, Has No Null: true]
+[Min: NULL, Max: NULL][Has Null: true, Has No Null: true]
 
 # query combined WITHOUT union_by_name (should give back no stats)
 query I
@@ -42,4 +44,4 @@ select stats(i) from read_parquet('__TEST_DIR__/parquet_stats_function*.parquet'
 query I
 select stats(i) from read_parquet('__TEST_DIR__/parquet_stats_function*.parquet', union_by_name=true) limit 1
 ----
-[Min: 0, Max: 109][Has Null: true, Has No Null: true]
+[Min: NULL, Max: NULL][Has Null: true, Has No Null: true]

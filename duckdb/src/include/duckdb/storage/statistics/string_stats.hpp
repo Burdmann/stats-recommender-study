@@ -24,9 +24,8 @@ class Vector;
 struct StringStatsData {
 	constexpr static uint32_t MAX_STRING_MINMAX_SIZE = 8;
 
-	//! The minimum value of the segment, potentially truncated
+	//! Reserved serialized fields; string min/max statistics are unavailable
 	data_t min[MAX_STRING_MINMAX_SIZE];
-	//! The maximum value of the segment, potentially truncated
 	data_t max[MAX_STRING_MINMAX_SIZE];
 	//! Whether or not the column can contain unicode characters
 	bool has_unicode;
@@ -43,6 +42,8 @@ struct StringStats {
 	DUCKDB_API static BaseStatistics CreateEmpty(LogicalType type);
 	//! Whether or not the statistics have a maximum string length defined
 	DUCKDB_API static bool HasMaxStringLength(const BaseStatistics &stats);
+	//! Whether or not the statistics have string min/max values defined
+	DUCKDB_API static bool HasMinMax(const BaseStatistics &stats);
 	//! Returns the maximum string length, or throws an exception if !HasMaxStringLength()
 	DUCKDB_API static uint32_t MaxStringLength(const BaseStatistics &stats);
 	//! Whether or not the strings can contain unicode

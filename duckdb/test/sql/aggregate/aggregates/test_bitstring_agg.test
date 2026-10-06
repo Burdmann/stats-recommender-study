@@ -12,13 +12,18 @@ CREATE TABLE tinyints(i TINYINT)
 statement ok
 INSERT INTO tinyints VALUES(1), (8), (3), (12), (7), (1), (2), (8)
 
-query I 
+statement error
 SELECT BITSTRING_AGG(i) FROM tinyints
+----
+Binder Error: Could not retrieve required statistics. Alternatively, try by providing the statistics explicitly: BITSTRING_AGG(col, min, max)
+
+query I
+SELECT BITSTRING_AGG(i, 1, 12) FROM tinyints
 ----
 111000110001
 
 query I
-SELECT bit_count(BITSTRING_AGG(i)) FROM tinyints WHERE i <= 7
+SELECT bit_count(BITSTRING_AGG(i, 1, 7)) FROM tinyints WHERE i <= 7
 ----
 4
 
@@ -30,12 +35,12 @@ statement ok
 INSERT INTO smallints VALUES(1), (8), (-3), (12), (7), (1), (-1), (-9), (NULL), (-2), (8)
 
 query I 
-SELECT BITSTRING_AGG(i) FROM smallints
+SELECT BITSTRING_AGG(i, -9, 12) FROM smallints
 ----
 1000001110100000110001
 
 query I
-SELECT bit_count(BITSTRING_AGG(i)) FROM smallints WHERE i = 8
+SELECT bit_count(BITSTRING_AGG(i, 8, 8)) FROM smallints WHERE i = 8
 ----
 1
 
@@ -47,12 +52,12 @@ statement ok
 INSERT INTO ints VALUES(10), (-5), (11), (NULL), (30), (11), (23), (17), (27), (15), (5), (14)
 
 query I
-SELECT BITSTRING_AGG(i) FROM ints
+SELECT BITSTRING_AGG(i, -5, 30) FROM ints
 ----
 100000000010000110011010000010001001
 
 query I
-SELECT bit_count(BITSTRING_AGG(i)) FROM ints WHERE i > 20 AND i < 28
+SELECT bit_count(BITSTRING_AGG(i, 23, 27)) FROM ints WHERE i > 20 AND i < 28
 ----
 2
 
@@ -64,12 +69,12 @@ statement ok
 INSERT INTO bigints VALUES(2378097), (2378100), (2378095), (2378104), (NULL), (2378113), (2378100), (2378095), (2378105), (2378097)
 
 query I
-SELECT BITSTRING_AGG(i) FROM bigints
+SELECT BITSTRING_AGG(i, 2378095, 2378113) FROM bigints
 ----
 1010010001100000001
 
 query I
-SELECT bit_count(BITSTRING_AGG(i)) FROM bigints WHERE i = 100
+SELECT bit_count(BITSTRING_AGG(i, 2378095, 2378113)) FROM bigints WHERE i = 100
 ----
 NULL
 
@@ -81,7 +86,7 @@ statement ok
 INSERT INTO hugeints VALUES(12243372036854775807), (12243372036854778191), (12243372036854730332), (12243372036854773737), (12243372036854737711), (12243372036854722124), (12243372036854778191)
 
 query I
-SELECT bit_length(BITSTRING_AGG(i)) FROM hugeints
+SELECT bit_length(BITSTRING_AGG(i, 12243372036854722124, 12243372036854778191)) FROM hugeints
 ----
 56068
 
@@ -93,14 +98,14 @@ statement ok
 INSERT INTO uhugeints VALUES(12243372036854775807), (12243372036854778191), (12243372036854730332), (12243372036854773737), (12243372036854737711), (12243372036854722124), (12243372036854778191)
 
 query I
-SELECT bit_length(BITSTRING_AGG(i)) FROM uhugeints
+SELECT bit_length(BITSTRING_AGG(i, 12243372036854722124::UHUGEINT, 12243372036854778191::UHUGEINT)) FROM uhugeints
 ----
 56068
 
 
 # bit_count of BITSTRING_AGG should give same results as DISTINCT COUNT 
 query I nosort distinct_small
-SELECT bit_count(BITSTRING_AGG(i)) FROM smallints
+SELECT bit_count(BITSTRING_AGG(i, -9, 12)) FROM smallints
 ----
 
 query I nosort distinct_small
@@ -108,7 +113,7 @@ SELECT COUNT(DISTINCT i) FROM smallints
 ----
 
 query I nosort distinct_ints
-SELECT bit_count(BITSTRING_AGG(i)) FROM ints
+SELECT bit_count(BITSTRING_AGG(i, -5, 30)) FROM ints
 ----
 
 query I nosort distinct_ints
@@ -116,7 +121,7 @@ SELECT COUNT(DISTINCT i) FROM ints
 ----
 
 query I nosort distinct_bigints
-SELECT bit_count(BITSTRING_AGG(i)) FROM bigints
+SELECT bit_count(BITSTRING_AGG(i, 2378095, 2378113)) FROM bigints
 ----
 
 query I nosort distinct_bigints
@@ -124,7 +129,7 @@ SELECT COUNT(DISTINCT i) FROM bigints
 ----
 
 query I nosort distinct_hugeints
-SELECT bit_count(BITSTRING_AGG(i)) FROM hugeints
+SELECT bit_count(BITSTRING_AGG(i, 12243372036854722124, 12243372036854778191)) FROM hugeints
 ----
 
 query I nosort distinct_hugeints
@@ -165,7 +170,7 @@ SELECT BITSTRING_AGG(i, 2378080, 2378150) FROM bigints
 
 # test on scalar values 
 query I
-SELECT BITSTRING_AGG(3)
+SELECT BITSTRING_AGG(3, 3, 3)
 ----
 1
 
@@ -182,7 +187,7 @@ statement ok
 INSERT INTO null_table VALUES(NULL)
 
 query I
-SELECT BITSTRING_AGG(i) FROM null_table
+SELECT BITSTRING_AGG(i, 6, 6) FROM null_table
 ----
 NULL
 
@@ -190,7 +195,7 @@ statement ok
 INSERT INTO null_table VALUES(6), (NULL), (NULL), (NULL), (NULL)
 
 query I
-SELECT BITSTRING_AGG(i) FROM null_table
+SELECT BITSTRING_AGG(i, 6, 6) FROM null_table
 ----
 1
 
@@ -225,7 +230,7 @@ statement ok
 INSERT INTO groups VALUES(10, 'a'), (13, 'b'), (9, 'a'), (16, 'c'), (NULL, 'd'), (2, 'a'), (6, 'c'), (9, 'b')
 
 query II
-SELECT g, BITSTRING_AGG(i) FROM groups GROUP BY g ORDER BY g
+SELECT g, BITSTRING_AGG(i, 2, 16) FROM groups GROUP BY g ORDER BY g
 ----
 a	100000011000000
 b	000000010001000

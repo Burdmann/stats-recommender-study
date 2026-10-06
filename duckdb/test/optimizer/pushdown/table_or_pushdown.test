@@ -98,7 +98,7 @@ INSERT INTO strings VALUES ('BBBB'), ('CCCC')
 query II
 EXPLAIN SELECT * FROM strings WHERE s!='111' OR s!='WWW'
 ----
-physical_plan	<!REGEX>:.*SEQ_SCAN.*Filters:.*
+physical_plan	<REGEX>:.*SEQ_SCAN.*Filters:.*
 
 query I
 SELECT * FROM strings WHERE s!='111' OR s!='WWW' ORDER BY s
@@ -390,10 +390,9 @@ CREATE TABLE integers AS SELECT a as A, a as B FROM generate_series(1, 1, 1) tbl
 query II
 EXPLAIN SELECT * FROM integers WHERE a!=1 OR a<2
 ----
-physical_plan	<!REGEX>:.*SEQ_SCAN.*Filters:.*
+physical_plan	<REGEX>:.*SEQ_SCAN.*Filters:.*
 
 query II
 SELECT * FROM integers WHERE a!=1 OR a<3
 ----
 1	1
-

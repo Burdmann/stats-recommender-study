@@ -283,29 +283,29 @@ PRAGMA disable_verification
 query I
 SELECT stats(date_trunc('year', d)) FROM dates LIMIT 1;
 ----
-[Min: 1992-01-01, Max: 2022-01-01][Has Null: false, Has No Null: true]
+<REGEX>:.*Min: NULL, Max: NULL.*Has Null: true.*Has No Null: true.*
 
 query I
 SELECT stats(date_trunc('quarter', d)) FROM dates LIMIT 1;
 ----
-[Min: 1992-10-01, Max: 2022-01-01][Has Null: false, Has No Null: true]
+<REGEX>:.*Min: NULL, Max: NULL.*Has Null: true.*Has No Null: true.*
 
 query I
 SELECT stats(date_trunc('month', d)) FROM dates LIMIT 1;
 ----
-[Min: 1992-12-01, Max: 2022-01-01][Has Null: false, Has No Null: true]
+<REGEX>:.*Min: NULL, Max: NULL.*Has Null: true.*Has No Null: true.*
 
 query I
 SELECT stats(date_trunc('day', d)) FROM dates LIMIT 1;
 ----
-[Min: 1992-12-02, Max: 2022-01-01][Has Null: false, Has No Null: true]
+<REGEX>:.*Min: NULL, Max: NULL.*Has Null: true.*Has No Null: true.*
 
 foreach daypart millennium century decade year quarter month week day
 
 query I
 SELECT stats(date_trunc('${daypart}', d)) FROM timestamps LIMIT 1;
 ----
-[Min: -infinity, Max: infinity][Has Null: false, Has No Null: true]
+<REGEX>:.*Min: NULL, Max: NULL.*Has Null: true.*Has No Null: true.*
 
 endloop
 

@@ -11,25 +11,47 @@ statement ok
 INSERT INTO integers VALUES (0), (255);
 
 statement ok
-SELECT bitstring_agg(i) FROM integers
+SELECT bitstring_agg(i, 0, 255) FROM integers
 
 endloop
 
 statement ok
 CREATE TABLE all_types AS FROM test_all_types();
 
-foreach small_type utinyint usmallint
+statement ok
+SELECT bitstring_agg("utinyint", 0, 255) FROM all_types;
 
 statement ok
-SELECT bitstring_agg("${small_type}") FROM all_types;
+SELECT bitstring_agg("usmallint", 0, 65535) FROM all_types;
 
-endloop
+statement ok
+SELECT bitstring_agg("tinyint", -128, 127) FROM all_types;
 
-foreach type tinyint smallint int uint ubigint bigint hugeint
+statement ok
+SELECT bitstring_agg("smallint", -32768, 32767) FROM all_types;
 
 statement error
-SELECT bitstring_agg("${type}") FROM all_types;
+SELECT bitstring_agg("int", -2147483648, 2147483647) FROM all_types;
 ----
 too large for bitstring aggregation
 
-endloop
+statement error
+SELECT bitstring_agg("uint", 0::UINTEGER, 4294967295::UINTEGER) FROM all_types;
+----
+too large for bitstring aggregation
+
+statement error
+SELECT bitstring_agg("ubigint", 0::UBIGINT, '18446744073709551615'::UBIGINT) FROM all_types;
+----
+too large for bitstring aggregation
+
+statement error
+SELECT bitstring_agg("bigint", '-9223372036854775808'::BIGINT, '9223372036854775807'::BIGINT) FROM all_types;
+----
+too large for bitstring aggregation
+
+statement error
+SELECT bitstring_agg("hugeint", '-170141183460469231731687303715884105728'::HUGEINT,
+					 '170141183460469231731687303715884105727'::HUGEINT) FROM all_types;
+----
+too large for bitstring aggregation

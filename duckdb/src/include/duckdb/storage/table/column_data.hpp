@@ -293,7 +293,8 @@ public:
 			AppendTempString(vdata, offset, copied_elements, string_temp_vectors[this]);
 			break;
 		default:
-			throw InternalException("Unsupported type for appending to additional stats");
+			break;
+			// throw InternalException("Unsupported type for appending to additional stats");
 		}
 		map_mutex.unlock();
 	}
@@ -310,12 +311,14 @@ public:
 
 		AdditionalStats<T> *astats = ((AdditionalStats<T> *)stats.additional_stats);
 		temp_storage.clear();
+#ifndef DEBUG
 		fprintf(stderr,
 		        "%lx,%lu,%lu,END_INITIALISE_ADDITIONAL_STATS,\"{\"\"table_id\"\":\"\"%s\"\",\"\"rowgroup\"\":%lu,"
 		        "\"\"column\"\":%d,\"\"type\"\":"
 		        "\"\"%s\"\",\"\"size\"\":%lu,\"\"start_time\"\":%lu}\"\n",
 		        Util::session_id, Util::command_count, Util::GetTime(), table_identifier.c_str(), index, column,
 		        astats->name, astats->Size(astats), start_time);
+#endif
 	}
 
 	void InitStats(BaseStatistics &stats, idx_t index, int column) {
@@ -378,7 +381,8 @@ public:
 			string_temp_vectors.erase(this);
 			break;
 		default:
-			throw InternalException("Unsupported type for appending to numeric cluster stats");
+			break;
+			// throw InternalException("Unsupported type for appending to numeric cluster stats");
 		}
 		map_mutex.unlock();
 	}

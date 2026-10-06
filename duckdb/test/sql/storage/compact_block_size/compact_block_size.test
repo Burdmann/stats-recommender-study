@@ -15,3 +15,8 @@ query I
 SELECT * FROM block_size_16kb.tbl;
 ----
 42
+
+query I
+SELECT stats(magic) FROM block_size_16kb.tbl LIMIT 1;
+----
+<REGEX>:.*\[Min: NULL, Max: NULL\]\[Has Null: false, Has No Null: true\].*

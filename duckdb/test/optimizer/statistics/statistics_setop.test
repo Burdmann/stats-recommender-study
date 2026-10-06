@@ -19,7 +19,7 @@ PRAGMA explain_output = OPTIMIZED_ONLY;
 query II
 EXPLAIN SELECT i=7 FROM (SELECT * FROM integers UNION ALL SELECT * FROM integers2) tbl(i);
 ----
-logical_opt	<!REGEX>:.*\(i = 7\).*
+logical_opt	<REGEX>:.*\(i = 7\).*
 
 # 5 is in bounds, so this cannot be optimized away
 query II
@@ -45,7 +45,7 @@ logical_opt	<REGEX>:.*IS NULL.*
 query II
 EXPLAIN SELECT i=7 FROM (SELECT * FROM integers2 EXCEPT SELECT * FROM integers3) tbl(i);
 ----
-logical_opt	<!REGEX>:.*\(i = 7\).*
+logical_opt	<REGEX>:.*\(i = 7\).*
 
 query II
 EXPLAIN SELECT i=5 FROM (SELECT * FROM integers2 EXCEPT SELECT * FROM integers3) tbl(i);
@@ -64,7 +64,7 @@ logical_opt	<!REGEX>:.*IS NULL.*
 query II
 EXPLAIN SELECT i=7 FROM (SELECT * FROM integers2 INTERSECT SELECT * FROM integers3) tbl(i);
 ----
-logical_opt	<!REGEX>:.*\(i = 7\).*
+logical_opt	<REGEX>:.*\(i = 7\).*
 
 query II
 EXPLAIN SELECT i=5 FROM (SELECT * FROM integers2 INTERSECT SELECT * FROM integers3) tbl(i);

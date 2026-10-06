@@ -4608,15 +4608,21 @@ int ShellState::ProcessInput(InputMode mode) {
 		if (nSql && line_contains_semicolon(&zSql[nSqlPrior], nSql - nSqlPrior) && sqlite3_complete(zSql)) {
 			FixCommandForLog(zSql, &zSql_fixed);
 			auto start_time = duckdb::Util::GetTime();
+#ifndef DEBUG
 			fprintf(stderr, "%lx,%lu,%lu,SQL_COMMAND_RUN_START,\"{\"\"command\"\":\"\"%s\"\"}\"\n",
 			        duckdb::Util::session_id, duckdb::Util::command_count, start_time, zSql_fixed);
+#endif
 			duckdb::ConstantFilter::clear_set();
 			errCnt += RunOneSqlLine(mode, zSql);
+#ifndef DEBUG
 			fprintf(stderr, "%lx,%lu,%lu,SCANNED_PARTITIONS,\"{\"\"count\"\":%lu}\"\n", duckdb::Util::session_id,
 			        duckdb::Util::command_count, duckdb::Util::GetTime(), duckdb::ConstantFilter::get_count());
+#endif
 			auto end_time = duckdb::Util::GetTime();
+#ifndef DEBUG
 			fprintf(stderr, "%lx,%lu,%lu,SQL_COMMAND_RUN_END,\"{\"\"command\"\":\"\"%s\"\",\"\"start_time\"\":%lu}\"\n",
 			        duckdb::Util::session_id, duckdb::Util::command_count, end_time, zSql_fixed, start_time);
+#endif
 			duckdb::Util::command_count++;
 			// fprintf(stderr, "Partitions scanned: %lu\n", duckdb::ConstantFilter::get_count());
 			nSql = 0;

@@ -34,7 +34,7 @@ struct NumericStatsData {
 struct NumericStats {
 	//! Unknown statistics - i.e. "has_min" is false, "has_max" is false
 	DUCKDB_API static BaseStatistics CreateUnknown(LogicalType type);
-	//! Empty statistics - i.e. "min = MaxValue<type>, max = MinValue<type>"
+	//! Empty statistics with numeric min/max values unavailable
 	DUCKDB_API static BaseStatistics CreateEmpty(LogicalType type);
 
 	//! Returns true if the stats has a constant value
@@ -49,23 +49,24 @@ struct NumericStats {
 	DUCKDB_API static Value Min(const BaseStatistics &stats);
 	//! Returns the max value - throws an exception if there is no max value
 	DUCKDB_API static Value Max(const BaseStatistics &stats);
+	//! Returns the value retained for decoding a legacy constant-compressed segment
+	DUCKDB_API static Value GetStorageConstant(const BaseStatistics &stats);
 	//! Sets the min value of the statistics
 	DUCKDB_API static void SetMin(BaseStatistics &stats, const Value &val);
 	//! Sets the max value of the statistics
 	DUCKDB_API static void SetMax(BaseStatistics &stats, const Value &val);
 
 	template <class T>
-	static void SetMax(BaseStatistics &stats, T val) {
-		auto &nstats = GetDataUnsafe(stats);
-		nstats.has_max = true;
-		nstats.max.GetReferenceUnsafe<T>() = val;
+	static T GetStorageConstant(const BaseStatistics &stats) {
+		return GetStorageConstant(stats).GetValueUnsafe<T>();
 	}
 
 	template <class T>
-	static void SetMin(BaseStatistics &stats, T val) {
-		auto &nstats = GetDataUnsafe(stats);
-		nstats.has_min = true;
-		nstats.min.GetReferenceUnsafe<T>() = val;
+	static void SetMax(BaseStatistics &, T) {
+	}
+
+	template <class T>
+	static void SetMin(BaseStatistics &, T) {
 	}
 
 	//! Check whether or not a given comparison with a constant could possibly be satisfied by rows given the statistics
@@ -86,8 +87,7 @@ struct NumericStats {
 		max = GreaterThan::Operation(new_value, max) ? new_value : max;
 	}
 	template <class T>
-	static inline void Update(NumericStatsData &nstats, T new_value) {
-		UpdateValue<T>(new_value, nstats.min.GetReferenceUnsafe<T>(), nstats.max.GetReferenceUnsafe<T>());
+	static inline void Update(NumericStatsData &, T) {
 	}
 
 	static void Verify(const BaseStatistics &stats, Vector &vector, const SelectionVector &sel, idx_t count);

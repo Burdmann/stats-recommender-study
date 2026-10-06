@@ -11,61 +11,32 @@ namespace duckdb {
 BaseStatistics NumericStats::CreateUnknown(LogicalType type) {
 	BaseStatistics result(std::move(type));
 	result.InitializeUnknown();
-	SetMin(result, Value(result.GetType()));
-	SetMax(result, Value(result.GetType()));
+	auto &numeric_data = GetDataUnsafe(result);
+	numeric_data.has_min = false;
+	numeric_data.has_max = false;
 	return result;
 }
 
 BaseStatistics NumericStats::CreateEmpty(LogicalType type) {
 	BaseStatistics result(std::move(type));
 	result.InitializeEmpty();
-	SetMin(result, Value::MaximumValue(result.GetType()));
-	SetMax(result, Value::MinimumValue(result.GetType()));
+	auto &numeric_data = GetDataUnsafe(result);
+	numeric_data.has_min = false;
+	numeric_data.has_max = false;
 	return result;
 }
 
-static NumericStatsData EmptyNumericStatsData() {
-
-	NumericStatsData numeric_data;
-	numeric_data.has_min = false;
-	numeric_data.has_max = false;
-	return numeric_data;
-}
-static NumericStatsData empty_numeric_stats_data = EmptyNumericStatsData();
-
 NumericStatsData &NumericStats::GetDataUnsafe(BaseStatistics &stats) {
 	D_ASSERT(stats.GetStatsType() == StatisticsType::NUMERIC_STATS);
-	return empty_numeric_stats_data;
-	// return stats.stats_union.numeric_data;
+	return stats.stats_union.numeric_data;
 }
 
 const NumericStatsData &NumericStats::GetDataUnsafe(const BaseStatistics &stats) {
 	D_ASSERT(stats.GetStatsType() == StatisticsType::NUMERIC_STATS);
-	return empty_numeric_stats_data;
-	// return stats.stats_union.numeric_data;
+	return stats.stats_union.numeric_data;
 }
 
-void NumericStats::Merge(BaseStatistics &stats, const BaseStatistics &other) {
-	if (other.GetType().id() == LogicalTypeId::VALIDITY) {
-		return;
-	}
-	D_ASSERT(stats.GetType() == other.GetType());
-	if (NumericStats::HasMin(other) && NumericStats::HasMin(stats)) {
-		auto other_min = NumericStats::Min(other);
-		if (other_min < NumericStats::Min(stats)) {
-			NumericStats::SetMin(stats, other_min);
-		}
-	} else {
-		NumericStats::SetMin(stats, Value());
-	}
-	if (NumericStats::HasMax(other) && NumericStats::HasMax(stats)) {
-		auto other_max = NumericStats::Max(other);
-		if (other_max > NumericStats::Max(stats)) {
-			NumericStats::SetMax(stats, other_max);
-		}
-	} else {
-		NumericStats::SetMax(stats, Value());
-	}
+void NumericStats::Merge(BaseStatistics &, const BaseStatistics &) {
 }
 
 struct GetNumericValueUnion {
@@ -282,68 +253,16 @@ bool NumericStats::IsConstant(const BaseStatistics &) {
 	return false;
 }
 
-void SetNumericValueInternal(const Value &input, const LogicalType &type, NumericValueUnion &val, bool &has_val) {
-	if (input.IsNull()) {
-		has_val = false;
-		return;
-	}
-	if (input.type().InternalType() != type.InternalType()) {
-		throw InternalException("SetMin or SetMax called with Value that does not match statistics' column value");
-	}
-	has_val = true;
-	switch (type.InternalType()) {
-	case PhysicalType::BOOL:
-		val.value_.boolean = BooleanValue::Get(input);
-		break;
-	case PhysicalType::INT8:
-		val.value_.tinyint = TinyIntValue::Get(input);
-		break;
-	case PhysicalType::INT16:
-		val.value_.smallint = SmallIntValue::Get(input);
-		break;
-	case PhysicalType::INT32:
-		val.value_.integer = IntegerValue::Get(input);
-		break;
-	case PhysicalType::INT64:
-		val.value_.bigint = BigIntValue::Get(input);
-		break;
-	case PhysicalType::UINT8:
-		val.value_.utinyint = UTinyIntValue::Get(input);
-		break;
-	case PhysicalType::UINT16:
-		val.value_.usmallint = USmallIntValue::Get(input);
-		break;
-	case PhysicalType::UINT32:
-		val.value_.uinteger = UIntegerValue::Get(input);
-		break;
-	case PhysicalType::UINT64:
-		val.value_.ubigint = UBigIntValue::Get(input);
-		break;
-	case PhysicalType::INT128:
-		val.value_.hugeint = HugeIntValue::Get(input);
-		break;
-	case PhysicalType::UINT128:
-		val.value_.uhugeint = UhugeIntValue::Get(input);
-		break;
-	case PhysicalType::FLOAT:
-		val.value_.float_ = FloatValue::Get(input);
-		break;
-	case PhysicalType::DOUBLE:
-		val.value_.double_ = DoubleValue::Get(input);
-		break;
-	default:
-		throw InternalException("Unsupported type for NumericStatistics::SetValueInternal");
-	}
-}
-
 void NumericStats::SetMin(BaseStatistics &stats, const Value &new_min) {
-	auto &data = NumericStats::GetDataUnsafe(stats);
-	SetNumericValueInternal(new_min, stats.GetType(), data.min, data.has_min);
+	if (!new_min.IsNull() && new_min.type().InternalType() != stats.GetType().InternalType()) {
+		throw InternalException("SetMin called with Value that does not match statistics' column value");
+	}
 }
 
 void NumericStats::SetMax(BaseStatistics &stats, const Value &new_max) {
-	auto &data = NumericStats::GetDataUnsafe(stats);
-	SetNumericValueInternal(new_max, stats.GetType(), data.max, data.has_max);
+	if (!new_max.IsNull() && new_max.type().InternalType() != stats.GetType().InternalType()) {
+		throw InternalException("SetMax called with Value that does not match statistics' column value");
+	}
 }
 
 Value NumericValueUnionToValueInternal(const LogicalType &type, const NumericValueUnion &val) {
@@ -383,6 +302,21 @@ Value NumericValueUnionToValue(const LogicalType &type, const NumericValueUnion 
 	Value result = NumericValueUnionToValueInternal(type, val);
 	result.GetTypeMutable() = type;
 	return result;
+}
+
+Value NumericStats::GetStorageConstant(const BaseStatistics &stats) {
+	const auto &numeric_stats = GetDataUnsafe(stats);
+	if (numeric_stats.has_min && numeric_stats.has_max) {
+		auto min_value = NumericValueUnionToValue(stats.GetType(), numeric_stats.min);
+		auto max_value = NumericValueUnionToValue(stats.GetType(), numeric_stats.max);
+		if (Value::NotDistinctFrom(min_value, max_value)) {
+			return min_value;
+		}
+	}
+	if (!stats.CanHaveNoNull()) {
+		return NumericValueUnionToValue(stats.GetType(), NumericValueUnion {});
+	}
+	throw InternalException("Constant-compressed numeric segment is missing its storage value");
 }
 
 bool NumericStats::HasMinMax(const BaseStatistics &stats) {
@@ -531,24 +465,28 @@ static void DeserializeNumericStatsValue(const LogicalType &type, NumericValueUn
 }
 
 void NumericStats::Serialize(const BaseStatistics &stats, Serializer &serializer) {
-	auto &numeric_stats = NumericStats::GetDataUnsafe(stats);
+	const auto &numeric_stats = GetDataUnsafe(stats);
+	// Preserve values read from legacy constant-compressed segments for storage decoding.
 	serializer.WriteObject(200, "max", [&](Serializer &object) {
-		SerializeNumericStatsValue(stats.GetType(), numeric_stats.min, numeric_stats.has_min, object);
+		SerializeNumericStatsValue(stats.GetType(), numeric_stats.max, numeric_stats.has_max, object);
 	});
 	serializer.WriteObject(201, "min", [&](Serializer &object) {
-		SerializeNumericStatsValue(stats.GetType(), numeric_stats.max, numeric_stats.has_max, object);
+		SerializeNumericStatsValue(stats.GetType(), numeric_stats.min, numeric_stats.has_min, object);
 	});
 }
 
 void NumericStats::Deserialize(Deserializer &deserializer, BaseStatistics &result) {
-	auto &numeric_stats = NumericStats::GetDataUnsafe(result);
+	NumericStatsData numeric_stats {};
 
 	deserializer.ReadObject(200, "max", [&](Deserializer &object) {
-		DeserializeNumericStatsValue(result.GetType(), numeric_stats.min, numeric_stats.has_min, object);
-	});
-	deserializer.ReadObject(201, "min", [&](Deserializer &object) {
 		DeserializeNumericStatsValue(result.GetType(), numeric_stats.max, numeric_stats.has_max, object);
 	});
+	deserializer.ReadObject(201, "min", [&](Deserializer &object) {
+		DeserializeNumericStatsValue(result.GetType(), numeric_stats.min, numeric_stats.has_min, object);
+	});
+	// Retain serialized values for legacy constant-compressed segment decoding.
+	// NumericStats::HasMin/HasMax still report that these are unavailable to query planning.
+	GetDataUnsafe(result) = numeric_stats;
 }
 
 string NumericStats::ToString(const BaseStatistics &stats) {

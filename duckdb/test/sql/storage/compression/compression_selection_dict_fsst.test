@@ -23,7 +23,7 @@ SELECT compression FROM pragma_storage_info('test_rle') WHERE segment_type ILIKE
 ----
 RLE
 
-# Constant
+# Numeric min/max stats are unavailable, so constant integer data uses RLE.
 statement ok
 CREATE TABLE test_constant (a INTEGER);
 
@@ -36,7 +36,7 @@ CHECKPOINT
 query I
 SELECT compression FROM pragma_storage_info('test_constant') WHERE segment_type ILIKE 'INTEGER' LIMIT 1
 ----
-Constant
+RLE
 
 # Dictionary
 statement ok

@@ -13,13 +13,13 @@ CREATE TABLE integers AS SELECT * FROM (VALUES (1), (2), (3)) tbl(i);
 query II
 EXPLAIN SELECT * FROM integers WHERE (COALESCE(i, 17)=17);
 ----
-logical_opt	<REGEX>:.*EMPTY_RESULT.*
+logical_opt	<!REGEX>:.*EMPTY_RESULT.*
 
 # adding NULLs randomly into the coalesce does not change anything
 query II
 EXPLAIN SELECT * FROM integers WHERE (COALESCE(NULL, NULL, NULL, i, NULL, 17)=17);
 ----
-logical_opt	<REGEX>:.*EMPTY_RESULT.*
+logical_opt	<!REGEX>:.*EMPTY_RESULT.*
 
 # same here, i is never output, the expression is a constant false
 query II

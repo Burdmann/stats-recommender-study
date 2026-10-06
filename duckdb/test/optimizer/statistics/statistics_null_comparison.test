@@ -22,7 +22,7 @@ PRAGMA explain_output = OPTIMIZED_ONLY;
 query II
 EXPLAIN SELECT i=j FROM integers ORDER BY i;
 ----
-logical_opt	<REGEX>:.*constant_or_null.*
+logical_opt	<!REGEX>:.*constant_or_null.*
 
 # if we put the same expression in a where clause, however, we CAN prune it
 query II
@@ -34,13 +34,13 @@ logical_opt	<!REGEX>:.*constant_or_null.*
 query II
 EXPLAIN SELECT i>j FROM integers ORDER BY i;
 ----
-logical_opt	<REGEX>:.*constant_or_null.*
+logical_opt	<!REGEX>:.*constant_or_null.*
 
 # if we put it in the where clause, we STILL can't prune it
 query II
 EXPLAIN SELECT * FROM integers WHERE i>j ORDER BY i;
 ----
-logical_opt	<REGEX>:.*constant_or_null.*
+logical_opt	<!REGEX>:.*constant_or_null.*
 
 # now verify that the results are correct
 query I
@@ -86,7 +86,7 @@ INSERT INTO t2 VALUES(1);
 query II
 EXPLAIN SELECT * FROM t1 INNER JOIN t2 ON ((t2.c0)>=(t2.c0));
 ----
-logical_opt	<REGEX>:.*IS NOT NULL.*
+logical_opt	<!REGEX>:.*IS NOT NULL.*
 
 query II
 SELECT * FROM t1 INNER JOIN t2 ON ((t2.c0)>=(t2.c0));

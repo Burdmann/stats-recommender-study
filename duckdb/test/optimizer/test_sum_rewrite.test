@@ -42,12 +42,12 @@ pragma explain_output='optimized_only'
 query II
 EXPLAIN SELECT SUM(i + 1), SUM(i + 2), SUM(i + 3), SUM(i + 4) FROM integers
 ----
-logical_opt	<REGEX>:.*sum_no_overflow\(i\).*
+logical_opt	<REGEX>:.*sum\(i\).*
 
 query II
 EXPLAIN SELECT SUM(i + 1), SUM(2 + i), SUM(i + 3), SUM(4 + i) FROM integers
 ----
-logical_opt	<REGEX>:.*sum_no_overflow\(i\).*
+logical_opt	<REGEX>:.*sum\(i\).*
 
 # test rewrite with HUGEINT
 statement ok

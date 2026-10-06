@@ -28,4 +28,4 @@ SELECT * FROM test WHERE m=2
 query I
 SELECT stats(m) FROM test LIMIT 1
 ----
-<REGEX>:.*1.*2.*
+[Min: NULL, Max: NULL][Has Null: false, Has No Null: true]

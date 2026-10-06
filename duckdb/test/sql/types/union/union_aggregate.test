@@ -15,13 +15,13 @@ SELECT FIRST(u), LAST(u) FROM tbl1;
 
 
 query II
-SELECT union_tag(u), max(u) FROM tbl1 GROUP BY union_tag(u);
+SELECT union_tag(u), max(u) FROM tbl1 GROUP BY union_tag(u) ORDER BY union_tag(u);
 ----
 num	3
 str	foo
 
 query II
-SELECT union_tag(u), min(u) FROM tbl1 GROUP BY union_tag(u);
+SELECT union_tag(u), min(u) FROM tbl1 GROUP BY union_tag(u) ORDER BY union_tag(u);
 ----
 num	1
 str	bar

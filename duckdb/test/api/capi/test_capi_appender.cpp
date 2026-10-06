@@ -987,7 +987,7 @@ TEST_CASE("Test append duckdb_value values in C API", "[capi]") {
 	REQUIRE_THAT(reinterpret_cast<duckdb_interval *>(chunk->GetData(14))[0],
 	             Catch::Predicate<duckdb_interval>([&](const duckdb_interval &input) {
 		             return input.months == interval.months && input.days == interval.days &&
-		                    input.micros == interval.micros;
+					        input.micros == interval.micros;
 	             }));
 	REQUIRE_THAT(reinterpret_cast<duckdb_hugeint *>(chunk->GetData(15))[0],
 	             Catch::Predicate<duckdb_hugeint>([&](const duckdb_hugeint &input) {
@@ -1000,14 +1000,14 @@ TEST_CASE("Test append duckdb_value values in C API", "[capi]") {
 	REQUIRE_THAT(reinterpret_cast<duckdb_string_t *>(chunk->GetData(17))[0],
 	             Catch::Predicate<duckdb_string_t>([&](const duckdb_string_t &input) {
 		             return !strncmp(duckdb_string_t_data(const_cast<duckdb_string_t *>(&input)), varchar,
-		                             strlen(varchar)) &&
-		                    duckdb_string_t_length(input) == strlen(varchar);
+					                 strlen(varchar)) &&
+					        duckdb_string_t_length(input) == strlen(varchar);
 	             }));
 	REQUIRE_THAT(reinterpret_cast<duckdb_string_t *>(chunk->GetData(18))[0],
 	             Catch::Predicate<duckdb_string_t>([&](const duckdb_string_t &input) {
 		             return !memcmp(duckdb_string_t_data(const_cast<duckdb_string_t *>(&input)), blob_data,
-		                            blob_size) &&
-		                    duckdb_string_t_length(input) == blob_size;
+					                blob_size) &&
+					        duckdb_string_t_length(input) == blob_size;
 	             }));
 
 	REQUIRE(duckdb_validity_row_is_valid(chunk->GetValidity(19), 0) == false); // no duckdb_create_decimal (yet)

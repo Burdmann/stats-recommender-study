@@ -19,12 +19,12 @@ PRAGMA explain_output = OPTIMIZED_ONLY;
 query II
 EXPLAIN SELECT i1.i FROM integers i1 JOIN integers2 i2 ON (i1.i=i2.i AND i1.i=i2.j);
 ----
-logical_opt	<REGEX>:.*EMPTY_RESULT.*
+logical_opt	<!REGEX>:.*EMPTY_RESULT.*
 
 query II
 EXPLAIN SELECT i1.i FROM integers i1 JOIN integers2 i2 ON (i1.i=i2.i AND i1.i>i2.j);
 ----
-logical_opt	<REGEX>:.*EMPTY_RESULT.*
+logical_opt	<!REGEX>:.*EMPTY_RESULT.*
 
 # when we do i1.i < i2.j, the sets are no longer disjoint, because the set [2, 4] is smaller than the set [5, 7]
 query II

@@ -178,8 +178,9 @@ SELECT * FROM T_1
 statement ok
 CHECKPOINT
 
+# Numeric min/max stats are unavailable, so constant integer data uses RLE.
 query I
 SELECT compression FROM pragma_storage_info('T_1') WHERE segment_type ILIKE 'INTEGER' LIMIT 3
 ----
 RLE
-Constant
+RLE

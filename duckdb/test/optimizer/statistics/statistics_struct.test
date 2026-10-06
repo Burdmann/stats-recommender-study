@@ -24,4 +24,4 @@ logical_opt	<!REGEX>:.*IS_NULL.*
 query II
 EXPLAIN SELECT * FROM structs WHERE c['i']=4;
 ----
-logical_opt	<REGEX>:.*EMPTY_RESULT.*
+logical_opt	<!REGEX>:.*EMPTY_RESULT.*

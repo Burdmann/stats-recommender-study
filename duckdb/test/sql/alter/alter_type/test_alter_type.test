@@ -40,7 +40,7 @@ PRAGMA disable_verification
 query I
 SELECT stats(i) FROM test LIMIT 1
 ----
-<REGEX>:.*1.*2.*
+[Min: NULL, Max: NULL][Has Null: false, Has No Null: true]
 
 statement ok
 PRAGMA enable_verification

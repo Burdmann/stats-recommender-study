@@ -12,7 +12,7 @@ PRAGMA explain_output = OPTIMIZED_ONLY;
 query II
 EXPLAIN SELECT i=3 FROM integers WHERE i BETWEEN 0 AND 2
 ----
-logical_opt	<!REGEX>:.*\(i = 3\).*
+logical_opt	<REGEX>:.*\(i = 3\).*
 
 # filter is in range: need to execute it
 query II
@@ -47,7 +47,7 @@ SELECT * FROM integers WHERE i BETWEEN 3 AND 2;
 query II
 EXPLAIN SELECT i=3 FROM (SELECT * FROM integers LIMIT 10) integers(i) WHERE i BETWEEN 0 AND 2
 ----
-logical_opt	<!REGEX>:.*\(i = 3\).*
+logical_opt	<REGEX>:.*\(i = 3\).*
 
 query II
 EXPLAIN SELECT i=1 FROM (SELECT * FROM integers LIMIT 10) integers(i) WHERE i BETWEEN 0 AND 2
@@ -59,28 +59,28 @@ EXPLAIN SELECT * FROM (SELECT * FROM integers LIMIT 10) integers(i) WHERE i BETW
 ----
 logical_opt	<REGEX>:.*EMPTY_RESULT.*
 
-# lower clause is always true: between should be converted into i <= 2
+# Without min/max statistics, the optimizer cannot simplify the lower clause.
 query II
 EXPLAIN SELECT * FROM (SELECT * FROM integers LIMIT 10) integers(i) WHERE i BETWEEN 0 AND 2;
 ----
-logical_opt	<REGEX>:.*\(i <= 2\).*
+logical_opt	<REGEX>:.*BETWEEN 0 AND 2.*
 
-# upper clause is always true: between should be converted into i >= 2
+# Without min/max statistics, the optimizer cannot simplify the upper clause.
 query II
 EXPLAIN SELECT * FROM (SELECT * FROM integers LIMIT 10) integers(i) WHERE i BETWEEN 2 AND 10;
 ----
-logical_opt	<REGEX>:.*\(i >= 2\).*
+logical_opt	<REGEX>:.*BETWEEN 2 AND 10.*
 
-# between is always false
+# Without min/max statistics, the optimizer cannot prove the filter is empty.
 query II
 EXPLAIN SELECT * FROM (SELECT * FROM integers LIMIT 10) integers(i) WHERE i BETWEEN -1 AND 0;
 ----
-logical_opt	<REGEX>:.*EMPTY_RESULT.*
+logical_opt	<!REGEX>:.*EMPTY_RESULT.*
 
 query II
 EXPLAIN SELECT i BETWEEN -1 AND 0 FROM (SELECT * FROM integers LIMIT 10) integers(i);
 ----
-logical_opt	<REGEX>:.*false.*
+logical_opt	<REGEX>:.*i >= -1.*i <= 0.*
 
 # verify the results
 query I
@@ -132,13 +132,13 @@ SELECT i BETWEEN -1 AND 0 FROM (SELECT * FROM integers LIMIT 10) integers(i);
 statement ok
 PRAGMA explain_output = PHYSICAL_ONLY;
 
-# wide between: both are always true, entire filter can be pruned. (happens during physical planning).
+# Without min/max statistics, the physical planner cannot prove the filter is redundant.
 # see https://github.com/duckdb/duckdb-fuzzer/issues/1357
 # https://github.com/duckdb/duckdb-fuzzer/issues/1358
 query II
 EXPLAIN SELECT * FROM (SELECT * FROM integers LIMIT 10) integers(i) WHERE i BETWEEN 0 AND 10;
 ----
-physical_plan	<!REGEX>:.*FILTER.*
+physical_plan	<REGEX>:.*FILTER.*
 
 statement ok
 PRAGMA explain_output = OPTIMIZED_ONLY;
@@ -147,23 +147,23 @@ PRAGMA explain_output = OPTIMIZED_ONLY;
 statement ok
 INSERT INTO integers VALUES (NULL)
 
-# between is always false or null: we can still prune the entire filter
+# Without min/max statistics, the optimizer cannot prove that this filter is empty.
 query II
 EXPLAIN SELECT * FROM (SELECT * FROM integers LIMIT 10) integers(i) WHERE i BETWEEN -1 AND 0;
 ----
-logical_opt	<REGEX>:.*EMPTY_RESULT.*
+logical_opt	<!REGEX>:.*EMPTY_RESULT.*
 
-# between is always false or null: we can still prune the entire filter
+# The filter is retained when min/max statistics are unavailable.
 query II
 EXPLAIN SELECT * FROM (SELECT * FROM integers LIMIT 10) integers(i) WHERE i BETWEEN -1 AND 0;
 ----
-logical_opt	<!REGEX>:.*FILTER.*
+logical_opt	<REGEX>:.*FILTER.*
 
-# however, if used in a select clause, we can only replace it with a constant_or_null clause
+# Without min/max statistics, the BETWEEN expression remains a comparison conjunction.
 query II
 EXPLAIN SELECT i BETWEEN -1 AND 0 FROM (SELECT * FROM integers LIMIT 10) integers(i);
 ----
-logical_opt	<REGEX>:.*constant_or_null.*
+logical_opt	<REGEX>:.*i >= -1.*i <= 0.*
 
 # in the case of null values we cannot prune the filter here
 query II
