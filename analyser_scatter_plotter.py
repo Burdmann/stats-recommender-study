@@ -26,9 +26,9 @@ def main():
 	try:
 		with open(args.csv_file, newline="", encoding="utf-8") as csv_file:
 			reader = csv.DictReader(csv_file)
-			required_columns = {"size", "pruning_power", "statistic"}
+			required_columns = {"size", "pruning_power", "statistic_alias"}
 			if reader.fieldnames is None or not required_columns.issubset(reader.fieldnames):
-				parser.error("CSV must contain 'size', 'pruning_power', and 'statistic' columns")
+				parser.error("CSV must contain 'size', 'pruning_power', and 'statistic_alias' columns")
 
 			points_by_statistic = {}
 			for row_number, row in enumerate(reader, start=2):
@@ -37,7 +37,7 @@ def main():
 					pruning_power = float(row["pruning_power"])
 				except (TypeError, ValueError):
 					parser.error(f"invalid numeric value in CSV row {row_number}")
-				statistic = row["statistic"]
+				statistic = row["statistic_alias"]
 				if statistic not in points_by_statistic:
 					points_by_statistic[statistic] = ([], [])
 				statistic_sizes, statistic_pruning_powers = points_by_statistic[statistic]
