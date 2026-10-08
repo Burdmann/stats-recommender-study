@@ -17,12 +17,12 @@ for i,line in enumerate(IN_FILE):
     table_name,rowgroup,col,statistic,statistic_alias,size,pruning_power = line.split(",")
     rowgroup,col,statistic,size = map(int,[rowgroup,col,statistic,size])
     pruning_power = float(pruning_power)
-    options.append((pruning_power,table_name,rowgroup,col,statistic,size))
+    options.append((-pruning_power,size,table_name,rowgroup,col,statistic))
 
 IN_FILE.close()
-options.sort(reverse=True)
+options.sort()
 
-for pruning_power,table_name,rowgroup,col,statistic,size in options:
+for _,size,table_name,rowgroup,col,statistic in options:
     if not (table_name,rowgroup,col) in mapping and size <= budget:
         budget-=size
         mapping[(table_name,rowgroup,col)] = statistic
