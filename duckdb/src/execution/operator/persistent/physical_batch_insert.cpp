@@ -457,9 +457,11 @@ void PhysicalBatchInsert::FinishInitialiseStats(ExecutionContext &context, DataC
 	auto &gstate = input.global_state.Cast<BatchInsertGlobalState>();
 
 	auto &table = gstate.table;
-	auto &storage = table.GetStorage();
-	storage.FinishInitialiseStats(table, context.client, insert_chunk, bound_constraints,
-	                              *lstate.current_append_state.row_group_append_state.row_group);
+	auto *row_group = lstate.current_append_state.row_group_append_state.row_group;
+	if (!row_group) {
+		return;
+	}
+	row_group->InitStats(lstate.current_append_state.row_group_append_state);
 }
 
 //===--------------------------------------------------------------------===//

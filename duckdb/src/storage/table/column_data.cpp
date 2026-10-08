@@ -316,6 +316,11 @@ void ColumnData::UpdateInternal(TransactionData transaction, DataTable &data_tab
 		updates = make_uniq<UpdateSegment>(*this);
 	}
 	updates->Update(transaction, data_table, column_index, update_vector, row_ids, update_count, base_vector);
+	lock_guard<mutex> stats_guard(stats_lock);
+	additional_stats_invalidated = true;
+	if (stats) {
+		stats->statistics.additional_stats = nullptr;
+	}
 }
 
 idx_t ColumnData::ScanVector(TransactionData transaction, idx_t vector_index, ColumnScanState &state, Vector &result,
@@ -421,6 +426,10 @@ void ColumnData::Append(ColumnAppendState &state, Vector &vector, idx_t append_c
 		throw InternalException("ColumnData::Append called on a column with a parent or without stats");
 	}
 	lock_guard<mutex> l(stats_lock);
+	if (stats->statistics.additional_stats) {
+		additional_stats_invalidated = true;
+		stats->statistics.additional_stats = nullptr;
+	}
 	Append(stats->statistics, state, vector, append_count);
 }
 
@@ -459,8 +468,24 @@ FilterPropagateResult ColumnData::CheckZonemap(TableFilter &filter) {
 	if (!stats) {
 		throw InternalException("ColumnData::CheckZonemap called on a column without stats");
 	}
-	lock_guard<mutex> l(stats_lock);
-	return filter.CheckStatistics(stats->statistics);
+	FilterPropagateResult prune_result;
+	{
+		lock_guard<mutex> l(stats_lock);
+		prune_result = filter.CheckStatistics(stats->statistics);
+		if (prune_result == FilterPropagateResult::NO_PRUNING_POSSIBLE) {
+			return prune_result;
+		}
+	}
+	lock_guard<mutex> l(update_lock);
+	if (!updates) {
+		return prune_result;
+	}
+	auto update_stats = updates->GetStatistics();
+	auto update_result = filter.CheckStatistics(*update_stats);
+	if (prune_result == update_result) {
+		return prune_result;
+	}
+	return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 }
 
 unique_ptr<BaseStatistics> ColumnData::GetStatistics() {

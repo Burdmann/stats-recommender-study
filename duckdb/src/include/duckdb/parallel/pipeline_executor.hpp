@@ -118,6 +118,8 @@ private:
 	bool started_flushing = false;
 	//! Flushing of caching operators is done
 	bool done_flushing = false;
+	//! Final statistics are initialized after the final input chunk has been sunk.
+	bool finished_initialise_stats = false;
 
 	//! This flag is set when the pipeline gets interrupted by the Sink -> the final_chunk should be re-sink-ed.
 	bool remaining_sink_chunk = false;

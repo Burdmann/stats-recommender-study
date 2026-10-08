@@ -231,13 +231,6 @@ PipelineExecuteResult PipelineExecutor::Execute(idx_t max_chunks) {
 				}
 				if (source_result == SourceResultType::FINISHED) {
 					exhausted_source = true;
-					try {
-						// OperatorSinkInput sink_input {*pipeline.sink->sink_state, *local_sink_state,
-						// interrupt_state}; printf("a\n"); pipeline.sink->FinishInitialiseStats(context, final_chunk,
-						// sink_input); printf("b\n");
-					} catch (std::exception &ex) {
-						// do nothing
-					}
 				}
 			}
 
@@ -269,6 +262,13 @@ PipelineExecuteResult PipelineExecutor::Execute(idx_t max_chunks) {
 			break;
 		}
 	} while (chunk_budget.Next());
+
+	if (exhausted_source && done_flushing && !remaining_sink_chunk && !next_batch_blocked &&
+	    in_process_operators.empty() && !finished_initialise_stats) {
+		OperatorSinkInput sink_input {*pipeline.sink->sink_state, *local_sink_state, interrupt_state};
+		pipeline.sink->FinishInitialiseStats(context, final_chunk, sink_input);
+		finished_initialise_stats = true;
+	}
 
 	if ((!exhausted_source || !done_flushing) && !IsFinished()) {
 		return PipelineExecuteResult::NOT_FINISHED;

@@ -627,8 +627,29 @@ void PhysicalInsert::FinishInitialiseStats(ExecutionContext &context, DataChunk 
 	auto &table = gstate.table;
 	auto &storage = table.GetStorage();
 	auto &lstate = input.local_state.Cast<InsertLocalState>();
-	storage.FinishInitialiseStats(table, context.client, insert_chunk, bound_constraints,
-	                              *lstate.local_append_state.row_group_append_state.row_group);
+	if (gstate.insert_count == 0) {
+		return;
+	}
+
+	auto *row_group = lstate.local_append_state.row_group_append_state.row_group;
+	if (row_group) {
+		row_group->InitStats(lstate.local_append_state.row_group_append_state);
+		return;
+	}
+	if (parallel) {
+		return;
+	}
+
+	auto &local_storage = LocalStorage::Get(context.client, storage.db);
+	auto local_table_storage = local_storage.GetStorage(storage);
+	if (!local_table_storage || local_table_storage->row_groups->GetTotalRows() == 0) {
+		return;
+	}
+
+	LocalAppendState append_state;
+	storage.InitializeLocalAppend(append_state, table, context.client, bound_constraints);
+	LocalStorage::FinishInitialiseStats(append_state, insert_chunk, *storage.GetDataTableInfo());
+	storage.FinalizeLocalAppend(append_state);
 }
 
 SinkResultType PhysicalInsert::Sink(ExecutionContext &context, DataChunk &insert_chunk,

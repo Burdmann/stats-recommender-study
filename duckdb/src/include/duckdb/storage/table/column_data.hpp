@@ -301,6 +301,10 @@ public:
 
 	template <class T>
 	void InitAdditionalStats(std::vector<T> &temp_storage, BaseStatistics &stats, idx_t index, int column) {
+		if (additional_stats_invalidated) {
+			temp_storage.clear();
+			return;
+		}
 		uint64_t start_time = Util::GetTime();
 		// fprintf(
 		//     stderr,
@@ -322,6 +326,7 @@ public:
 	}
 
 	void InitStats(BaseStatistics &stats, idx_t index, int column) {
+		lock_guard<mutex> stats_guard(stats_lock);
 		map_mutex.lock();
 		switch (type.InternalType()) {
 		case PhysicalType::BOOL:
@@ -396,11 +401,13 @@ public:
 		AdditionalStats<T> &astats = *((AdditionalStats<T> *)stats.additional_stats);
 		uint64_t start_time = Util::GetTime();
 		FilterPropagateResult result = astats.Query(&astats, comparison_type, constant);
-		// fprintf(stderr,
-		//         "%lx,%lu,%lu,EVAL_ADDITIONAL_STATISTICS_END,\"{\"\"statistic\"\":\"\"%p\"\",\"\"type\"\":\"\"%s\"\","
-		//         "\"\"start_time\"\":%lu,\"\"result\"\":%u}\"\n",
-		//         duckdb::Util::session_id, duckdb::Util::command_count, duckdb::Util::GetTime(), &stats, astats->name,
-		//         start_time, (unsigned int)result);
+#ifndef DEBUG
+		fprintf(stderr,
+		        "%lx,%lu,%lu,EVAL_ADDITIONAL_STATISTICS_END,\"{\"\"statistic\"\":\"\"%p\"\",\"\"type\"\":\"\"%d\"\","
+		        "\"\"start_time\"\":%lu,\"\"result\"\":%u}\"\n",
+		        duckdb::Util::session_id, duckdb::Util::command_count, duckdb::Util::GetTime(), &stats,
+		        (int)astats.type, start_time, (unsigned int)result);
+#endif
 		return result;
 	}
 
@@ -538,6 +545,8 @@ protected:
 	unique_ptr<UpdateSegment> updates;
 	//! The lock for the stats
 	mutable mutex stats_lock;
+	//! Additional statistics are only valid until the row group is modified after initialization.
+	bool additional_stats_invalidated = false;
 	//! Total transient allocation size
 	atomic<idx_t> allocation_size;
 

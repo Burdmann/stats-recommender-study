@@ -39,7 +39,8 @@ struct ColumnAppendState {
 };
 
 struct RowGroupAppendState {
-	explicit RowGroupAppendState(TableAppendState &parent_p) : parent(parent_p) {
+	explicit RowGroupAppendState(TableAppendState &parent_p)
+	    : parent(parent_p), row_group(nullptr), offset_in_row_group(0) {
 	}
 
 	//! The parent append state
