@@ -18,6 +18,25 @@
 
 namespace duckdb {
 
+template <class T>
+using NONE = EmptyAdditionalStats<T>;
+template <class T>
+using MIN_MAX = ClusterAdditionalStats<T, 1>;
+template <class T>
+using CLUSTER_SMALL = ClusterAdditionalStats<T, 10>;
+template <class T>
+using CLUSTER_MEDIUM = ClusterAdditionalStats<T, 50>;
+template <class T>
+using CLUSTER_LARGE = ClusterAdditionalStats<T, 200>;
+template <class T>
+using BLOOM_SMALL = BloomAdditionalStats<T, 20, 1>;
+template <class T>
+using BLOOM_MEDIUM = BloomAdditionalStats<T, 100, 1>;
+template <class T>
+using BLOOM_LARGE = BloomAdditionalStats<T, 400, 1>;
+template <class T>
+using DICTIONARY = DictionaryAdditionalStats<T, 300>;
+
 enum class STATISTIC_TYPE : int8_t {
 	ERROR = -1,
 	NONE = 0,
@@ -44,6 +63,7 @@ public:
 	static STATISTIC_TYPE default_type;
 	static std::unordered_map<std::tuple<std::string, unsigned int, unsigned int>, STATISTIC_TYPE, StatisticsSetKeyHash>
 	    mapping;
+
 	template <class T>
 	static inline AdditionalStats<T> *construct(std::vector<T> &data, STATISTIC_TYPE type) {
 		AdditionalStats<T> *res;
@@ -51,31 +71,31 @@ public:
 		case STATISTIC_TYPE::ERROR:
 			throw std::invalid_argument("Cannot initialise statistics of type -1");
 		case STATISTIC_TYPE::NONE:
-			res = new EmptyAdditionalStats<T>(data);
+			res = new NONE<T>(data);
 			break;
 		case STATISTIC_TYPE::MIN_MAX:
-			res = new ClusterAdditionalStats<T, 1>(data);
+			res = new MIN_MAX<T>(data);
 			break;
 		case STATISTIC_TYPE::CLUSTER_SMALL:
-			res = new ClusterAdditionalStats<T, 10>(data);
+			res = new CLUSTER_SMALL<T>(data);
 			break;
 		case STATISTIC_TYPE::CLUSTER_MEDIUM:
-			res = new ClusterAdditionalStats<T, 50>(data);
+			res = new CLUSTER_MEDIUM<T>(data);
 			break;
 		case STATISTIC_TYPE::CLUSTER_LARGE:
-			res = new ClusterAdditionalStats<T, 200>(data);
+			res = new CLUSTER_LARGE<T>(data);
 			break;
 		case STATISTIC_TYPE::BLOOM_SMALL:
-			res = new BloomAdditionalStats<T, 20, 1>(data, 1);
+			res = new BLOOM_SMALL<T>(data, 1);
 			break;
 		case STATISTIC_TYPE::BLOOM_MEDIUM:
-			res = new BloomAdditionalStats<T, 100, 1>(data, 1);
+			res = new BLOOM_MEDIUM<T>(data, 1);
 			break;
 		case STATISTIC_TYPE::BLOOM_LARGE:
-			res = new BloomAdditionalStats<T, 400, 1>(data, 2);
+			res = new BLOOM_LARGE<T>(data, 2);
 			break;
 		case STATISTIC_TYPE::DICTIONARY:
-			res = new DictionaryAdditionalStats<T, 300>(data);
+			res = new DICTIONARY<T>(data);
 			break;
 		default:
 			return NULL;

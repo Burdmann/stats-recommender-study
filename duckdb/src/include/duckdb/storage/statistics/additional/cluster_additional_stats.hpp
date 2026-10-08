@@ -60,6 +60,29 @@ struct ClusterValueTraits<double> {
 	}
 };
 
+template <class T, class Enable = void>
+struct ClusterGapType {
+	using type = typename std::make_unsigned<T>::type;
+};
+
+template <class T>
+struct ClusterGapType<T, typename std::enable_if<std::is_floating_point<T>::value>::type> {
+	using type = T;
+};
+
+template <>
+struct ClusterGapType<bool, void> {
+	using type = uint8_t;
+};
+template <>
+struct ClusterGapType<duckdb::uhugeint_t, void> {
+	using type = duckdb::uhugeint_t;
+};
+template <>
+struct ClusterGapType<duckdb::hugeint_t, void> {
+	using type = duckdb::uhugeint_t;
+};
+
 template <class T, unsigned int N>
 class ClusterAdditionalStats : public AdditionalStats<T> {
 private:
@@ -68,10 +91,8 @@ private:
 			return GreaterThan::Operation(right, left);
 		}
 	};
-	static const unsigned int MAX_CLUSTERS = N + 3;
-	unsigned int cluster_count = 0;
-	T min_values[MAX_CLUSTERS];
-	T max_values[MAX_CLUSTERS];
+	T min_values[N];
+	T max_values[N];
 	static bool ConstantExactRange(T min, T max, T constant) {
 		return Equals::Operation(constant, min) && Equals::Operation(constant, max);
 	}
@@ -96,11 +117,14 @@ public:
 
 	inline static void Initialise_implementation(std::vector<T> &data, AdditionalStats<T> *stats) {
 		ClusterAdditionalStats<T, N> *nstats = static_cast<ClusterAdditionalStats<T, N> *>(stats);
-		nstats->cluster_count = 0;
+		unsigned int cluster_count = 0;
 
 		int size = data.size();
-		if (size == 0)
+		if (size == 0) {
+			nstats->min_values[0] = T(1);
+			nstats->max_values[0] = T(0);
 			return;
+		}
 
 		std::sort(data.begin(), data.end(), DuckDBLess());
 		bool has_negative_infinity = false;
@@ -136,36 +160,60 @@ public:
 		}
 		auto &cluster_data = has_special_values ? finite_data : data;
 
-		if (has_negative_infinity) {
-			nstats->min_values[nstats->cluster_count] = negative_infinity;
-			nstats->max_values[nstats->cluster_count++] = negative_infinity;
-		}
-
-		if (cluster_data.empty()) {
-			if (has_positive_infinity) {
-				nstats->min_values[nstats->cluster_count] = positive_infinity;
-				nstats->max_values[nstats->cluster_count++] = positive_infinity;
-			}
-			if (has_nan) {
-				nstats->min_values[nstats->cluster_count] = nan_value;
-				nstats->max_values[nstats->cluster_count++] = nan_value;
+		if (N == 1 || (N < 4 && has_special_values)) {
+			nstats->min_values[cluster_count] = data.front();
+			nstats->max_values[cluster_count] = data.back();
+			cluster_count++;
+			for (int i = cluster_count; i < N; i++) {
+				nstats->min_values[i] = nstats->min_values[i - 1];
+				nstats->max_values[i] = nstats->max_values[i - 1];
 			}
 			return;
 		}
 
+		if (has_negative_infinity) {
+			nstats->min_values[cluster_count] = negative_infinity;
+			nstats->max_values[cluster_count++] = negative_infinity;
+		}
+
+		if (cluster_data.empty()) {
+			if (has_positive_infinity) {
+				nstats->min_values[cluster_count] = positive_infinity;
+				nstats->max_values[cluster_count++] = positive_infinity;
+			}
+			if (has_nan) {
+				nstats->min_values[cluster_count] = nan_value;
+				nstats->max_values[cluster_count++] = nan_value;
+			}
+			for (int i = cluster_count; i < N; i++) {
+				nstats->min_values[i] = nstats->min_values[i - 1];
+				nstats->max_values[i] = nstats->max_values[i - 1];
+			}
+			return;
+		}
+
+		using U = typename ClusterGapType<T>::type;
+
 		// compute gap sizes
-		std::vector<std::pair<T, int>> gaps; // first element of each pair stores the gap, second is the index
+		std::vector<std::pair<U, idx_t>> gaps; // first element of each pair stores the gap, second is the index
 		for (idx_t i = 0; i + 1 < cluster_data.size(); i++) {
-			gaps.push_back({cluster_data[i + 1] - cluster_data[i], UnsafeNumericCast<int>(i)});
+			const auto left = static_cast<U>(cluster_data[i]);
+			const auto right = static_cast<U>(cluster_data[i + 1]);
+			gaps.emplace_back(right - left, i);
 		}
 
 		// select the k largest gaps
-		T zero = (T)0;
-		std::vector<int> idxs;
-		std::sort(gaps.begin(), gaps.end(), std::greater<std::pair<T, int>>());
-
-		for (int i = 0; i < std::min((unsigned long)gaps.size(), (unsigned long)(N - 1)); i++) {
-			if (gaps[i].first == zero)
+		std::vector<idx_t> idxs;
+		std::sort(gaps.begin(), gaps.end(), std::greater<std::pair<U, idx_t>>());
+		unsigned long stop = N - 1;
+		if (has_nan)
+			stop--;
+		if (has_negative_infinity)
+			stop--;
+		if (has_positive_infinity)
+			stop--;
+		for (int i = 0; i < std::min((unsigned long)gaps.size(), stop); i++) {
+			if (gaps[i].first == U(0))
 				break;
 			idxs.push_back(gaps[i].second);
 		}
@@ -174,28 +222,32 @@ public:
 		std::sort(idxs.begin(), idxs.end());
 		T start = cluster_data[0];
 		for (int idx : idxs) {
-			nstats->min_values[nstats->cluster_count] = start;
-			nstats->max_values[nstats->cluster_count] = cluster_data[idx];
+			nstats->min_values[cluster_count] = start;
+			nstats->max_values[cluster_count] = cluster_data[idx];
 			start = cluster_data[idx + 1];
-			nstats->cluster_count++;
+			cluster_count++;
 		}
 
-		nstats->min_values[nstats->cluster_count] = start;
-		nstats->max_values[nstats->cluster_count++] = cluster_data.back();
+		nstats->min_values[cluster_count] = start;
+		nstats->max_values[cluster_count++] = cluster_data.back();
 		if (has_positive_infinity) {
-			nstats->min_values[nstats->cluster_count] = positive_infinity;
-			nstats->max_values[nstats->cluster_count++] = positive_infinity;
+			nstats->min_values[cluster_count] = positive_infinity;
+			nstats->max_values[cluster_count++] = positive_infinity;
 		}
 		if (has_nan) {
-			nstats->min_values[nstats->cluster_count] = nan_value;
-			nstats->max_values[nstats->cluster_count++] = nan_value;
+			nstats->min_values[cluster_count] = nan_value;
+			nstats->max_values[cluster_count++] = nan_value;
+		}
+		for (int i = cluster_count; i < N; i++) {
+			nstats->min_values[i] = nstats->min_values[i - 1];
+			nstats->max_values[i] = nstats->max_values[i - 1];
 		}
 	}
 
-	inline static idx_t FindLastIndexBeforePoint_Binary(T *min_values, unsigned int len, const T &constant) {
-		idx_t lo = 0;
-		idx_t hi = len - 1;
-		idx_t mid;
+	inline static int FindLastIndexBeforePoint_Binary(T *min_values, unsigned int len, const T &constant) {
+		int lo = 0;
+		int hi = len - 1;
+		int mid;
 		while (lo < hi) {
 			mid = (lo + hi + 1) / 2;
 			if (GreaterThan::Operation(min_values[mid], constant)) {
@@ -212,7 +264,7 @@ public:
 		return mid;
 	}
 
-	inline static idx_t FindLastIndexBeforePoint_Linear(T *min_values, unsigned int len, const T &constant) {
+	inline static int FindLastIndexBeforePoint_Linear(T *min_values, unsigned int len, const T &constant) {
 		for (int i = 0; i < len; i++) {
 			if (GreaterThan::Operation(min_values[i], constant)) {
 				return i - 1;
@@ -221,12 +273,12 @@ public:
 		return len - 1;
 	}
 
-	inline static idx_t FindLastIndexBeforePoint(T *min_values, unsigned int len, const T &constant) {
+	inline static int FindLastIndexBeforePoint(T *min_values, unsigned int len, const T &constant) {
 		return FindLastIndexBeforePoint_Linear(min_values, len, constant);
 	}
 
 	inline static FilterPropagateResult Query_Equal(ClusterAdditionalStats<T, N> *nstats, const T &constant) {
-		int idx = FindLastIndexBeforePoint(nstats->min_values, nstats->cluster_count, constant);
+		int idx = FindLastIndexBeforePoint(nstats->min_values, N, constant);
 		if (idx == -1) {
 			return FilterPropagateResult::FILTER_ALWAYS_FALSE;
 		} else if (GreaterThanEquals::Operation(nstats->max_values[idx], constant)) {
@@ -239,39 +291,27 @@ public:
 	inline static FilterPropagateResult Query_implementation(AdditionalStats<T> *stats, ExpressionType &comparison_type,
 	                                                         const T &constant) {
 		ClusterAdditionalStats<T, N> *nstats = (ClusterAdditionalStats<T, N> *)stats;
-		// printf("nstats->cluster_count: %d\n", nstats->cluster_count);
-		if (nstats->cluster_count == 0)
+		if (N == 0 || nstats->min_values[0] > nstats->max_values[0])
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
-		// printf("comparison_type: %s\n", ExpressionTypeToString(comparison_type).c_str());
-		// std::cout << "constant: " << (int64_t)constant << "\n";
-		// for (int i = 0; i < nstats->cluster_count; i++) {
-		// 	std::cout << "cluster: " << (int64_t)nstats->min_values[i] << " -> " << (int64_t)nstats->max_values[i]
-		// 	          << "\n";
-		// }
 
 		switch (comparison_type) {
 		case ExpressionType::COMPARE_EQUAL:
 		case ExpressionType::COMPARE_NOT_DISTINCT_FROM:
 			return Query_Equal(nstats, constant);
 		case ExpressionType::COMPARE_NOTEQUAL:
-			return (nstats->cluster_count == 1 && Equals::Operation(nstats->min_values[0], nstats->max_values[0]) &&
-			        Equals::Operation(nstats->min_values[0], constant))
-			           ? FilterPropagateResult::FILTER_ALWAYS_FALSE
-					   : FilterPropagateResult::NO_PRUNING_POSSIBLE;
 		case ExpressionType::COMPARE_DISTINCT_FROM:
-			return (nstats->cluster_count == 1 && Equals::Operation(nstats->min_values[0], nstats->max_values[0]) &&
+			return (Equals::Operation(nstats->min_values[0], nstats->max_values[N - 1]) &&
 			        Equals::Operation(nstats->min_values[0], constant))
 			           ? FilterPropagateResult::FILTER_ALWAYS_FALSE
 					   : FilterPropagateResult::NO_PRUNING_POSSIBLE;
 		case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
 		case ExpressionType::COMPARE_GREATERTHAN:
-			return (nstats->cluster_count > 0 &&
-			        GreaterThanEquals::Operation(nstats->max_values[nstats->cluster_count - 1], constant))
+			return (GreaterThanEquals::Operation(nstats->max_values[N - 1], constant))
 			           ? FilterPropagateResult::NO_PRUNING_POSSIBLE
 					   : FilterPropagateResult::FILTER_ALWAYS_FALSE;
 		case ExpressionType::COMPARE_LESSTHANOREQUALTO:
 		case ExpressionType::COMPARE_LESSTHAN:
-			return (nstats->cluster_count > 0 && LessThanEquals::Operation(nstats->min_values[0], constant))
+			return (LessThanEquals::Operation(nstats->min_values[0], constant))
 			           ? FilterPropagateResult::NO_PRUNING_POSSIBLE
 					   : FilterPropagateResult::FILTER_ALWAYS_FALSE;
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
@@ -282,9 +322,9 @@ public:
 	inline static FilterPropagateResult QueryRange_implementation(AdditionalStats<T> *stats, const T &start,
 	                                                              const T &end) {
 		ClusterAdditionalStats<T, N> *nstats = (ClusterAdditionalStats<T, N> *)stats;
-		if (nstats->cluster_count == 0)
+		if (N == 0 || nstats->min_values[0] > nstats->max_values[0])
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
-		int idx = FindLastIndexBeforePoint(nstats->min_values, nstats->cluster_count, start);
+		int idx = FindLastIndexBeforePoint(nstats->min_values, N, start);
 		if (idx == -1) {
 			if (GreaterThan::Operation(nstats->min_values[0], end)) {
 				return FilterPropagateResult::FILTER_ALWAYS_FALSE;
@@ -292,7 +332,7 @@ public:
 				return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 			}
 		} else if (GreaterThanEquals::Operation(nstats->max_values[idx], start) ||
-		           (idx < nstats->cluster_count - 1 && LessThanEquals::Operation(nstats->min_values[idx + 1], end))) {
+		           (idx < N - 1 && LessThanEquals::Operation(nstats->min_values[idx + 1], end))) {
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 		} else {
 			return FilterPropagateResult::FILTER_ALWAYS_FALSE;
@@ -317,7 +357,6 @@ public:
 template <unsigned int N>
 class ClusterAdditionalStats<std::string, N> : public AdditionalStats<std::string> {
 private:
-	unsigned int cluster_count = 0;
 	data_array min_values[N];
 	data_array max_values[N];
 	struct StringComparisonResult {
@@ -383,7 +422,7 @@ public:
 
 	inline static void Initialise_implementation(std::vector<std::string> &data, AdditionalStats<std::string> *stats) {
 		ClusterAdditionalStats<std::string, N> *nstats = (ClusterAdditionalStats<std::string, N> *)stats;
-		nstats->cluster_count = 0;
+		unsigned int cluster_count = 0;
 
 		int size = data.size();
 		if (size == 0)
@@ -415,17 +454,17 @@ public:
 		data_array next;
 		ConstructValue(const_data_ptr_cast(data[0].data()), data[0].size(), start);
 		for (int idx : idxs) {
-			nstats->min_values[nstats->cluster_count] = start;
+			nstats->min_values[cluster_count] = start;
 			ConstructValue(const_data_ptr_cast(data[idx].data()), data[idx].size(), next);
-			nstats->max_values[nstats->cluster_count] = next;
+			nstats->max_values[cluster_count] = next;
 			ConstructValue(const_data_ptr_cast(data[idx + 1].data()), data[idx + 1].size(), start);
-			nstats->cluster_count++;
+			cluster_count++;
 		}
 
-		nstats->min_values[nstats->cluster_count] = start;
+		nstats->min_values[cluster_count] = start;
 		ConstructValue(const_data_ptr_cast(data.back().data()), data.back().size(), next);
-		nstats->max_values[nstats->cluster_count] = next;
-		nstats->cluster_count++;
+		nstats->max_values[cluster_count] = next;
+		cluster_count++;
 	}
 
 	inline static FilterPropagateResult Query_inner(const data_array &min_value, const data_array &max_value,
@@ -462,23 +501,10 @@ public:
 	                                                         ExpressionType &comparison_type,
 	                                                         const std::string &constant) {
 		ClusterAdditionalStats<std::string, N> *nstats = (ClusterAdditionalStats<std::string, N> *)stats;
-		// printf("nstats->cluster_count: %d\n", nstats->cluster_count);
-		if (nstats->cluster_count == 0)
+		if (N == 0)
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
-		// printf("comparison_type: %s\n", ExpressionTypeToString(comparison_type).c_str());
-		// std::cout << "constant: " << constant << "\n";
-		// for (int i = 0; i < nstats->cluster_count; i++) {
-		// 	std::cout << "cluster: ";
-		// 	for (int j = 0; j < CLUSTER_MAX_STRING_MINMAX_SIZE && nstats->min_values[i].data[j]; j++) {
-		// 		std::cout << (char)nstats->min_values[i].data[j];
-		// 	}
-		// 	std::cout << " -> ";
-		// 	for (int j = 0; j < CLUSTER_MAX_STRING_MINMAX_SIZE && nstats->max_values[i].data[j]; j++) {
-		// 		std::cout << (char)nstats->max_values[i].data[j];
-		// 	}
-		// 	std::cout << "\n";
-		// }
-		for (int i = 0; i < nstats->cluster_count; i++) {
+
+		for (int i = 0; i < N; i++) {
 			FilterPropagateResult result =
 			    Query_inner(nstats->min_values[i], nstats->max_values[i], comparison_type, constant);
 			if (result == FilterPropagateResult::FILTER_ALWAYS_TRUE) {
@@ -492,7 +518,7 @@ public:
 	inline static FilterPropagateResult QueryRange_implementation(AdditionalStats<std::string> *stats,
 	                                                              const std::string &start, const std::string &end) {
 		ClusterAdditionalStats<std::string, N> *nstats = (ClusterAdditionalStats<std::string, N> *)stats;
-		if (nstats->cluster_count == 0)
+		if (N == 0)
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 		// TODO: implement
 		return FilterPropagateResult::NO_PRUNING_POSSIBLE;

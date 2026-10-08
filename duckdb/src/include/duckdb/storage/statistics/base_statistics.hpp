@@ -141,6 +141,7 @@ public:
 	//! estimate that one may have even if distinct_stats==nullptr
 	idx_t distinct_count;
 	//! Numeric and String stats
+	//! This is needed to pass tests, it is NOT used in the optimiser
 	union {
 		//! Numeric stats data, for numeric stats
 		NumericStatsData numeric_data;

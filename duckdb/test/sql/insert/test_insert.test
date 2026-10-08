@@ -6,6 +6,9 @@ statement ok
 CREATE TABLE integers(i INTEGER)
 
 statement ok
+INSERT INTO integers SELECT 0 WHERE FALSE
+
+statement ok
 INSERT INTO integers VALUES (1), (2), (3), (4), (5)
 
 # insert a constant 1 for every uneven value in "integers"
