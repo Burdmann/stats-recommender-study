@@ -4939,7 +4939,6 @@ static bool LoadStatisticMapping(const std::string &filename) {
 			return false;
 		}
 		mapping[std::make_tuple(fields[0], rowgroup, column)] = static_cast<duckdb::STATISTIC_TYPE>(statistic);
-		printf("mapping[(%s,%u,%u)]=%u\n", fields[0].c_str(), rowgroup, column, statistic);
 	}
 
 	duckdb::StatisticsSet::mapping.swap(mapping);

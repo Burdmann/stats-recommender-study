@@ -55,7 +55,7 @@ def main():
 			color=STATISTIC_COLORS.get(statistic),
 		)
 	x_min, x_max = plt.xlim()
-	plt.xlim(x_min, x_min + (x_max - x_min) * 1.5)
+	plt.xlim(x_min, x_min + (x_max - x_min))
 	plt.legend(title="Statistic", loc="upper left", bbox_to_anchor=(1.02, 1))
 	plt.xlabel("Size")
 	plt.ylabel("Pruning power")
