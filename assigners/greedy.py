@@ -27,7 +27,7 @@ heapq.heapify(pq)
 
 while pq:
     val,pruning_power,table_name,rowgroup,col,statistic,size = heapq.heappop(pq)
-    if size > budget or pruning_power < current_pruning_power[(table_name,rowgroup,col)]:
+    if size > budget or pruning_power <= current_pruning_power[(table_name,rowgroup,col)]:
         continue
     new_val = -(pruning_power-current_pruning_power[(table_name,rowgroup,col)])/(size-current_size[(table_name,rowgroup,col)])
     if val != new_val:
