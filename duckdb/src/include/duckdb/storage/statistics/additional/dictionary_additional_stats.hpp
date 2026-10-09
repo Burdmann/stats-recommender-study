@@ -32,16 +32,9 @@ public:
 		return "dictionary";
 	}
 	inline DictionaryAdditionalStats(std::vector<T> &data) {
-		this->name = GetStaticName();
-		this->Initialise = &Initialise_implementation;
-		this->Query = &Query_implementation;
-		this->QueryRange = &QueryRange_implementation;
-		this->Size = &Size_implementation;
-		this->Serialise = &Serialise_implementation;
-		this->Deserialise = &Deserialise_implementation;
-		this->Initialise(data, this);
+		Initialise(data, this);
 	}
-	inline static void Initialise_implementation(std::vector<T> &data, AdditionalStats<T> *stats) {
+	inline static void Initialise(std::vector<T> &data, AdditionalStats<T> *stats) {
 		DictionaryAdditionalStats<T, N> *nstats = (DictionaryAdditionalStats<T, N> *)stats;
 		for (T item : data) {
 			nstats->dictionary.insert(item);
@@ -57,16 +50,10 @@ public:
 			fprintf(stderr, "%lx,%lu,%lu,DISCARDED_DICTIONARY,\"{\"\"stats\"\":\"\"%p\"\"}\"\n", Util::session_id,
 			        Util::command_count, Util::GetTime(), stats);
 #endif
-		} else {
-			// printf("DID NOT DISCARD DICTIONARY\n");
 		}
-		// for (T item : nstats->dictionary) {
-		// 	std::cout << "ITEM " << (int64_t)item << " IS IN DICTIONARY " << stats << std::endl;
-		// }
-		// printf("END OF DICTIONARY\n");
 	}
-	inline static FilterPropagateResult Query_implementation(AdditionalStats<T> *stats, ExpressionType &comparison_type,
-	                                                         const T &constant) {
+	inline static FilterPropagateResult Query(AdditionalStats<T> *stats, ExpressionType &comparison_type,
+	                                          const T &constant) {
 		DictionaryAdditionalStats<T, N> *nstats = (DictionaryAdditionalStats<T, N> *)stats;
 		if (!nstats->valid)
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
@@ -99,8 +86,7 @@ public:
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 		}
 	}
-	inline static FilterPropagateResult QueryRange_implementation(AdditionalStats<T> *stats, const T &start,
-	                                                              const T &end) {
+	inline static FilterPropagateResult QueryRange(AdditionalStats<T> *stats, const T &start, const T &end) {
 		DictionaryAdditionalStats<T, N> *nstats = (DictionaryAdditionalStats<T, N> *)stats;
 		if (!nstats->valid)
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
@@ -109,12 +95,12 @@ public:
 				return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 		return FilterPropagateResult::FILTER_ALWAYS_FALSE;
 	}
-	inline static size_t Size_implementation(AdditionalStats<T> *stats) {
+	inline static size_t Size(AdditionalStats<T> *stats) {
 		DictionaryAdditionalStats<T, N> *nstats = (DictionaryAdditionalStats<T, N> *)stats;
 		return sizeof(*nstats) + nstats->dictionary.bucket_count() * (sizeof(void *)) +
 		       nstats->dictionary.size() * sizeof(T);
 	}
-	inline static void Serialise_implementation(AdditionalStats<T> *stats, Serializer &serializer) {
+	inline static void Serialise(AdditionalStats<T> *stats, Serializer &serializer) {
 		DictionaryAdditionalStats<T, N> *nstats = (DictionaryAdditionalStats<T, N> *)stats;
 		serializer.WriteProperty(1001, "dictionary:valid", nstats->valid);
 		serializer.WriteProperty(1002, "dictionary:size", nstats->dictionary.size());
@@ -122,7 +108,7 @@ public:
 			serializer.WriteProperty(1003, "dictionary:item", item);
 		}
 	}
-	inline static void Deserialise_implementation(AdditionalStats<T> *stats, Deserializer &deserializer) {
+	inline static void Deserialise(AdditionalStats<T> *stats, Deserializer &deserializer) {
 		DictionaryAdditionalStats<T, N> *nstats = (DictionaryAdditionalStats<T, N> *)stats;
 		nstats->valid = deserializer.template ReadProperty<bool>(1001, "dictionary:valid");
 		auto size = deserializer.template ReadProperty<unsigned int>(1002, "dictionary:size");

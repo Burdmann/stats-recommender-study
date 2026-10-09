@@ -78,7 +78,6 @@ The following files have been added:
 
 - [additional_stats.hpp](./duckdb/src/include/duckdb/storage/statistics/additional/additional_stats.hpp)
 - [additional_stats_util.hpp](./duckdb/src/include/duckdb/storage/statistics/additional/additional_stats_util.hpp)
-- [always_prune_additional_stats.hpp](./duckdb/src/include/duckdb/storage/statistics/additional/always_prune_additional_stats.hpp)
 - [bloom_additional_stats.hpp](./duckdb/src/include/duckdb/storage/statistics/additional/bloom_additional_stats.hpp)
 - [cluster_additional_stats.hpp](./duckdb/src/include/duckdb/storage/statistics/additional/cluster_additional_stats.hpp)
 - [dictionary_additional_stats.hpp](./duckdb/src/include/duckdb/storage/statistics/additional/dictionary_additional_stats.hpp)

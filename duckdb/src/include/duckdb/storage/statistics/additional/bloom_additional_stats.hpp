@@ -22,23 +22,10 @@ namespace duckdb {
 
 // parameters should be chosen based on https://www.vldb.org/pvldb/vol12/p502-lang.pdf
 
+template <unsigned int BLOCK_COUNT, unsigned int N, unsigned int K>
 class BloomUtil {
 public:
-	uint BLOCK_COUNT;
-	uint N;
-	uint K;
-
 public:
-	BloomUtil() {
-		this->BLOCK_COUNT = 0;
-		this->N = 0;
-	}
-	BloomUtil(uint BLOCK_COUNT, uint N, uint K) {
-		this->BLOCK_COUNT = BLOCK_COUNT;
-		this->N = N;
-		this->K = K;
-	}
-
 	// https://github.com/PeterScott/murmur3
 	static inline uint64_t rotl64(uint64_t x, int8_t r) {
 		return (x << r) | (x >> (64 - r));
@@ -164,21 +151,21 @@ public:
 		return MurmurHash3_x64_128(&h, sizeof(size_t), 1);
 	}
 
-	inline uint64_t *GetBlock(uint32_t h1, uint32_t h2, uint64_t *bit_array) {
-		uint32_t block_idx = h1 % this->BLOCK_COUNT;
-		uint32_t byte_idx = block_idx * this->N;
+	static inline uint64_t *GetBlock(uint32_t h1, uint32_t h2, uint64_t *bit_array) {
+		uint32_t block_idx = h1 % BLOCK_COUNT;
+		uint32_t byte_idx = block_idx * N;
 		return bit_array + byte_idx;
 	}
 	template <class T>
-	inline bool QueryUtil(T value, uint64_t *bit_array) {
+	static inline bool QueryUtil(T value, uint64_t *bit_array) {
 		size_t h = hash(value);
 		uint32_t h1 = h & ((1ull << 32) - 1);
 		uint32_t h2 = h >> 32;
 
 		bool result = true;
 		uint64_t *block = GetBlock(h1, h2, bit_array);
-		for (int i = 1; i <= this->K; i++) {
-			uint32_t bit_pos = (h1 + i * h2) % (64 * this->N);
+		for (int i = 1; i <= K; i++) {
+			uint32_t bit_pos = (h1 + i * h2) % (64 * N);
 			uint64_t bit_idx = bit_pos % 64;
 			uint64_t byte_idx = bit_pos / 64;
 			result = result && ((block[byte_idx] >> bit_idx) & 1);
@@ -186,7 +173,7 @@ public:
 		return result;
 	}
 	template <class T>
-	inline void Insert(T new_value, uint64_t *bit_array) {
+	static inline void Insert(T new_value, uint64_t *bit_array) {
 		size_t h = hash(new_value);
 		uint32_t h1 = h & ((1ull << 32) - 1);
 		uint32_t h2 = h >> 32;
@@ -195,8 +182,8 @@ public:
 		uint64_t *block = GetBlock(h1, h2, bit_array);
 
 		// chosse k bits within the block to set
-		for (int i = 1; i <= this->K; i++) {
-			uint32_t bit_pos = (h1 + i * h2) % (64 * this->N);
+		for (int i = 1; i <= K; i++) {
+			uint32_t bit_pos = (h1 + i * h2) % (64 * N);
 			uint64_t bit_idx = bit_pos % 64;
 			uint64_t byte_idx = bit_pos / 64;
 			block[byte_idx] |= (1ull << bit_idx);
@@ -204,44 +191,35 @@ public:
 	}
 };
 
-// N = block size, M = number of blocks
-template <class T, unsigned int N, unsigned int M>
+// N = block size, M = number of blocks, K = number of hash functions
+template <class T, unsigned int N, unsigned int M, unsigned int K>
 class BloomAdditionalStats : public AdditionalStats<T> {
 private:
 	uint64_t bit_array[N * M];
-	BloomUtil util;
 
 public:
 	static inline const char *GetStaticName() {
 		return "bloom";
 	}
-	inline BloomAdditionalStats(std::vector<T> &data, uint k) {
-		this->util = BloomUtil(M, N, k);
-		this->name = GetStaticName();
-		this->Initialise = &Initialise_implementation;
-		this->Query = &Query_implementation;
-		this->QueryRange = &QueryRange_implementation;
-		this->Size = &Size_implementation;
-		this->Serialise = &Serialise_implementation;
-		this->Deserialise = &Deserialise_implementation;
-		this->Initialise(data, this);
+	inline BloomAdditionalStats(std::vector<T> &data) {
+		Initialise(data, this);
 	}
 
-	inline static void Initialise_implementation(std::vector<T> &data, AdditionalStats<T> *stats) {
-		BloomAdditionalStats<T, N, M> *nstats = (BloomAdditionalStats<T, N, M> *)stats;
+	inline static void Initialise(std::vector<T> &data, AdditionalStats<T> *stats) {
+		BloomAdditionalStats<T, N, M, K> *nstats = (BloomAdditionalStats<T, N, M, K> *)stats;
 		std::fill(nstats->bit_array, nstats->bit_array + (N * M), 0);
 		for (T element : data) {
-			nstats->util.Insert(element, nstats->bit_array);
+			BloomUtil<M, N, K>::Insert(element, nstats->bit_array);
 		}
 	}
 
-	inline static FilterPropagateResult Query_implementation(AdditionalStats<T> *stats, ExpressionType &comparison_type,
-	                                                         const T &constant) {
+	inline static FilterPropagateResult Query(AdditionalStats<T> *stats, ExpressionType &comparison_type,
+	                                          const T &constant) {
 		switch (comparison_type) {
 		case ExpressionType::COMPARE_EQUAL:
 		case ExpressionType::COMPARE_NOT_DISTINCT_FROM: {
-			BloomAdditionalStats<T, N, M> *nstats = (BloomAdditionalStats<T, N, M> *)stats;
-			if (nstats->util.QueryUtil(constant, nstats->bit_array)) {
+			BloomAdditionalStats<T, N, M, K> *nstats = (BloomAdditionalStats<T, N, M, K> *)stats;
+			if (BloomUtil<M, N, K>::QueryUtil(constant, nstats->bit_array)) {
 				return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 			}
 
@@ -252,18 +230,17 @@ public:
 		}
 	}
 
-	inline static FilterPropagateResult QueryRange_implementation(AdditionalStats<T> *stats, const T &start,
-	                                                              const T &end) {
+	inline static FilterPropagateResult QueryRange(AdditionalStats<T> *stats, const T &start, const T &end) {
 		return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 	}
 
-	inline static size_t Size_implementation(AdditionalStats<T> *stats) {
-		BloomAdditionalStats<T, N, M> *nstats = (BloomAdditionalStats<T, N, M> *)stats;
+	inline static size_t Size(AdditionalStats<T> *stats) {
+		BloomAdditionalStats<T, N, M, K> *nstats = (BloomAdditionalStats<T, N, M, K> *)stats;
 		return sizeof(*nstats);
 	}
-	inline static void Serialise_implementation(AdditionalStats<T> *stats, Serializer &serializer) {
+	inline static void Serialise(AdditionalStats<T> *stats, Serializer &serializer) {
 	}
-	inline static void Deserialise_implementation(AdditionalStats<T> *stats, Deserializer &deserializer) {
+	inline static void Deserialise(AdditionalStats<T> *stats, Deserializer &deserializer) {
 	}
 };
 

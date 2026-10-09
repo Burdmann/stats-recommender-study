@@ -105,17 +105,10 @@ public:
 		return "cluster";
 	}
 	inline ClusterAdditionalStats(std::vector<T> &data) {
-		this->name = GetStaticName();
-		this->Initialise = &Initialise_implementation;
-		this->Query = &Query_implementation;
-		this->QueryRange = &QueryRange_implementation;
-		this->Size = &Size_implementation;
-		this->Serialise = &Serialise_implementation;
-		this->Deserialise = &Deserialise_implementation;
-		this->Initialise(data, this);
+		Initialise(data, this);
 	}
 
-	inline static void Initialise_implementation(std::vector<T> &data, AdditionalStats<T> *stats) {
+	inline static void Initialise(std::vector<T> &data, AdditionalStats<T> *stats) {
 		ClusterAdditionalStats<T, N> *nstats = static_cast<ClusterAdditionalStats<T, N> *>(stats);
 		unsigned int cluster_count = 0;
 
@@ -288,8 +281,8 @@ public:
 		}
 	}
 
-	inline static FilterPropagateResult Query_implementation(AdditionalStats<T> *stats, ExpressionType &comparison_type,
-	                                                         const T &constant) {
+	inline static FilterPropagateResult Query(AdditionalStats<T> *stats, ExpressionType &comparison_type,
+	                                          const T &constant) {
 		ClusterAdditionalStats<T, N> *nstats = (ClusterAdditionalStats<T, N> *)stats;
 		if (N == 0 || nstats->min_values[0] > nstats->max_values[0])
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
@@ -319,8 +312,7 @@ public:
 			throw InternalException("Expression type in zonemap check not implemented");
 		}
 	}
-	inline static FilterPropagateResult QueryRange_implementation(AdditionalStats<T> *stats, const T &start,
-	                                                              const T &end) {
+	inline static FilterPropagateResult QueryRange(AdditionalStats<T> *stats, const T &start, const T &end) {
 		ClusterAdditionalStats<T, N> *nstats = (ClusterAdditionalStats<T, N> *)stats;
 		if (N == 0 || nstats->min_values[0] > nstats->max_values[0])
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
@@ -338,13 +330,13 @@ public:
 			return FilterPropagateResult::FILTER_ALWAYS_FALSE;
 		}
 	}
-	inline static size_t Size_implementation(AdditionalStats<T> *stats) {
+	inline static size_t Size(AdditionalStats<T> *stats) {
 		ClusterAdditionalStats<T, N> *nstats = (ClusterAdditionalStats<T, N> *)stats;
 		return sizeof(*nstats);
 	}
-	inline static void Serialise_implementation(AdditionalStats<T> *stats, Serializer &serializer) {
+	inline static void Serialise(AdditionalStats<T> *stats, Serializer &serializer) {
 	}
-	inline static void Deserialise_implementation(AdditionalStats<T> *stats, Deserializer &deserializer) {
+	inline static void Deserialise(AdditionalStats<T> *stats, Deserializer &deserializer) {
 	}
 };
 
@@ -410,17 +402,10 @@ public:
 		return "cluster";
 	}
 	inline ClusterAdditionalStats(std::vector<std::string> &data) {
-		this->name = GetStaticName();
-		this->Initialise = &Initialise_implementation;
-		this->Query = &Query_implementation;
-		this->QueryRange = &QueryRange_implementation;
-		this->Size = &Size_implementation;
-		this->Serialise = &Serialise_implementation;
-		this->Deserialise = &Deserialise_implementation;
-		this->Initialise(data, this);
+		Initialise(data, this);
 	}
 
-	inline static void Initialise_implementation(std::vector<std::string> &data, AdditionalStats<std::string> *stats) {
+	inline static void Initialise(std::vector<std::string> &data, AdditionalStats<std::string> *stats) {
 		ClusterAdditionalStats<std::string, N> *nstats = (ClusterAdditionalStats<std::string, N> *)stats;
 		unsigned int cluster_count = 0;
 
@@ -497,9 +482,8 @@ public:
 			throw InternalException("Expression type not implemented for string statistics zone map");
 		}
 	}
-	inline static FilterPropagateResult Query_implementation(AdditionalStats<std::string> *stats,
-	                                                         ExpressionType &comparison_type,
-	                                                         const std::string &constant) {
+	inline static FilterPropagateResult Query(AdditionalStats<std::string> *stats, ExpressionType &comparison_type,
+	                                          const std::string &constant) {
 		ClusterAdditionalStats<std::string, N> *nstats = (ClusterAdditionalStats<std::string, N> *)stats;
 		if (N == 0)
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
@@ -515,8 +499,8 @@ public:
 		return FilterPropagateResult::FILTER_ALWAYS_FALSE;
 	}
 
-	inline static FilterPropagateResult QueryRange_implementation(AdditionalStats<std::string> *stats,
-	                                                              const std::string &start, const std::string &end) {
+	inline static FilterPropagateResult QueryRange(AdditionalStats<std::string> *stats, const std::string &start,
+	                                               const std::string &end) {
 		ClusterAdditionalStats<std::string, N> *nstats = (ClusterAdditionalStats<std::string, N> *)stats;
 		if (N == 0)
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
@@ -524,13 +508,13 @@ public:
 		return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 	}
 
-	inline static size_t Size_implementation(AdditionalStats<std::string> *stats) {
+	inline static size_t Size(AdditionalStats<std::string> *stats) {
 		ClusterAdditionalStats<std::string, N> *nstats = (ClusterAdditionalStats<std::string, N> *)stats;
 		return sizeof(*nstats);
 	}
-	inline static void Serialise_implementation(AdditionalStats<std::string> *stats, Serializer &serializer) {
+	inline static void Serialise(AdditionalStats<std::string> *stats, Serializer &serializer) {
 	}
-	inline static void Deserialise_implementation(AdditionalStats<std::string> *stats, Deserializer &deserializer) {
+	inline static void Deserialise(AdditionalStats<std::string> *stats, Deserializer &deserializer) {
 	}
 };
 

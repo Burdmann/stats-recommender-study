@@ -13,7 +13,7 @@ ATTACHED = True # FIXME:
 NUM_STATS = len(in_files)
 QUERIES_START = 2*NUM_TABLES+NUM_QUERIES+2 + (2 if ATTACHED else 0)
 
-EMPTY_SIZE = 200
+EMPTY_SIZE = 0
 
 if os.path.exists("test.db"):
     os.remove("test.db")

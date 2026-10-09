@@ -21,32 +21,24 @@ public:
 		return "empty";
 	}
 	inline EmptyAdditionalStats(std::vector<T> &data) {
-		this->name = GetStaticName();
-		this->Initialise = &Initialise_implementation;
-		this->Query = &Query_implementation;
-		this->QueryRange = &QueryRange_implementation;
-		this->Size = &Size_implementation;
-		this->Serialise = &Serialise_implementation;
-		this->Deserialise = &Deserialise_implementation;
-		this->Initialise(data, this);
+		Initialise(data, this);
 	}
-	inline static void Initialise_implementation(std::vector<T> &data, AdditionalStats<T> *stats) {
+	inline static void Initialise(std::vector<T> &data, AdditionalStats<T> *stats) {
 	}
-	inline static FilterPropagateResult Query_implementation(AdditionalStats<T> *stats, ExpressionType &comparison_type,
-	                                                         const T &constant) {
+	inline static FilterPropagateResult Query(AdditionalStats<T> *stats, ExpressionType &comparison_type,
+	                                          const T &constant) {
 		return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 	}
-	inline static FilterPropagateResult QueryRange_implementation(AdditionalStats<T> *stats, const T &start,
-	                                                              const T &end) {
+	inline static FilterPropagateResult QueryRange(AdditionalStats<T> *stats, const T &start, const T &end) {
 		return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 	}
-	inline static size_t Size_implementation(AdditionalStats<T> *stats) {
+	inline static size_t Size(AdditionalStats<T> *stats) {
 		EmptyAdditionalStats<T> *nstats = (EmptyAdditionalStats<T> *)stats;
 		return sizeof(*nstats);
 	}
-	inline static void Serialise_implementation(AdditionalStats<T> *stats, Serializer &serializer) {
+	inline static void Serialise(AdditionalStats<T> *stats, Serializer &serializer) {
 	}
-	inline static void Deserialise_implementation(AdditionalStats<T> *stats, Deserializer &deserializer) {
+	inline static void Deserialise(AdditionalStats<T> *stats, Deserializer &deserializer) {
 	}
 };
 

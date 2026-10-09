@@ -25,7 +25,6 @@
 // #include "duckdb/storage/statistics/additional/empty_additional_stats.hpp"
 // #include "duckdb/storage/statistics/additional/cluster_additional_stats.hpp"
 // #include "duckdb/storage/statistics/additional/bloom_additional_stats.hpp"
-// #include "duckdb/storage/statistics/additional/always_prune_additional_stats.hpp"
 // #include "duckdb/storage/statistics/additional/dictionary_additional_stats.hpp"
 #include "duckdb/storage/statistics/additional/stats_set.hpp"
 
@@ -321,7 +320,7 @@ public:
 		        "\"\"column\"\":%d,\"\"type\"\":"
 		        "\"\"%s\"\",\"\"size\"\":%lu,\"\"start_time\"\":%lu}\"\n",
 		        Util::session_id, Util::command_count, Util::GetTime(), table_identifier.c_str(), index, column,
-		        astats->name, astats->Size(astats), start_time);
+		        StatisticsSet::Name<T>(astats), StatisticsSet::Size<T>(astats), start_time);
 #endif
 	}
 
@@ -400,7 +399,8 @@ public:
 		}
 		AdditionalStats<T> &astats = *((AdditionalStats<T> *)stats.additional_stats);
 		uint64_t start_time = Util::GetTime();
-		FilterPropagateResult result = astats.Query(&astats, comparison_type, constant);
+		// FilterPropagateResult result = astats.Query(&astats, comparison_type, constant);
+		FilterPropagateResult result = StatisticsSet::Query(&astats, comparison_type, constant);
 #ifndef DEBUG
 		fprintf(stderr,
 		        "%lx,%lu,%lu,EVAL_ADDITIONAL_STATISTICS_END,\"{\"\"statistic\"\":\"\"%p\"\",\"\"type\"\":\"\"%d\"\","
@@ -453,7 +453,8 @@ public:
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 		AdditionalStats<T> &astats = *((AdditionalStats<T> *)stats.additional_stats);
 		uint64_t start_time = Util::GetTime();
-		FilterPropagateResult result = astats.QueryRange(&astats, start, end);
+		// FilterPropagateResult result = astats.QueryRange(&astats, start, end);
+		FilterPropagateResult result = StatisticsSet::QueryRange(&astats, start, end);
 		// fprintf(stderr,
 		//         "%lx,%lu,%lu,EVAL_ADDITIONAL_STATISTICS_END,\"{\"\"statistic\"\":\"\"%p\"\",\"\"type\"\":\"\"%s\"\","
 		//         "\"\"start_time\"\":%lu,\"\"result\"\":%u}\"\n",
