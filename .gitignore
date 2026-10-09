@@ -98,3 +98,4 @@ out_tpch.txt
 experiments_results/*
 *.log
 test.db
+combined.csv
