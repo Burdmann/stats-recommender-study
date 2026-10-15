@@ -10,7 +10,7 @@ percent = 0
 f.write("time,data\n")
 for i in range(n):
     f.write(f"{random.randint(1767225600000,1769817600000)},{random.randint(1,1000000)}\n")
-    if idx % 10000000 == 0:
+    if idx % (n//100) == 0:
         print(f"{percent}% written")
         percent+=1
     idx += 1

@@ -2,16 +2,9 @@ import duckdb
 import sys
 import os
 
-NUM_TABLES = int(sys.argv[1])
-NUM_QUERIES = int(sys.argv[2])
-NUM_ITERATIONS = int(sys.argv[3])
-OUT_FILE = sys.argv[4]
-rest = sys.argv[5:]
+OUT_FILE = sys.argv[1]
+rest = sys.argv[2:]
 names,in_files = rest[::2],rest[1::2]
-
-ATTACHED = True # FIXME:
-NUM_STATS = len(in_files)
-QUERIES_START = 2*NUM_TABLES+NUM_QUERIES+2 + (2 if ATTACHED else 0)
 
 EMPTY_SIZE = 0
 

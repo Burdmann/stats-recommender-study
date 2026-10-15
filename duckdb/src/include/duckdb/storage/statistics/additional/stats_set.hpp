@@ -35,6 +35,8 @@ template <class T>
 using BLOOM_LARGE = BloomAdditionalStats<T, 400, 1, 2>;
 template <class T>
 using DICTIONARY = DictionaryAdditionalStats<T, 300>;
+template <class T>
+using BLOOM_TINY = BloomAdditionalStats<T, 2, 1, 1>;
 
 enum class STATISTIC_TYPE : int8_t {
 	ERROR = -1,
@@ -46,7 +48,8 @@ enum class STATISTIC_TYPE : int8_t {
 	BLOOM_SMALL = 5,
 	BLOOM_MEDIUM = 6,
 	BLOOM_LARGE = 7,
-	DICTIONARY = 8
+	DICTIONARY = 8,
+	BLOOM_TINY = 9
 };
 
 struct StatisticsSetKeyHash {
@@ -96,6 +99,9 @@ public:
 		case STATISTIC_TYPE::DICTIONARY:
 			res = new DICTIONARY<T>(data);
 			break;
+		case STATISTIC_TYPE::BLOOM_TINY:
+			res = new BLOOM_TINY<T>(data);
+			break;
 		default:
 			return NULL;
 		}
@@ -137,6 +143,8 @@ public:
 			return BLOOM_LARGE<T>::Query(stats, comparison_type, constant);
 		case STATISTIC_TYPE::DICTIONARY:
 			return DICTIONARY<T>::Query(stats, comparison_type, constant);
+		case STATISTIC_TYPE::BLOOM_TINY:
+			return BLOOM_TINY<T>::Query(stats, comparison_type, constant);
 		default:
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 		}
@@ -164,6 +172,8 @@ public:
 			return BLOOM_LARGE<T>::QueryRange(stats, start, end);
 		case STATISTIC_TYPE::DICTIONARY:
 			return DICTIONARY<T>::QueryRange(stats, start, end);
+		case STATISTIC_TYPE::BLOOM_TINY:
+			return BLOOM_TINY<T>::QueryRange(stats, start, end);
 		default:
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 		}
@@ -191,6 +201,8 @@ public:
 			return BLOOM_LARGE<T>::Size(stats);
 		case STATISTIC_TYPE::DICTIONARY:
 			return DICTIONARY<T>::Size(stats);
+		case STATISTIC_TYPE::BLOOM_TINY:
+			return BLOOM_TINY<T>::Size(stats);
 		default:
 			return 0;
 		}
@@ -218,6 +230,8 @@ public:
 			return BLOOM_LARGE<T>::GetStaticName();
 		case STATISTIC_TYPE::DICTIONARY:
 			return DICTIONARY<T>::GetStaticName();
+		case STATISTIC_TYPE::BLOOM_TINY:
+			return BLOOM_TINY<T>::GetStaticName();
 		default:
 			return "error";
 		}
