@@ -2,7 +2,7 @@
 
 namespace duckdb {
 
-STATISTIC_TYPE StatisticsSet::default_type = STATISTIC_TYPE::NONE;
+STATISTIC_TYPE StatisticsSet::default_type = STATISTIC_TYPE::CLUSTER_LARGE;
 std::unordered_map<std::tuple<std::string, unsigned int, unsigned int>, STATISTIC_TYPE, StatisticsSetKeyHash>
     StatisticsSet::mapping;
 

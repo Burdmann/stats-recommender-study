@@ -241,6 +241,9 @@ public:
 		int lo = 0;
 		int hi = len - 1;
 		int mid;
+		if (GreaterThan::Operation(min_values[0], constant))
+			return -1;
+
 		while (lo < hi) {
 			mid = (lo + hi + 1) / 2;
 			if (GreaterThan::Operation(min_values[mid], constant)) {
@@ -252,9 +255,7 @@ public:
 				return mid;
 			}
 		}
-		if (GreaterThan::Operation(min_values[mid], constant))
-			return -1;
-		return mid;
+		return lo;
 	}
 
 	inline static int FindLastIndexBeforePoint_Linear(T *min_values, unsigned int len, const T &constant) {
@@ -267,7 +268,7 @@ public:
 	}
 
 	inline static int FindLastIndexBeforePoint(T *min_values, unsigned int len, const T &constant) {
-		return FindLastIndexBeforePoint_Linear(min_values, len, constant);
+		return FindLastIndexBeforePoint_Binary(min_values, len, constant);
 	}
 
 	inline static FilterPropagateResult Query_Equal(ClusterAdditionalStats<T, N> *nstats, const T &constant) {
