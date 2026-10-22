@@ -1,6 +1,11 @@
 bin_dir="./duckdb/build/release"
 out_dir=$1
 file=$2
+
+# ---------------------------- EXAMPLES ---------------------------------
+# ./analyser.sh taxi_experiment/analysis sql_queries_yellow_tripdata_2024.sql
+# -----------------------------------------------------------------------
+
 for i in $(seq 0 9);
 do
     echo $i

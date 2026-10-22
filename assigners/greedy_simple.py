@@ -1,6 +1,4 @@
 import sys
-from collections import defaultdict
-import heapq
 
 IN_FILE = open(sys.argv[1],"r")
 OUT_FILE = open(sys.argv[2],"w+")
@@ -17,13 +15,17 @@ for i,line in enumerate(IN_FILE):
     table_name,rowgroup,col,statistic,statistic_alias,size,pruning_power = line.split(",")
     rowgroup,col,statistic,size = map(int,[rowgroup,col,statistic,size])
     pruning_power = float(pruning_power)
-    options.append((-pruning_power,size,table_name,rowgroup,col,statistic))
+    if statistic == 0:
+        budget -= size
+        mapping[(table_name,rowgroup,col)] = statistic
+    else:
+        options.append((-pruning_power,size,table_name,rowgroup,col,statistic))
 
 IN_FILE.close()
 options.sort()
 
 for _,size,table_name,rowgroup,col,statistic in options:
-    if not (table_name,rowgroup,col) in mapping and size <= budget:
+    if mapping[(table_name,rowgroup,col)] == 0 and size <= budget:
         budget-=size
         mapping[(table_name,rowgroup,col)] = statistic
 

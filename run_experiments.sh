@@ -1,7 +1,15 @@
 sql_file=$1
 folder=$2
 base_size=$3
+num_tables=$4
+num_queries=$5
+num_iterations=$6
 bin_dir="./duckdb/build/release"
+
+# ---------------------------- EXAMPLES ---------------------------------
+# ./run_experiments.sh sql_queries_combined.sql combined_experiment/ 390656 1 1000 1
+# ./run_experiments.sh sql_queries_yellow_tripdata_2024.sql taxi_experiment/ 1171504 1 15 100
+# -----------------------------------------------------------------------
 
 mkdir -p $folder/1x
 mkdir -p $folder/10x
@@ -82,7 +90,7 @@ rm test.db
 $bin_dir/duckdb -statistic-file $folder/200x/assignment.csv -f $sql_file 2>> $folder/log/greedy_200.log
 rm test.db
 
-python3 data_processor.py 1 1000 1 MIN_MAX $folder/log/min_max.log BLOOM_1 $folder/log/bloom_1.log GREEDY_SIMPLE_1 $folder/log/greedy_simple_1.log GREEDY_1 $folder/log/greedy_1.log \
+python3 data_processor.py $num_tables $num_queries $num_iterations MIN_MAX $folder/log/min_max.log BLOOM_1 $folder/log/bloom_1.log GREEDY_SIMPLE_1 $folder/log/greedy_simple_1.log GREEDY_1 $folder/log/greedy_1.log \
         CLUSTER_10 $folder/log/cluster_10.log BLOOM_10 $folder/log/bloom_10.log GREEDY_SIMPLE_10 $folder/log/greedy_simple_10.log GREEDY_10 $folder/log/greedy_10.log \
         CLUSTER_50 $folder/log/cluster_50.log BLOOM_50 $folder/log/bloom_50.log GREEDY_SIMPLE_50 $folder/log/greedy_simple_50.log GREEDY_50 $folder/log/greedy_50.log \
         CLUSTER_200 $folder/log/cluster_200.log BLOOM_200 $folder/log/bloom_200.log GREEDY_SIMPLE_200 $folder/log/greedy_simple_200.log GREEDY_200 $folder/log/greedy_200.log

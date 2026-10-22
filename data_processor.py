@@ -29,16 +29,16 @@ duckdb.execute(f"CREATE TABLE Result_size (Name VARCHAR, Unit VARCHAR, Table_nam
 # duckdb.execute(f"CREATE TABLE Result_ingestion (Name VARCHAR, Unit VARCHAR, Table_name VARCHAR, {", ".join([f'"{name}" FLOAT' for name in names])});")
 for idx,in_file in enumerate(in_files):
     duckdb.execute(f"CREATE OR REPLACE TABLE tbl AS SELECT * FROM read_csv('{in_file}',max_line_size=100000000);")
-    duckdb.execute("CREATE OR REPLACE TABLE times AS SELECT start_time,end_time,t1.CommandID AS CommandID FROM (SELECT Time as end_time,CommandID FROM tbl WHERE type = 'SQL_COMMAND_RUN_END') t1 JOIN (SELECT Time as start_time,CommandID FROM tbl WHERE type = 'SQL_COMMAND_RUN_START') t2 on t1.CommandID = t2.CommandID;")
+    duckdb.execute("CREATE OR REPLACE TABLE times AS SELECT start_time,end_time,t1.CommandID AS CommandID FROM (SELECT Time as end_time,CommandID FROM tbl WHERE Type = 'SQL_COMMAND_RUN_END') t1 JOIN (SELECT Time as start_time,CommandID FROM tbl WHERE Type = 'SQL_COMMAND_RUN_START') t2 on t1.CommandID = t2.CommandID;")
     for i in range(NUM_TABLES):
-        sizes[idx].append(duckdb.execute(f"SELECT COALESCE(SUM(CAST(Data->'size' AS HUGEINT)),0) FROM tbl WHERE type = 'END_INITIALISE_ADDITIONAL_STATS' AND CommandID = {NUM_TABLES+i+(3 if ATTACHED else 1)};").fetchone()[0])
-        max_sizes[idx].append(duckdb.execute(f"SELECT COALESCE(MAX(CAST(Data->'size' AS HUGEINT)),0) FROM tbl WHERE type = 'END_INITIALISE_ADDITIONAL_STATS' AND CommandID = {NUM_TABLES+i+(3 if ATTACHED else 1)};").fetchone()[0])
+        sizes[idx].append(duckdb.execute(f"SELECT COALESCE(SUM(CAST(Data->'size' AS HUGEINT)),0) FROM tbl WHERE Type = 'END_INITIALISE_ADDITIONAL_STATS' AND CommandID = {NUM_TABLES+i+(3 if ATTACHED else 1)};").fetchone()[0])
+        max_sizes[idx].append(duckdb.execute(f"SELECT COALESCE(MAX(CAST(Data->'size' AS HUGEINT)),0) FROM tbl WHERE Type = 'END_INITIALISE_ADDITIONAL_STATS' AND CommandID = {NUM_TABLES+i+(3 if ATTACHED else 1)};").fetchone()[0])
         ingestion_times[idx].append(duckdb.execute(f"SELECT ROUND((end_time-start_time)/1000000.0,5) FROM times WHERE CommandID = {NUM_TABLES+i+(3 if ATTACHED else 1)}").fetchone()[0])
-        tables[idx].append(duckdb.execute(f"SELECT CAST(Data->'command' AS VARCHAR) FROM tbl WHERE type='SQL_COMMAND_RUN_START' AND CommandID = {NUM_TABLES+i+(3 if ATTACHED else 1)}").fetchone()[0].split()[1])
+        tables[idx].append(duckdb.execute(f"SELECT CAST(Data->'command' AS VARCHAR) FROM tbl WHERE Type='SQL_COMMAND_RUN_START' AND CommandID = {NUM_TABLES+i+(3 if ATTACHED else 1)}").fetchone()[0].split()[1])
 
     for i in range(NUM_QUERIES):
         times[idx] += [l[0] for l in duckdb.execute(f"SELECT ROUND((end_time-start_time)/1000000.0,5) FROM times WHERE CommandID >= {QUERIES_START+NUM_ITERATIONS*i} AND CommandID < {QUERIES_START+NUM_ITERATIONS*(1+i)};").fetchall()]
-        rows_scanned[idx].append(duckdb.execute(f"SELECT SUM(CAST(Data->'count' AS HUGEINT)) AS val FROM tbl WHERE type = 'SCANNED_PARTITIONS' and CommandID = {2*NUM_TABLES+i+(3 if ATTACHED else 1)};").fetchone()[0])
+        rows_scanned[idx] += [l[0] for l in duckdb.execute(f"SELECT AVG(CAST(Data->'count' AS HUGEINT)) AS val FROM tbl WHERE Type = 'SCANNED_PARTITIONS' AND CommandID >= {QUERIES_START+NUM_ITERATIONS*i} AND CommandID < {QUERIES_START+NUM_ITERATIONS*(1+i)};").fetchall()]
 for i in range(NUM_QUERIES):
     for j in range(NUM_ITERATIONS):
         idx = i*NUM_ITERATIONS+j

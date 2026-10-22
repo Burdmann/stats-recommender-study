@@ -4930,7 +4930,7 @@ static bool LoadStatisticMapping(const std::string &filename) {
 				throw std::invalid_argument("invalid column");
 			}
 			statistic = std::stoi(fields[3], &parsed);
-			if (parsed != fields[3].size() || statistic < 0 || statistic > 8) {
+			if (parsed != fields[3].size() || statistic < 0 || statistic > 9) {
 				throw std::invalid_argument("invalid statistic");
 			}
 		} catch (const std::exception &) {
