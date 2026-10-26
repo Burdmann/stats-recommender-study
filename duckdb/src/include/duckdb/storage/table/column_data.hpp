@@ -455,11 +455,11 @@ public:
 		uint64_t start_time = Util::GetTime();
 		// FilterPropagateResult result = astats.QueryRange(&astats, start, end);
 		FilterPropagateResult result = StatisticsSet::QueryRange(&astats, start, end);
-		// fprintf(stderr,
-		//         "%lx,%lu,%lu,EVAL_ADDITIONAL_STATISTICS_END,\"{\"\"statistic\"\":\"\"%p\"\",\"\"type\"\":\"\"%s\"\","
-		//         "\"\"start_time\"\":%lu,\"\"result\"\":%u}\"\n",
-		//         duckdb::Util::session_id, duckdb::Util::command_count, duckdb::Util::GetTime(), &stats, astats->name,
-		//         start_time, (unsigned int)result);
+		fprintf(stderr,
+		        "%lx,%lu,%lu,EVAL_ADDITIONAL_STATISTICS_END,\"{\"\"statistic\"\":\"\"%p\"\",\"\"type\"\":\"\"%s\"\","
+		        "\"\"start_time\"\":%lu,\"\"result\"\":%u}\"\n",
+		        duckdb::Util::session_id, duckdb::Util::command_count, duckdb::Util::GetTime(), &stats, astats->name,
+		        start_time, (unsigned int)result);
 		return result;
 	}
 

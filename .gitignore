@@ -100,6 +100,13 @@ experiments_results/*
 test.db
 combined.csv
 yellow_2024/*.parquet
-yellow_2024/yellow_tripdata_2024.csv
+yellow_2024/*.csv
 taxi_experiment/*
 taxi_experiment_32k/*
+taxi_experiment_small/*
+ssb_flat/*csv
+ssb_flat/ssb-dbgen
+chicago_taxi/*.csv
+BTS_OTP/*.csv
+BTS_OTP/*.zip
+BTS_OTP/readme.html

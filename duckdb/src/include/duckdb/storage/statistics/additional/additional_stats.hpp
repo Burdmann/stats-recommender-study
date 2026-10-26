@@ -25,6 +25,8 @@ template <class T>
 class AlwaysPruneAdditionalStats;
 template <class T, unsigned int N>
 class DictionaryAdditionalStats;
+template <class T, unsigned int N, unsigned int M>
+class HashedNGramAdditionalStats;
 
 template <class T>
 class AdditionalStats {
