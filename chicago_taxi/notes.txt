@@ -1,0 +1,5 @@
+SELECT *
+· FROM read_csv_auto(
+·     'chicago_taxi.csv',
+·     thousands=','
+‣ );

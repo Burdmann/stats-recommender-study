@@ -456,10 +456,10 @@ public:
 		// FilterPropagateResult result = astats.QueryRange(&astats, start, end);
 		FilterPropagateResult result = StatisticsSet::QueryRange(&astats, start, end);
 		fprintf(stderr,
-		        "%lx,%lu,%lu,EVAL_ADDITIONAL_STATISTICS_END,\"{\"\"statistic\"\":\"\"%p\"\",\"\"type\"\":\"\"%s\"\","
+		        "%lx,%lu,%lu,EVAL_ADDITIONAL_STATISTICS_END,\"{\"\"statistic\"\":\"\"%p\"\",\"\"type\"\":\"\"%d\"\","
 		        "\"\"start_time\"\":%lu,\"\"result\"\":%u}\"\n",
-		        duckdb::Util::session_id, duckdb::Util::command_count, duckdb::Util::GetTime(), &stats, astats->name,
-		        start_time, (unsigned int)result);
+		        duckdb::Util::session_id, duckdb::Util::command_count, duckdb::Util::GetTime(), &stats,
+		        (int)astats.type, start_time, (unsigned int)result);
 		return result;
 	}
 

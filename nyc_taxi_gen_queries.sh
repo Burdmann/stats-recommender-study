@@ -20,18 +20,18 @@
 # Airport_fee: (-1.75, 1.75)
 
 count=100
-python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE trip_distance BETWEEN ? AND ?;" $count "float" 0.0 312722.3 "float" 0.0 312722.3
-python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE total_amount BETWEEN ? AND ?;" $count "float" -1315.97 334145.3 "float" -1315.97 334145.3
-python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE passenger_count = ?;" $count "int" 0 9
-python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE PULocationID = ?;" $count "int" 1 265
-python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE tpep_pickup_datetime BETWEEN ? AND ? AND fare_amount BETWEEN ? AND ?;"  $count "time" "2002-12-31 16:46:07" "2026-06-26 23:53:12" "time" "2002-12-31 16:46:07" "2026-06-26 23:53:12" "float" -1315.97 334145.3 "float" -1315.97 334145.3 
-python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE tpep_dropoff_datetime BETWEEN ? AND ? AND trip_distance > ?;"  $count "time" "2002-12-31 17:24:07" "2026-06-27 20:59:10" "time" "2002-12-31 17:24:07" "2026-06-27 20:59:10" "float" 0.0 312722.3
-python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE fare_amount > ?;" $count "float" -1315.97 334145.3
-python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE trip_distance > ?;" $count "float" 0.0 312722.3
-python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE PULocationID IN (?, ?, ?);" $count "int" 1 265 "int" 1 265 "int" 1 265
-python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE fare_amount = ?;"  $count "float" -1315.97 334145.3
-python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE passenger_count = ?;" $count "int" 0 9
-python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE PULocationID = ?;" $count "int" 1 265
-python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE RatecodeID = ?;" $count "int" 1 99
-python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE trip_distance = ?;" $count "float" 0 21.4
-python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE tpep_pickup_datetime BETWEEN ? AND ? AND PULocationID = ?;" $count "time" "2002-12-31 16:46:07" "2026-06-26 23:53:12" "time" "2002-12-31 16:46:07" "2026-06-26 23:53:12" "int" 1 265
+python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE trip_distance BETWEEN ? AND ?;" $count "float" 0.0 312722.3 0 "float" 0.0 312722.3 0
+python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE total_amount BETWEEN ? AND ?;" $count "float" -1315.97 334145.3 0 "float" -1315.97 334145.3 0
+python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE passenger_count = ?;" $count "int" 0 9 0
+python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE PULocationID = ?;" $count "int" 1 265 0
+python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE tpep_pickup_datetime BETWEEN ? AND ? AND fare_amount BETWEEN ? AND ?;"  $count "time" "2002-12-31 16:46:07" "2026-06-26 23:53:12" 0 "time" "2002-12-31 16:46:07" "2026-06-26 23:53:12" 0 "float" -1315.97 334145.3 1 "float" -1315.97 334145.3 1 
+python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE tpep_dropoff_datetime BETWEEN ? AND ? AND trip_distance > ?;"  $count "time" "2002-12-31 17:24:07" "2026-06-27 20:59:10" 0 "time" "2002-12-31 17:24:07" "2026-06-27 20:59:10" 0 "float" 0.0 312722.3 1
+python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE fare_amount > ?;" $count "float" -1315.97 334145.3 0
+python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE trip_distance > ?;" $count "float" 0.0 312722.3 0
+python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE PULocationID IN (?, ?, ?);" $count "int" 1 265 0 "int" 1 265 0 "int" 1 265 0
+python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE fare_amount = ?;"  $count "float" -1315.97 334145.3 0
+python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE passenger_count = ?;" $count "int" 0 9 0
+python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE PULocationID = ?;" $count "int" 1 265 0
+python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE RatecodeID = ?;" $count "int" 1 99 0
+python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE trip_distance = ?;" $count "float" 0 21.4 0
+python3 nyc_taxi_query_gen.py "SELECT COUNT(*) FROM trips WHERE tpep_pickup_datetime BETWEEN ? AND ? AND PULocationID = ?;" $count "time" "2002-12-31 16:46:07" "2026-06-26 23:53:12" 0 "time" "2002-12-31 16:46:07" "2026-06-26 23:53:12" 0 "int" 1 265 1
