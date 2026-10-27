@@ -1,5 +1,5 @@
 {
   "cmake.sourceDirectory": "/home/alex/stats-recommender-study/duckdb",
   "chat.disableAIFeatures": false,
-  "cmake.ignoreCMakeListsMissing": true
+  "cmake.configureOnOpen": false
 }

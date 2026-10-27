@@ -107,6 +107,6 @@ taxi_experiment_small/*
 ssb_flat/*csv
 ssb_flat/ssb-dbgen
 chicago_taxi/*.csv
-BTS_OTP/*.csv
-BTS_OTP/*.zip
-BTS_OTP/readme.html
+flights/*.csv
+flights/*.zip
+flights/readme.html
