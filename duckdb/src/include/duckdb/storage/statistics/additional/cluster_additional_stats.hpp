@@ -408,11 +408,19 @@ public:
 
 	inline static void Initialise(std::vector<std::string> &data, AdditionalStats<std::string> *stats) {
 		ClusterAdditionalStats<std::string, N> *nstats = (ClusterAdditionalStats<std::string, N> *)stats;
-		unsigned int cluster_count = 0;
+		idx_t cluster_count = 0;
 
-		int size = data.size();
-		if (size == 0)
+		if (N == 0)
 			return;
+		int size = data.size();
+		if (size == 0) {
+			data_array empty_value {};
+			for (idx_t i = 0; i < N; i++) {
+				nstats->min_values[i] = empty_value;
+				nstats->max_values[i] = empty_value;
+			}
+			return;
+		}
 
 		// sort the data
 		std::sort(data.begin(), data.end());
@@ -451,6 +459,11 @@ public:
 		ConstructValue(const_data_ptr_cast(data.back().data()), data.back().size(), next);
 		nstats->max_values[cluster_count] = next;
 		cluster_count++;
+		while (cluster_count < N) {
+			nstats->min_values[cluster_count] = nstats->min_values[cluster_count - 1];
+			nstats->max_values[cluster_count] = nstats->max_values[cluster_count - 1];
+			cluster_count++;
+		}
 	}
 
 	inline static FilterPropagateResult Query_inner(const data_array &min_value, const data_array &max_value,
@@ -489,7 +502,7 @@ public:
 		if (N == 0)
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 
-		for (int i = 0; i < N; i++) {
+		for (idx_t i = 0; i < N; i++) {
 			FilterPropagateResult result =
 			    Query_inner(nstats->min_values[i], nstats->max_values[i], comparison_type, constant);
 			if (result == FilterPropagateResult::FILTER_ALWAYS_TRUE) {

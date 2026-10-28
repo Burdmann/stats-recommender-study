@@ -34,8 +34,7 @@ python3 assigners/greedy_simple.py $folder/analysis/final.csv $folder/200x/assig
 python3 assigners/greedy.py $folder/analysis/final.csv $folder/200x/assignment.csv $(($base_size * 200))
 
 # this is just to avoid a cold run, the data from this run is thrown away
-cat template.csv > $folder/log/bloom_1.log
-$bin_dir/duckdb -statistic 9 -f $sql_file 2>> $folder/log/bloom_1.log
+$bin_dir/duckdb -statistic 9 -f $sql_file 2> /dev/null
 rm test.db
 
 cat template.csv > $folder/log/min_max.log

@@ -101,9 +101,7 @@ test.db
 combined.csv
 yellow_2024/*.parquet
 yellow_2024/*.csv
-taxi_experiment/*
-taxi_experiment_32k/*
-taxi_experiment_small/*
+experiment_results
 ssb_flat/*csv
 ssb_flat/ssb-dbgen
 chicago_taxi/*.csv
