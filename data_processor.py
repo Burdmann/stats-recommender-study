@@ -23,8 +23,8 @@ if os.path.exists("test.db"):
     os.remove("test.db")
 duckdb.execute("ATTACH 'test.db'")
 duckdb.execute("USE test")
-duckdb.execute(f"CREATE TABLE Result_time (Name VARCHAR, Unit VARCHAR, Query INT, {", ".join([f'"{name}" FLOAT' for name in names])});")
-duckdb.execute(f"CREATE TABLE Result_pruning (Name VARCHAR, Unit VARCHAR, Query INT, {", ".join([f'"{name}" INT64' for name in names])});")
+duckdb.execute(f"CREATE TABLE Result_time (Name VARCHAR, Unit VARCHAR, Query INT, {", ".join([f'"{name}" DOUBLE' for name in names])});")
+duckdb.execute(f"CREATE TABLE Result_pruning (Name VARCHAR, Unit VARCHAR, Query INT, {", ".join([f'"{name}" DOUBLE' for name in names])});")
 duckdb.execute(f"CREATE TABLE Result_size (Name VARCHAR, Unit VARCHAR, Table_name VARCHAR, {", ".join([f'"{name}" INT64' for name in names])});")
 # duckdb.execute(f"CREATE TABLE Result_ingestion (Name VARCHAR, Unit VARCHAR, Table_name VARCHAR, {", ".join([f'"{name}" FLOAT' for name in names])});")
 for idx,in_file in enumerate(in_files):

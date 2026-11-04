@@ -103,3 +103,5 @@ SELECT * FROM sensor_records WHERE timestamp_ms = 1768739295985;
 SELECT * FROM sensor_records WHERE timestamp_ms = 1768962244067;
 SELECT * FROM sensor_records WHERE timestamp_ms = 1768715650379;
 SELECT * FROM sensor_records WHERE timestamp_ms = 1768553436580;
+
+DROP TABLE sensor_records;

@@ -2563,3 +2563,5 @@ SELECT COUNT(*) FROM ssb_flat WHERE lo_discount BETWEEN 2 AND 6 AND s_region = '
 SELECT COUNT(*) FROM ssb_flat WHERE lo_discount BETWEEN 0 AND 2 AND s_region = 'EUROPE';
 SELECT COUNT(*) FROM ssb_flat WHERE lo_discount BETWEEN 10 AND 7 AND s_region = 'ASIA';
 SELECT COUNT(*) FROM ssb_flat WHERE lo_discount BETWEEN 3 AND 3 AND s_region = 'ASIA';
+
+DROP TABLE ssb_flat;

@@ -2027,3 +2027,5 @@ SELECT COUNT(*) FROM chicago_taxi WHERE "Taxi ID" = 'f5ec20f3bc27b6d331205ab96de
 SELECT COUNT(*) FROM chicago_taxi WHERE "Taxi ID" = '4c06f4d6622cc4aecd182ded5c68ec252842a98a41c8b750c9d85f94e0148edad9237beff6f45deea615ea5aa8e7f96629fbd405b8419e6f0be0738dc8286f22' AND "Pickup Census Tract" = 17031031900 AND "Dropoff Census Tract" = 17031220701;
 SELECT COUNT(*) FROM chicago_taxi WHERE "Taxi ID" = '91fda2978a4fc5dca34dbd897f28ee663d2492a2b452efbfe6bc381245733b27975f6415b5d333d99bf56c491a61a45eec1cd2f3a02765a8cc9328dac3b38bc7' AND "Pickup Census Tract" = 17031730500 AND "Dropoff Census Tract" = 17031520200;
 SELECT COUNT(*) FROM chicago_taxi WHERE "Taxi ID" = '19225c817a8c8e402fd7ae9d8a19261bf5b85b3ab5e60723291567fdc806768f233d5554cd4250dbefcd7c321c56aa9ddd5022284ace276c88a82006c8faf37b' AND "Pickup Census Tract" = 17031120200 AND "Dropoff Census Tract" = 17031824120;
+
+DROP TABLE chicago_taxi;

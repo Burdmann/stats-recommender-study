@@ -90,3 +90,5 @@ select d_year, c_nation, sum(lo_revenue - lo_supplycost) as profit from denormal
 select d_year, s_nation, p_category, sum(lo_revenue - lo_supplycost) as profit from denormalized where c_region = 'AMERICA' and s_region = 'AMERICA' and (d_year = 1997 or d_year = 1998) and (p_mfgr = 'MFGR#1' or p_mfgr = 'MFGR#2') group by d_year, s_nation, p_category order by d_year, s_nation, p_category;
 -- Query 4.3
 select d_year, s_city, p_brand, sum(lo_revenue - lo_supplycost) as profit from denormalized where c_region = 'AMERICA' and s_nation = 'UNITED STATES' and (d_year = 1997 or d_year = 1998) and p_category = 'MFGR#14' group by d_year, s_city, p_brand order by d_year, s_city, p_brand;
+
+DROP TABLE denormalized;

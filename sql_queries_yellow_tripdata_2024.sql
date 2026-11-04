@@ -1521,3 +1521,5 @@ SELECT COUNT(*) FROM trips WHERE tpep_pickup_datetime BETWEEN '2019-09-02 08:53:
 SELECT COUNT(*) FROM trips WHERE tpep_pickup_datetime BETWEEN '2003-11-16 22:11:12' AND '2013-11-14 08:30:59' AND PULocationID = 7;
 SELECT COUNT(*) FROM trips WHERE tpep_pickup_datetime BETWEEN '2007-07-14 17:48:58' AND '2017-11-16 03:32:44' AND PULocationID = 96;
 SELECT COUNT(*) FROM trips WHERE tpep_pickup_datetime BETWEEN '2008-04-25 18:50:12' AND '2017-11-23 16:15:18' AND PULocationID = 139;
+
+DROP TABLE trips;

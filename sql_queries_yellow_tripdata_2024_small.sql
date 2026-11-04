@@ -36,3 +36,5 @@ SELECT COUNT(*) FROM trips WHERE PULocationID = 246;
 SELECT COUNT(*) FROM trips WHERE RatecodeID = 80;
 SELECT COUNT(*) FROM trips WHERE trip_distance = 11.106895528699386;
 SELECT COUNT(*) FROM trips WHERE tpep_pickup_datetime BETWEEN '2012-03-26 05:53:06' AND '2025-11-17 08:59:32' AND PULocationID = 261;
+
+DROP TABLE trips;

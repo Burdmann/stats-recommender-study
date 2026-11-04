@@ -9,6 +9,7 @@ bin_dir="./duckdb/build/release"
 # ---------------------------- EXAMPLES ---------------------------------
 # ./run_experiments.sh sql_queries_combined.sql combined_experiment/ 390656 1 1000 1
 # ./run_experiments.sh sql_queries_yellow_tripdata_2024.sql taxi_experiment/ 1171504 1 15 100
+# ./run_experiments.sh sql_queries_flights.sql experiment_results/flights/ 1171504 1 26 100
 # -----------------------------------------------------------------------
 
 mkdir -p $folder/1x
@@ -17,6 +18,8 @@ mkdir -p $folder/50x
 mkdir -p $folder/200x
 mkdir -p $folder/log
 mkdir -p $folder/processed
+
+mkdir profiler
 
 rm test.db
 ./analyser.sh $folder/analysis $sql_file
