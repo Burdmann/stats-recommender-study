@@ -159,7 +159,6 @@ public:
 	void SetBinaryMode();
 	void SetTextMode();
 	static idx_t StringLength(const char *z);
-	static void FixCommandForLog(char *zSql, char **zSql_fixed);
 	void SetTableName(const char *zName);
 	int RunTableDumpQuery(const char *zSelect);
 	void PrintValue(const char *str);

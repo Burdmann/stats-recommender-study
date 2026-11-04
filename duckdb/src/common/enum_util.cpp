@@ -2780,6 +2780,8 @@ const StringUtil::EnumStringLiteral *GetMetricsTypeValues() {
 		{ static_cast<uint32_t>(MetricsType::OPERATOR_CARDINALITY), "OPERATOR_CARDINALITY" },
 		{ static_cast<uint32_t>(MetricsType::CUMULATIVE_ROWS_SCANNED), "CUMULATIVE_ROWS_SCANNED" },
 		{ static_cast<uint32_t>(MetricsType::OPERATOR_ROWS_SCANNED), "OPERATOR_ROWS_SCANNED" },
+		{ static_cast<uint32_t>(MetricsType::ACTUAL_ROWS_SCANNED), "ACTUAL_ROWS_SCANNED" },
+		{ static_cast<uint32_t>(MetricsType::CUMULATIVE_ACTUAL_ROWS_SCANNED), "CUMULATIVE_ACTUAL_ROWS_SCANNED" },
 		{ static_cast<uint32_t>(MetricsType::OPERATOR_TIMING), "OPERATOR_TIMING" },
 		{ static_cast<uint32_t>(MetricsType::CUSTOM_STATISTICS_TIME), "CUSTOM_STATISTICS_TIME" },
 		{ static_cast<uint32_t>(MetricsType::CUMULATIVE_CUSTOM_STATISTICS_TIME), "CUMULATIVE_CUSTOM_STATISTICS_TIME" },

@@ -29,8 +29,10 @@ SELECT unnest(res) FROM (
     string_split(setting, ', ') AS res
 ) ORDER BY ALL;
 ----
+"ACTUAL_ROWS_SCANNED": "true"
 "BLOCKED_THREAD_TIME": "true"
 "CPU_TIME": "true"
+"CUMULATIVE_ACTUAL_ROWS_SCANNED": "true"
 "CUMULATIVE_CARDINALITY": "true"
 "CUMULATIVE_CUSTOM_STATISTICS_TIME": "true"
 "CUMULATIVE_ROWS_SCANNED": "true"

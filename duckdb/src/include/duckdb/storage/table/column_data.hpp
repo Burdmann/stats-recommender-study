@@ -212,16 +212,12 @@ public:
 				auto source_idx = adata.sel->get_index(offset + i);
 				bool is_null = !adata.validity.RowIsValid(source_idx);
 				if (!is_null) {
-					// if (1768979491171 == *(uint64_t *)&sdata[source_idx])
-					// 	printf("ALSO ALSO YES %p (%p)\n", this, &stats->statistics);
 					temp_storage.push_back(sdata[source_idx]);
 				}
 			}
 		} else {
 			for (idx_t i = 0; i < append_count; i++) {
 				auto source_idx = adata.sel->get_index(offset + i);
-				// if (1768979491171 == *(uint64_t *)&sdata[source_idx])
-				// printf("ALSO ALSO YES %p (%p)\n", this, &stats->statistics);
 				temp_storage.push_back(sdata[source_idx]);
 			}
 		}
@@ -304,24 +300,10 @@ public:
 			temp_storage.clear();
 			return;
 		}
-		uint64_t start_time = Util::GetTime();
-		// fprintf(
-		//     stderr,
-		//     "%lx,%lu,%lu,START_INITIALISE_ADDITIONAL_STATS,\"{\"\"stats\"\":\"\"%p\"\",\"\"type\"\":\"\"%s\"\"}\"\n",
-		//     Util::session_id, Util::command_count, start_time, &stats, ADDITIONAL_STATS<T>::GetStaticName());
 		auto table_identifier = info.GetTableName();
 		stats.additional_stats = StatisticsSet::construct<T>(temp_storage, table_identifier, index, column);
 
-		AdditionalStats<T> *astats = ((AdditionalStats<T> *)stats.additional_stats);
 		temp_storage.clear();
-#ifndef DEBUG
-		// fprintf(stderr,
-		//         "%lx,%lu,%lu,END_INITIALISE_ADDITIONAL_STATS,\"{\"\"table_id\"\":\"\"%s\"\",\"\"rowgroup\"\":%lu,"
-		//         "\"\"column\"\":%d,\"\"type\"\":"
-		//         "\"\"%s\"\",\"\"size\"\":%lu,\"\"start_time\"\":%lu}\"\n",
-		//         Util::session_id, Util::command_count, Util::GetTime(), table_identifier.c_str(), index, column,
-		//         StatisticsSet::Name<T>(astats), StatisticsSet::Size<T>(astats), start_time);
-#endif
 	}
 
 	void InitStats(BaseStatistics &stats, idx_t index, int column) {
@@ -398,20 +380,12 @@ public:
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 		}
 		AdditionalStats<T> &astats = *((AdditionalStats<T> *)stats.additional_stats);
-		uint64_t start_time = Util::GetTime();
 		auto start_time_nano = Util::track_stat_eval_time ? Util::GetTimeNano() : 0;
 		// FilterPropagateResult result = astats.Query(&astats, comparison_type, constant);
 		FilterPropagateResult result = StatisticsSet::Query(&astats, comparison_type, constant);
 		if (Util::track_stat_eval_time) {
 			Util::stat_eval_time += Util::GetTimeNano() - start_time_nano;
 		}
-#ifndef DEBUG
-		// fprintf(stderr,
-		//         "%lx,%lu,%lu,EVAL_ADDITIONAL_STATISTICS_END,\"{\"\"statistic\"\":\"\"%p\"\",\"\"type\"\":\"\"%d\"\","
-		//         "\"\"start_time\"\":%lu,\"\"result\"\":%u}\"\n",
-		//         duckdb::Util::session_id, duckdb::Util::command_count, duckdb::Util::GetTime(), &stats,
-		//         (int)astats.type, start_time, (unsigned int)result);
-#endif
 		return result;
 	}
 
@@ -456,20 +430,12 @@ public:
 		if (stats.additional_stats == NULL)
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 		AdditionalStats<T> &astats = *((AdditionalStats<T> *)stats.additional_stats);
-		uint64_t start_time = Util::GetTime();
 		auto start_time_nano = Util::track_stat_eval_time ? Util::GetTimeNano() : 0;
 		// FilterPropagateResult result = astats.QueryRange(&astats, start, end);
 		FilterPropagateResult result = StatisticsSet::QueryRange(&astats, start, end);
 		if (Util::track_stat_eval_time) {
 			Util::stat_eval_time += Util::GetTimeNano() - start_time_nano;
 		}
-#ifndef DEBUG
-		// fprintf(stderr,
-		//         "%lx,%lu,%lu,EVAL_ADDITIONAL_STATISTICS_END,\"{\"\"statistic\"\":\"\"%p\"\",\"\"type\"\":\"\"%d\"\","
-		//         "\"\"start_time\"\":%lu,\"\"result\"\":%u}\"\n",
-		//         duckdb::Util::session_id, duckdb::Util::command_count, duckdb::Util::GetTime(), &stats,
-		//         (int)astats.type, start_time, (unsigned int)result);
-#endif
 		return result;
 	}
 

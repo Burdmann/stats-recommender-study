@@ -283,6 +283,10 @@ void QueryProfiler::EndQuery() {
 				GetCumulativeMetric<double>(*root, MetricsType::CUMULATIVE_CUSTOM_STATISTICS_TIME,
 				                            MetricsType::CUSTOM_STATISTICS_TIME);
 			}
+			if (info.Enabled(settings, MetricsType::CUMULATIVE_ACTUAL_ROWS_SCANNED)) {
+				GetCumulativeMetric<idx_t>(*root, MetricsType::CUMULATIVE_ACTUAL_ROWS_SCANNED,
+				                           MetricsType::ACTUAL_ROWS_SCANNED);
+			}
 			if (info.Enabled(settings, MetricsType::RESULT_SET_SIZE)) {
 				info.metrics[MetricsType::RESULT_SET_SIZE] = child_info.metrics[MetricsType::RESULT_SET_SIZE];
 			}
@@ -420,7 +424,9 @@ OperatorProfiler::OperatorProfiler(ClientContext &context) : context(context) {
 
 void OperatorProfiler::StartOperator(optional_ptr<const PhysicalOperator> phys_op) {
 	Util::track_stat_eval_time = false;
+	Util::track_actual_rows_scanned = false;
 	custom_statistics_timer_active = false;
+	actual_rows_scanned_timer_active = false;
 	if (!enabled) {
 		return;
 	}
@@ -430,6 +436,11 @@ void OperatorProfiler::StartOperator(optional_ptr<const PhysicalOperator> phys_o
 	active_operator = phys_op;
 	if (active_operator->type == PhysicalOperatorType::TABLE_SCAN) {
 		StartCustomStatisticsTimer();
+		if (ProfilingInfo::Enabled(settings, MetricsType::ACTUAL_ROWS_SCANNED)) {
+			actual_rows_scanned_start = Util::actual_rows_scanned;
+			actual_rows_scanned_timer_active = true;
+			Util::track_actual_rows_scanned = true;
+		}
 	}
 
 	if (!settings.empty()) {
@@ -462,6 +473,12 @@ void OperatorProfiler::EndOperator(optional_ptr<DataChunk> chunk) {
 		auto &info = GetOperatorInfo(*active_operator);
 		if (active_operator->type == PhysicalOperatorType::TABLE_SCAN) {
 			EndCustomStatisticsTimer(*active_operator);
+			if (actual_rows_scanned_timer_active) {
+				Util::track_actual_rows_scanned = false;
+				auto actual_rows_scanned = Util::actual_rows_scanned - actual_rows_scanned_start;
+				GetOperatorInfo(*active_operator).AddActualRowsScanned(actual_rows_scanned);
+				actual_rows_scanned_timer_active = false;
+			}
 		}
 		if (ProfilingInfo::Enabled(settings, MetricsType::OPERATOR_TIMING)) {
 			op.End();
@@ -484,6 +501,7 @@ void OperatorProfiler::EndOperator(optional_ptr<DataChunk> chunk) {
 		}
 	}
 	Util::track_stat_eval_time = false;
+	Util::track_actual_rows_scanned = false;
 	active_operator = nullptr;
 }
 
@@ -579,6 +597,10 @@ void QueryProfiler::Flush(OperatorProfiler &profiler) {
 		if (op.type == PhysicalOperatorType::TABLE_SCAN &&
 		    ProfilingInfo::Enabled(profiler.settings, MetricsType::CUSTOM_STATISTICS_TIME)) {
 			info.MetricSum<double>(MetricsType::CUSTOM_STATISTICS_TIME, node.second.custom_statistics_time);
+		}
+		if (op.type == PhysicalOperatorType::TABLE_SCAN &&
+		    ProfilingInfo::Enabled(profiler.settings, MetricsType::ACTUAL_ROWS_SCANNED)) {
+			info.MetricSum<idx_t>(MetricsType::ACTUAL_ROWS_SCANNED, node.second.actual_rows_scanned);
 		}
 		if (ProfilingInfo::Enabled(profiler.settings, MetricsType::OPERATOR_CARDINALITY)) {
 			info.MetricSum<idx_t>(MetricsType::OPERATOR_CARDINALITY, node.second.elements_returned);

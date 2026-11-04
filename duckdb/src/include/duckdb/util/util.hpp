@@ -18,6 +18,8 @@ public:
 	static uint64_t command_count;
 	static thread_local uint64_t stat_eval_time;
 	static thread_local bool track_stat_eval_time;
+	static thread_local uint64_t actual_rows_scanned;
+	static thread_local bool track_actual_rows_scanned;
 
 	static inline uint64_t GetTime() {
 		auto duration = std::chrono::steady_clock::now().time_since_epoch();

@@ -430,7 +430,6 @@ FilterPropagateResult RowGroup::CheckRowIdFilter(const TableFilter &filter, idx_
 }
 
 bool RowGroup::CheckZonemap(ScanFilterInfo &filters) {
-	auto start_time = duckdb::Util::GetTime();
 	auto &filter_list = filters.GetFilterList();
 	// new row group - label all filters as up for grabs again
 	filters.CheckAllFilters();
@@ -441,17 +440,7 @@ bool RowGroup::CheckZonemap(ScanFilterInfo &filters) {
 		auto base_column_index = entry.table_column_index;
 		GetColumn(base_column_index).stats->statistics.is_rowgroup = true;
 		auto prune_result = GetColumn(base_column_index).CheckZonemap(filter);
-		auto table_identifier = GetTableInfo().GetTableName();
-#ifndef DEBUG
-		// fprintf(stderr,
-		//         "%lx,%lu,%lu,EVAL_STATISTICS,\"{\"\"table_id\"\":\"\"%s\"\",\"\"rowgroup\"\":%lu,\"\"column\"\":%lu,"
-		//         "\"\"start_time\"\":%lu,\"\"result\"\":%u}\"\n",
-		//         duckdb::Util::session_id, duckdb::Util::command_count, duckdb::Util::GetTime(),
-		//         table_identifier.c_str(), this->index, base_column_index, start_time, (unsigned int)prune_result);
-#endif
 		if (prune_result == FilterPropagateResult::FILTER_ALWAYS_FALSE) {
-			// printf("skipped normal\n");
-
 			return false;
 		}
 		if (filter.filter_type == TableFilterType::OPTIONAL_FILTER) {
@@ -528,7 +517,6 @@ bool RowGroup::CheckZonemap(ScanFilterInfo &filters) {
 		}
 	}
 	if (between_case_skip) {
-		// printf("skipped between\n");
 		return false;
 	}
 	ConstantFilter::scanned_partitions.insert(GetColumn(0).stats->statistics.id);
@@ -609,6 +597,9 @@ void RowGroup::TemplatedScan(TransactionData transaction, CollectionScanState &s
 		//! first check the zonemap if we have to scan this partition
 		if (!CheckZonemapSegments(state)) {
 			continue;
+		}
+		if (Util::track_actual_rows_scanned) {
+			Util::actual_rows_scanned += max_count;
 		}
 
 		// second, scan the version chunk manager to figure out which tuples to load for this transaction
