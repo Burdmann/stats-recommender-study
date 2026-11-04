@@ -51,6 +51,8 @@ profiler_settings_t ProfilingInfo::DefaultSettings() {
 	        MetricsType::CUMULATIVE_ROWS_SCANNED,
 	        MetricsType::OPERATOR_ROWS_SCANNED,
 	        MetricsType::OPERATOR_TIMING,
+	        MetricsType::CUSTOM_STATISTICS_TIME,
+	        MetricsType::CUMULATIVE_CUSTOM_STATISTICS_TIME,
 	        MetricsType::RESULT_SET_SIZE,
 	        MetricsType::LATENCY,
 	        MetricsType::ROWS_RETURNED,
@@ -60,12 +62,13 @@ profiler_settings_t ProfilingInfo::DefaultSettings() {
 
 profiler_settings_t ProfilingInfo::DefaultRootSettings() {
 	return {MetricsType::QUERY_NAME, MetricsType::BLOCKED_THREAD_TIME, MetricsType::LATENCY,
+	        MetricsType::CUMULATIVE_CUSTOM_STATISTICS_TIME,
 	        MetricsType::ROWS_RETURNED};
 }
 
 profiler_settings_t ProfilingInfo::DefaultOperatorSettings() {
 	return {MetricsType::OPERATOR_CARDINALITY, MetricsType::OPERATOR_ROWS_SCANNED, MetricsType::OPERATOR_TIMING,
-	        MetricsType::OPERATOR_NAME, MetricsType::OPERATOR_TYPE};
+	        MetricsType::CUSTOM_STATISTICS_TIME, MetricsType::OPERATOR_NAME, MetricsType::OPERATOR_TYPE};
 }
 
 void ProfilingInfo::ResetMetrics() {
@@ -84,6 +87,8 @@ void ProfilingInfo::ResetMetrics() {
 		case MetricsType::BLOCKED_THREAD_TIME:
 		case MetricsType::CPU_TIME:
 		case MetricsType::OPERATOR_TIMING:
+		case MetricsType::CUSTOM_STATISTICS_TIME:
+		case MetricsType::CUMULATIVE_CUSTOM_STATISTICS_TIME:
 			metrics[metric] = Value::CreateValue(0.0);
 			break;
 		case MetricsType::OPERATOR_NAME:
@@ -131,6 +136,9 @@ void ProfilingInfo::Expand(profiler_settings_t &settings, const MetricsType metr
 		return;
 	case MetricsType::CUMULATIVE_ROWS_SCANNED:
 		settings.insert(MetricsType::OPERATOR_ROWS_SCANNED);
+		return;
+	case MetricsType::CUMULATIVE_CUSTOM_STATISTICS_TIME:
+		settings.insert(MetricsType::CUSTOM_STATISTICS_TIME);
 		return;
 	case MetricsType::CUMULATIVE_OPTIMIZER_TIMING:
 	case MetricsType::ALL_OPTIMIZERS: {
@@ -223,10 +231,11 @@ void ProfilingInfo::WriteMetricsToJSON(yyjson_mut_doc *doc, yyjson_mut_val *dest
 		case MetricsType::LATENCY:
 		case MetricsType::BLOCKED_THREAD_TIME:
 		case MetricsType::CPU_TIME:
-		case MetricsType::OPERATOR_TIMING: {
+		case MetricsType::OPERATOR_TIMING:
+		case MetricsType::CUSTOM_STATISTICS_TIME:
+		case MetricsType::CUMULATIVE_CUSTOM_STATISTICS_TIME:
 			yyjson_mut_obj_add_real(doc, dest, key_ptr, metrics[metric].GetValue<double>());
 			break;
-		}
 		case MetricsType::OPERATOR_TYPE: {
 			yyjson_mut_obj_add_strcpy(doc, dest, key_ptr, GetMetricAsString(metric).c_str());
 			break;

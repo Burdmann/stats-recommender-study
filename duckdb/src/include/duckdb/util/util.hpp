@@ -16,10 +16,17 @@ class Util {
 public:
 	static uint64_t session_id;
 	static uint64_t command_count;
+	static thread_local uint64_t stat_eval_time;
+	static thread_local bool track_stat_eval_time;
 
 	static inline uint64_t GetTime() {
 		auto duration = std::chrono::steady_clock::now().time_since_epoch();
 		return std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
+	}
+
+	static inline uint64_t GetTimeNano() {
+		auto duration = std::chrono::steady_clock::now().time_since_epoch();
+		return std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
 	}
 };
 

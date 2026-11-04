@@ -1,13 +1,10 @@
-SET threads TO 1;
-ATTACH 'test.db' (ROW_GROUP_SIZE 8192);
-USE test;
-CREATE TABLE tbl(a INT, b INT, c INT);
-COPY tbl FROM 'test.csv' (FORMAT 'csv', delimiter ',', header 1);
-RESET threads;
-SELECT * FROM tbl WHERE a = 100;
-SELECT * FROM tbl WHERE b = 100;
-SELECT * FROM tbl WHERE a = 1000;
-SELECT * FROM tbl WHERE b = 1000;
-SELECT * FROM tbl WHERE a = 10000;
-SELECT * FROM tbl WHERE b = 10000;
-SELECT * FROM tbl WHERE c = 10000;
+create table tbl as select * from 'US_Accidents_March23.csv';
+PRAGMA enable_profiling = 'json';
+PRAGMA profiling_output = 'profile.json';
+
+SELECT *
+FROM tbl
+WHERE Zipcode = '60614'
+  AND Start_Time BETWEEN '2022-01-01' AND '2022-02-01';
+
+PRAGMA disable_profiling;

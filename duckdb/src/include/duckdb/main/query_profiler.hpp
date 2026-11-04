@@ -43,15 +43,21 @@ struct OperatorInformation {
 	string name;
 
 	double time = 0;
+	double custom_statistics_time = 0;
 	idx_t elements_returned = 0;
 	idx_t result_set_size = 0;
 	idx_t system_peak_buffer_manager_memory = 0;
 	idx_t system_peak_temp_directory_size = 0;
 
 	InsertionOrderPreservingMap<string> extra_info;
+	bool extra_info_initialized = false;
 
 	void AddTime(double n_time) {
 		time += n_time;
+	}
+
+	void AddCustomStatisticsTime(double n_time) {
+		custom_statistics_time += n_time;
 	}
 
 	void AddReturnedElements(idx_t n_elements) {
@@ -95,6 +101,8 @@ public:
 	DUCKDB_API OperatorInformation &GetOperatorInfo(const PhysicalOperator &phys_op);
 	DUCKDB_API bool OperatorInfoIsInitialized(const PhysicalOperator &phys_op);
 	DUCKDB_API void AddExtraInfo(InsertionOrderPreservingMap<string> extra_info);
+	DUCKDB_API void StartCustomStatisticsTimer();
+	DUCKDB_API void EndCustomStatisticsTimer(const PhysicalOperator &phys_op);
 
 public:
 	ClientContext &context;
@@ -107,6 +115,8 @@ private:
 
 	//! The timer used to time the execution time of the individual Physical Operators
 	Profiler op;
+	uint64_t custom_statistics_time_start = 0;
+	bool custom_statistics_timer_active = false;
 	//! The stack of Physical Operators that are currently active
 	optional_ptr<const PhysicalOperator> active_operator;
 	//! A mapping of physical operators to profiled operator information.

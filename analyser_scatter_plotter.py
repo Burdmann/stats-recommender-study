@@ -5,10 +5,11 @@ import matplotlib.pyplot as plt
 
 STATISTIC_COLORS = {
 	"NONE": "gray",
-	"MIN_MAX": "darkgreen",
+	"MIN_MAX": "lightcoral",
 	"CLUSTER_SMALL": "indianred",
 	"CLUSTER_MEDIUM": "firebrick",
 	"CLUSTER_LARGE": "darkred",
+	"BLOOM_TINY": "cyan",
 	"BLOOM_SMALL": "cornflowerblue",
 	"BLOOM_MEDIUM": "mediumblue",
 	"BLOOM_LARGE": "darkblue",

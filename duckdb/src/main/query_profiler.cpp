@@ -15,6 +15,7 @@
 #include "duckdb/main/client_data.hpp"
 #include "duckdb/planner/expression/bound_function_expression.hpp"
 #include "duckdb/storage/buffer/buffer_pool.hpp"
+#include "duckdb/util/util.hpp"
 #include "yyjson.hpp"
 
 #include <algorithm>
@@ -278,6 +279,10 @@ void QueryProfiler::EndQuery() {
 				GetCumulativeMetric<idx_t>(*root, MetricsType::CUMULATIVE_ROWS_SCANNED,
 				                           MetricsType::OPERATOR_ROWS_SCANNED);
 			}
+			if (info.Enabled(settings, MetricsType::CUMULATIVE_CUSTOM_STATISTICS_TIME)) {
+				GetCumulativeMetric<double>(*root, MetricsType::CUMULATIVE_CUSTOM_STATISTICS_TIME,
+				                            MetricsType::CUSTOM_STATISTICS_TIME);
+			}
 			if (info.Enabled(settings, MetricsType::RESULT_SET_SIZE)) {
 				info.metrics[MetricsType::RESULT_SET_SIZE] = child_info.metrics[MetricsType::RESULT_SET_SIZE];
 			}
@@ -414,6 +419,8 @@ OperatorProfiler::OperatorProfiler(ClientContext &context) : context(context) {
 }
 
 void OperatorProfiler::StartOperator(optional_ptr<const PhysicalOperator> phys_op) {
+	Util::track_stat_eval_time = false;
+	custom_statistics_timer_active = false;
 	if (!enabled) {
 		return;
 	}
@@ -421,14 +428,18 @@ void OperatorProfiler::StartOperator(optional_ptr<const PhysicalOperator> phys_o
 		throw InternalException("OperatorProfiler: Attempting to call StartOperator while another operator is active");
 	}
 	active_operator = phys_op;
+	if (active_operator->type == PhysicalOperatorType::TABLE_SCAN) {
+		StartCustomStatisticsTimer();
+	}
 
 	if (!settings.empty()) {
 		if (ProfilingInfo::Enabled(settings, MetricsType::EXTRA_INFO)) {
-			if (!OperatorInfoIsInitialized(*active_operator)) {
+			auto &info = GetOperatorInfo(*active_operator);
+			if (!info.extra_info_initialized) {
 				// first time calling into this operator - fetch the info
-				auto &info = GetOperatorInfo(*active_operator);
 				auto params = active_operator->ParamsToString();
 				info.extra_info = params;
+				info.extra_info_initialized = true;
 			}
 		}
 
@@ -449,6 +460,9 @@ void OperatorProfiler::EndOperator(optional_ptr<DataChunk> chunk) {
 
 	if (!settings.empty()) {
 		auto &info = GetOperatorInfo(*active_operator);
+		if (active_operator->type == PhysicalOperatorType::TABLE_SCAN) {
+			EndCustomStatisticsTimer(*active_operator);
+		}
 		if (ProfilingInfo::Enabled(settings, MetricsType::OPERATOR_TIMING)) {
 			op.End();
 			info.AddTime(op.Elapsed());
@@ -469,7 +483,29 @@ void OperatorProfiler::EndOperator(optional_ptr<DataChunk> chunk) {
 			info.UpdateSystemPeakTempDirectorySize(used_swap);
 		}
 	}
+	Util::track_stat_eval_time = false;
 	active_operator = nullptr;
+}
+
+void OperatorProfiler::StartCustomStatisticsTimer() {
+	Util::track_stat_eval_time = false;
+	custom_statistics_timer_active = false;
+	if (!enabled || !ProfilingInfo::Enabled(settings, MetricsType::CUSTOM_STATISTICS_TIME)) {
+		return;
+	}
+	custom_statistics_time_start = Util::stat_eval_time;
+	custom_statistics_timer_active = true;
+	Util::track_stat_eval_time = true;
+}
+
+void OperatorProfiler::EndCustomStatisticsTimer(const PhysicalOperator &phys_op) {
+	if (!custom_statistics_timer_active) {
+		return;
+	}
+	Util::track_stat_eval_time = false;
+	auto custom_statistics_time = Util::stat_eval_time - custom_statistics_time_start;
+	GetOperatorInfo(phys_op).AddCustomStatisticsTime(static_cast<double>(custom_statistics_time) / 1e9);
+	custom_statistics_timer_active = false;
 }
 
 void OperatorProfiler::FinishSource(GlobalSourceState &gstate, LocalSourceState &lstate) {
@@ -539,6 +575,10 @@ void QueryProfiler::Flush(OperatorProfiler &profiler) {
 
 		if (ProfilingInfo::Enabled(profiler.settings, MetricsType::OPERATOR_TIMING)) {
 			info.MetricSum<double>(MetricsType::OPERATOR_TIMING, node.second.time);
+		}
+		if (op.type == PhysicalOperatorType::TABLE_SCAN &&
+		    ProfilingInfo::Enabled(profiler.settings, MetricsType::CUSTOM_STATISTICS_TIME)) {
+			info.MetricSum<double>(MetricsType::CUSTOM_STATISTICS_TIME, node.second.custom_statistics_time);
 		}
 		if (ProfilingInfo::Enabled(profiler.settings, MetricsType::OPERATOR_CARDINALITY)) {
 			info.MetricSum<idx_t>(MetricsType::OPERATOR_CARDINALITY, node.second.elements_returned);

@@ -25,7 +25,14 @@ PipelineExecutor::PipelineExecutor(ClientContext &context_p, Pipeline &pipeline_
 			partition_info.min_batch_index = partition_info.batch_index;
 		}
 	}
+	const bool is_table_scan = pipeline.source->type == PhysicalOperatorType::TABLE_SCAN;
+	if (is_table_scan) {
+		thread.profiler.StartCustomStatisticsTimer();
+	}
 	local_source_state = pipeline.source->GetLocalSourceState(context, *pipeline.source_state);
+	if (is_table_scan) {
+		thread.profiler.EndCustomStatisticsTimer(*pipeline.source);
+	}
 
 	intermediate_chunks.reserve(pipeline.operators.size());
 	intermediate_states.reserve(pipeline.operators.size());

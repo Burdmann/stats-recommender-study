@@ -1,0 +1,34 @@
+# name: test/sql/pragma/profiling/test_custom_statistics_time.test
+# description: Test custom statistics profiling time.
+# group: [profiling]
+
+require json
+
+statement ok
+PRAGMA enable_verification;
+
+statement ok
+CREATE TABLE test_scan AS SELECT * FROM range(100) tbl(i);
+
+statement ok
+PRAGMA enable_profiling = 'json';
+
+statement ok
+PRAGMA profiling_output = '__TEST_DIR__/profiling_output.json';
+
+statement ok
+PRAGMA custom_profiling_settings='{"CUSTOM_STATISTICS_TIME": "true", "CUMULATIVE_CUSTOM_STATISTICS_TIME": "true"}';
+
+statement ok
+SELECT sum(i) FROM test_scan WHERE i BETWEEN 30 AND 70;
+
+statement ok
+PRAGMA disable_profiling;
+
+query I
+SELECT CASE WHEN count(*) FILTER (WHERE key = 'custom_statistics_time') = 1
+                 AND max(value::DOUBLE) FILTER (WHERE key = 'cumulative_custom_statistics_time') > 0
+            THEN 'true' ELSE 'false' END
+FROM json_tree(read_text('__TEST_DIR__/profiling_output.json')::JSON);
+----
+true

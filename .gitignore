@@ -108,3 +108,9 @@ chicago_taxi/*.csv
 flights/*.csv
 flights/*.zip
 flights/readme.html
+*.zip
+gha/2025-01-01.csv
+gha/github.csv
+NOAA/noaa.csv
+AQS
+US_Accidents_March23.csv
