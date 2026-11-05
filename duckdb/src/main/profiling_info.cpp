@@ -72,7 +72,7 @@ profiler_settings_t ProfilingInfo::DefaultRootSettings() {
 profiler_settings_t ProfilingInfo::DefaultOperatorSettings() {
 	return {MetricsType::OPERATOR_CARDINALITY, MetricsType::OPERATOR_ROWS_SCANNED, MetricsType::OPERATOR_TIMING,
 	        MetricsType::CUSTOM_STATISTICS_TIME, MetricsType::ACTUAL_ROWS_SCANNED, MetricsType::OPERATOR_NAME,
-	        MetricsType::OPERATOR_TYPE};
+	        MetricsType::OPERATOR_TYPE, MetricsType::STATISTICS_SIZE};
 }
 
 void ProfilingInfo::ResetMetrics() {
@@ -94,6 +94,8 @@ void ProfilingInfo::ResetMetrics() {
 		case MetricsType::CUSTOM_STATISTICS_TIME:
 		case MetricsType::CUMULATIVE_CUSTOM_STATISTICS_TIME:
 			metrics[metric] = Value::CreateValue(0.0);
+			break;
+		case MetricsType::STATISTICS_SIZE:
 			break;
 		case MetricsType::OPERATOR_NAME:
 			metrics[metric] = Value::CreateValue("");
@@ -177,6 +179,9 @@ string ProfilingInfo::GetMetricAsString(const MetricsType metric) const {
 		}
 		return "\"" + result + "\"";
 	}
+	if (metric == MetricsType::STATISTICS_SIZE) {
+		return StringUtil::Format("%llu statistic size entries", statistic_sizes.size());
+	}
 
 	// The metric cannot be NULL and must be initialized.
 	D_ASSERT(!metrics.at(metric).IsNull());
@@ -191,6 +196,14 @@ void ProfilingInfo::WriteMetricsToLog(ClientContext &context) {
 	auto &logger = Logger::Get(context);
 	if (logger.ShouldLog(MetricsLogType::NAME, MetricsLogType::LEVEL)) {
 		for (auto &metric : settings) {
+			if (metric == MetricsType::STATISTICS_SIZE) {
+				if (!statistic_sizes.empty()) {
+					logger.WriteLog(MetricsLogType::NAME, MetricsLogType::LEVEL,
+					                MetricsLogType::ConstructLogMessage(
+					                    metric, Value::CreateValue(GetMetricAsString(metric))));
+				}
+				continue;
+			}
 			logger.WriteLog(MetricsLogType::NAME, MetricsLogType::LEVEL,
 			                MetricsLogType::ConstructLogMessage(metric, metrics[metric]));
 		}
@@ -221,6 +234,32 @@ void ProfilingInfo::WriteMetricsToJSON(yyjson_mut_doc *doc, yyjson_mut_val *dest
 				}
 			}
 			yyjson_mut_obj_add_val(doc, dest, key_ptr, extra_info_obj);
+			continue;
+		}
+		if (metric == MetricsType::STATISTICS_SIZE) {
+			if (statistic_sizes.empty()) {
+				continue;
+			}
+			auto entries = statistic_sizes;
+			std::sort(entries.begin(), entries.end(), [](const StatisticSizeInfo &left, const StatisticSizeInfo &right) {
+				return std::tie(left.partition_index, left.column_index) <
+				       std::tie(right.partition_index, right.column_index);
+			});
+			entries.erase(std::unique(entries.begin(), entries.end(),
+			                          [](const StatisticSizeInfo &left, const StatisticSizeInfo &right) {
+				                          return left.partition_index == right.partition_index &&
+				                                 left.column_index == right.column_index;
+			                          }),
+			              entries.end());
+			auto sizes = yyjson_mut_arr(doc);
+			for (auto &entry : entries) {
+				auto size = yyjson_mut_obj(doc);
+				yyjson_mut_obj_add_uint(doc, size, "partition_index", entry.partition_index);
+				yyjson_mut_obj_add_uint(doc, size, "column_index", entry.column_index);
+				yyjson_mut_obj_add_uint(doc, size, "size_bytes", entry.size_bytes);
+				yyjson_mut_arr_add_val(sizes, size);
+			}
+			yyjson_mut_obj_add_val(doc, dest, key_ptr, sizes);
 			continue;
 		}
 

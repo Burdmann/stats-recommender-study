@@ -13,7 +13,7 @@ metrics_header_file = os.path.join("..", "src", "include", "duckdb", "common", "
 metrics_cpp_file = os.path.join("..", "src", "common", "enums", "metric_type.cpp")
 optimizer_file = os.path.join("..", "src", "include", "duckdb", "common", "enums", "optimizer_type.hpp")
 
-metrics = [
+default_metrics = [
     "QUERY_NAME",
     "BLOCKED_THREAD_TIME",
     "CPU_TIME",
@@ -37,6 +37,8 @@ metrics = [
     "TOTAL_BYTES_READ",
     "TOTAL_BYTES_WRITTEN",
 ]
+
+metrics = default_metrics + ["STATISTICS_SIZE"]
 
 phase_timing_metrics = [
     "ALL_OPTIMIZERS",
@@ -385,7 +387,7 @@ for test_file, name, description in zip(test_files, test_names, test_description
         write_get_custom_profiling_settings(f)
         metrics.sort()
 
-        for metric in metrics:
+        for metric in sorted(default_metrics):
             f.write(f'"{metric}": "true"\n')
         f.write("\n")
 

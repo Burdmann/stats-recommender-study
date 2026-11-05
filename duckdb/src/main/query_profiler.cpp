@@ -428,12 +428,26 @@ void OperatorProfiler::StartOperator(optional_ptr<const PhysicalOperator> phys_o
 	custom_statistics_timer_active = false;
 	actual_rows_scanned_timer_active = false;
 	if (!enabled) {
+		Util::track_statistic_sizes = false;
+		Util::statistic_sizes.clear();
+		statistic_sizes_timer_active = false;
 		return;
 	}
 	if (active_operator) {
 		throw InternalException("OperatorProfiler: Attempting to call StartOperator while another operator is active");
 	}
 	active_operator = phys_op;
+	if (ProfilingInfo::Enabled(settings, MetricsType::STATISTICS_SIZE)) {
+		if (!statistic_sizes_timer_active) {
+			Util::statistic_sizes.clear();
+		}
+		statistic_sizes_timer_active = true;
+		Util::track_statistic_sizes = true;
+	} else {
+		Util::track_statistic_sizes = false;
+		Util::statistic_sizes.clear();
+		statistic_sizes_timer_active = false;
+	}
 	if (active_operator->type == PhysicalOperatorType::TABLE_SCAN) {
 		StartCustomStatisticsTimer();
 		if (ProfilingInfo::Enabled(settings, MetricsType::ACTUAL_ROWS_SCANNED)) {
@@ -479,6 +493,11 @@ void OperatorProfiler::EndOperator(optional_ptr<DataChunk> chunk) {
 				GetOperatorInfo(*active_operator).AddActualRowsScanned(actual_rows_scanned);
 				actual_rows_scanned_timer_active = false;
 			}
+		}
+		if (statistic_sizes_timer_active) {
+			info.statistic_sizes.insert(info.statistic_sizes.end(), Util::statistic_sizes.begin(),
+			                            Util::statistic_sizes.end());
+			Util::statistic_sizes.clear();
 		}
 		if (ProfilingInfo::Enabled(settings, MetricsType::OPERATOR_TIMING)) {
 			op.End();
@@ -569,6 +588,14 @@ OperatorInformation &OperatorProfiler::GetOperatorInfo(const PhysicalOperator &p
 }
 
 void OperatorProfiler::Flush(const PhysicalOperator &phys_op) {
+	if (statistic_sizes_timer_active) {
+		Util::track_statistic_sizes = false;
+		auto &info = GetOperatorInfo(phys_op);
+		info.statistic_sizes.insert(info.statistic_sizes.end(), Util::statistic_sizes.begin(),
+		                            Util::statistic_sizes.end());
+		Util::statistic_sizes.clear();
+		statistic_sizes_timer_active = false;
+	}
 	auto entry = operator_infos.find(phys_op);
 	if (entry == operator_infos.end()) {
 		return;
@@ -601,6 +628,10 @@ void QueryProfiler::Flush(OperatorProfiler &profiler) {
 		if (op.type == PhysicalOperatorType::TABLE_SCAN &&
 		    ProfilingInfo::Enabled(profiler.settings, MetricsType::ACTUAL_ROWS_SCANNED)) {
 			info.MetricSum<idx_t>(MetricsType::ACTUAL_ROWS_SCANNED, node.second.actual_rows_scanned);
+		}
+		if (ProfilingInfo::Enabled(profiler.settings, MetricsType::STATISTICS_SIZE)) {
+			info.statistic_sizes.insert(info.statistic_sizes.end(), node.second.statistic_sizes.begin(),
+			                            node.second.statistic_sizes.end());
 		}
 		if (ProfilingInfo::Enabled(profiler.settings, MetricsType::OPERATOR_CARDINALITY)) {
 			info.MetricSum<idx_t>(MetricsType::OPERATOR_CARDINALITY, node.second.elements_returned);

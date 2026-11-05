@@ -300,10 +300,61 @@ public:
 			temp_storage.clear();
 			return;
 		}
+		uint64_t start_time = Util::GetTime();
 		auto table_identifier = info.GetTableName();
 		stats.additional_stats = StatisticsSet::construct<T>(temp_storage, table_identifier, index, column);
-
+		AdditionalStats<T> *astats = ((AdditionalStats<T> *)stats.additional_stats);
+		if (Util::log_statistics)
+			fprintf(stderr,
+			        "%lx,%lu,%lu,END_INITIALISE_ADDITIONAL_STATS,\"{\"\"table_id\"\":\"\"%s\"\",\"\"rowgroup\"\":%lu,"
+			        "\"\"column\"\":%d,\"\"type\"\":"
+			        "\"\"%s\"\",\"\"size\"\":%lu,\"\"start_time\"\":%lu}\"\n",
+			        Util::session_id, Util::command_count, Util::GetTime(), table_identifier.c_str(), index, column,
+			        StatisticsSet::Name<T>(astats), StatisticsSet::Size<T>(astats), start_time);
 		temp_storage.clear();
+	}
+
+	template <class T>
+	static inline idx_t GetAdditionalStatsSize(BaseStatistics &stats) {
+		if (!stats.additional_stats) {
+			return 0;
+		}
+		return StatisticsSet::Size((AdditionalStats<T> *)stats.additional_stats);
+	}
+
+	static inline idx_t GetAdditionalStatsSize(BaseStatistics &stats) {
+		switch (stats.GetType().InternalType()) {
+		case PhysicalType::BOOL:
+			return GetAdditionalStatsSize<bool>(stats);
+		case PhysicalType::INT8:
+			return GetAdditionalStatsSize<int8_t>(stats);
+		case PhysicalType::INT16:
+			return GetAdditionalStatsSize<int16_t>(stats);
+		case PhysicalType::INT32:
+			return GetAdditionalStatsSize<int32_t>(stats);
+		case PhysicalType::INT64:
+			return GetAdditionalStatsSize<int64_t>(stats);
+		case PhysicalType::INT128:
+			return GetAdditionalStatsSize<hugeint_t>(stats);
+		case PhysicalType::UINT8:
+			return GetAdditionalStatsSize<uint8_t>(stats);
+		case PhysicalType::UINT16:
+			return GetAdditionalStatsSize<uint16_t>(stats);
+		case PhysicalType::UINT32:
+			return GetAdditionalStatsSize<uint32_t>(stats);
+		case PhysicalType::UINT64:
+			return GetAdditionalStatsSize<uint64_t>(stats);
+		case PhysicalType::UINT128:
+			return GetAdditionalStatsSize<uhugeint_t>(stats);
+		case PhysicalType::FLOAT:
+			return GetAdditionalStatsSize<float>(stats);
+		case PhysicalType::DOUBLE:
+			return GetAdditionalStatsSize<double>(stats);
+		case PhysicalType::VARCHAR:
+			return GetAdditionalStatsSize<std::string>(stats);
+		default:
+			return 0;
+		}
 	}
 
 	void InitStats(BaseStatistics &stats, idx_t index, int column) {
@@ -369,6 +420,10 @@ public:
 		default:
 			break;
 			// throw InternalException("Unsupported type for appending to numeric cluster stats");
+		}
+		if (Util::track_statistic_sizes) {
+			auto size_bytes = additional_stats_invalidated ? 0 : GetAdditionalStatsSize(stats);
+			Util::statistic_sizes.push_back({index, NumericCast<idx_t>(column), size_bytes});
 		}
 		map_mutex.unlock();
 	}

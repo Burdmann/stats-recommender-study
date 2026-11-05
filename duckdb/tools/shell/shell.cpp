@@ -4497,14 +4497,14 @@ int ShellState::RunOneSqlLine(InputMode mode, char *zSql) {
 ** Return the number of errors.
 */
 int ShellState::ProcessInput(InputMode mode) {
-	char *zLine = nullptr;      /* A single input line */
-	char *zSql = nullptr;       /* Accumulated SQL text */
-	idx_t nLine;                /* Length of current line */
-	idx_t nSql = 0;             /* Bytes of zSql[] used */
-	idx_t nAlloc = 0;           /* Allocated zSql[] space */
-	idx_t nSqlPrior = 0;        /* Bytes of zSql[] used by prior line */
-	int rc;                     /* Error code */
-	idx_t errCnt = 0;           /* Number of errors seen */
+	char *zLine = nullptr; /* A single input line */
+	char *zSql = nullptr;  /* Accumulated SQL text */
+	idx_t nLine;           /* Length of current line */
+	idx_t nSql = 0;        /* Bytes of zSql[] used */
+	idx_t nAlloc = 0;      /* Allocated zSql[] space */
+	idx_t nSqlPrior = 0;   /* Bytes of zSql[] used by prior line */
+	int rc;                /* Error code */
+	idx_t errCnt = 0;      /* Number of errors seen */
 	idx_t numCtrlC = 0;
 	lineno = 0;
 	while (errCnt == 0 || !bail_on_error || (!in && stdin_is_interactive)) {
@@ -4773,7 +4773,9 @@ static const char zOptions[] =
     "   -unsigned            allow loading of unsigned extensions\n"
     "   -version             show DuckDB version\n"
     "	-statistic			 select which statistic to use\n"
-    "	-statistic-file		 file containing the mapping from partition to statistic type";
+    "	-statistic-file		 file containing the mapping from partition to statistic type"
+    "	-log-statistics		 when provided, DuckDB will produce very verose logs about the additional statistics. "
+    "Useful for the analyser component";
 static void usage(int showDetail) {
 	utf8_printf(stderr,
 	            "Usage: %s [OPTIONS] FILENAME [SQL]\n"
@@ -5245,6 +5247,8 @@ int SQLITE_CDECL wmain(int argc, wchar_t **wargv) {
 				return 1;
 			}
 
+		} else if (strcmp(z, "-log-statistics") == 0) {
+			duckdb::Util::log_statistics = true;
 		} else {
 			utf8_printf(stderr, "%s: Error: unknown option: %s\n", program_name, z);
 			raw_printf(stderr, "Use -help for a list of options.\n");

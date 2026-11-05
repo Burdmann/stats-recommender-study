@@ -440,6 +440,15 @@ bool RowGroup::CheckZonemap(ScanFilterInfo &filters) {
 		auto base_column_index = entry.table_column_index;
 		GetColumn(base_column_index).stats->statistics.is_rowgroup = true;
 		auto prune_result = GetColumn(base_column_index).CheckZonemap(filter);
+		if (Util::log_statistics) {
+			auto table_identifier = GetTableInfo().GetTableName();
+			fprintf(
+			    stderr,
+			    "%lx,%lu,%lu,EVAL_STATISTICS,\"{\"\"table_id\"\":\"\"%s\"\",\"\"rowgroup\"\":%lu,\"\"column\"\":%lu,"
+			    "\"\"start_time\"\":%lu,\"\"result\"\":%u}\"\n",
+			    duckdb::Util::session_id, duckdb::Util::command_count, duckdb::Util::GetTime(),
+			    table_identifier.c_str(), this->index, base_column_index, Util::GetTime(), (unsigned int)prune_result);
+		}
 		if (prune_result == FilterPropagateResult::FILTER_ALWAYS_FALSE) {
 			return false;
 		}

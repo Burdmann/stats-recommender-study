@@ -16,6 +16,7 @@
 #include "duckdb/common/unordered_set.hpp"
 #include "duckdb/common/constants.hpp"
 #include "duckdb/common/enums/metric_type.hpp"
+#include "duckdb/util/util.hpp"
 
 namespace duckdb_yyjson {
 struct yyjson_mut_doc;
@@ -35,6 +36,7 @@ public:
 	//! Additional metrics.
 	// FIXME: move to metrics.
 	InsertionOrderPreservingMap<string> extra_info;
+	vector<StatisticSizeInfo> statistic_sizes;
 
 public:
 	ProfilingInfo() = default;

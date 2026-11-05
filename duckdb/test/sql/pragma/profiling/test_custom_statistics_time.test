@@ -1,5 +1,5 @@
 # name: test/sql/pragma/profiling/test_custom_statistics_time.test
-# description: Test custom statistics profiling time.
+# description: Test custom-statistics profiling metrics and build-time statistic sizes.
 # group: [profiling]
 
 require json
@@ -8,16 +8,22 @@ statement ok
 PRAGMA enable_verification;
 
 statement ok
-CREATE TABLE test_scan AS SELECT * FROM range(245760) tbl(i);
-
-statement ok
 PRAGMA enable_profiling = 'json';
 
 statement ok
-PRAGMA profiling_output = '__TEST_DIR__/profiling_output.json';
+PRAGMA profiling_output = '__TEST_DIR__/build_profile.json';
 
 statement ok
-PRAGMA custom_profiling_settings='{"CUSTOM_STATISTICS_TIME": "true", "CUMULATIVE_CUSTOM_STATISTICS_TIME": "true", "ACTUAL_ROWS_SCANNED": "true", "CUMULATIVE_ACTUAL_ROWS_SCANNED": "true"}';
+PRAGMA custom_profiling_settings='{"STATISTICS_SIZE": "true"}';
+
+statement ok
+CREATE TABLE test_scan AS SELECT * FROM range(245760) tbl(i);
+
+statement ok
+PRAGMA profiling_output = '__TEST_DIR__/scan_profile.json';
+
+statement ok
+PRAGMA custom_profiling_settings='{"CUSTOM_STATISTICS_TIME": "true", "CUMULATIVE_CUSTOM_STATISTICS_TIME": "true", "ACTUAL_ROWS_SCANNED": "true", "CUMULATIVE_ACTUAL_ROWS_SCANNED": "true", "STATISTICS_SIZE": "true"}';
 
 statement ok
 SELECT sum(i) FROM test_scan WHERE i BETWEEN 130000 AND 130010;
@@ -30,7 +36,21 @@ SELECT CASE WHEN count(*) FILTER (WHERE key = 'custom_statistics_time') = 1
                  AND max(value::DOUBLE) FILTER (WHERE key = 'cumulative_custom_statistics_time') > 0
                  AND max(value::UBIGINT) FILTER (WHERE key = 'actual_rows_scanned') = 122880
                  AND max(value::UBIGINT) FILTER (WHERE key = 'cumulative_actual_rows_scanned') = 122880
+                 AND count(*) FILTER (WHERE key = 'statistics_size') = 0
             THEN 'true' ELSE 'false' END
-FROM json_tree(read_text('__TEST_DIR__/profiling_output.json')::JSON);
+FROM json_tree(read_text('__TEST_DIR__/scan_profile.json')::JSON);
+----
+true
+
+query I
+SELECT CASE WHEN count(*) FILTER (WHERE key = 'statistics_size') > 0
+                 AND count(*) FILTER (WHERE key = 'partition_index') = 2
+                 AND min(value::UBIGINT) FILTER (WHERE key = 'partition_index') = 0
+                 AND max(value::UBIGINT) FILTER (WHERE key = 'partition_index') = 1
+                 AND count(*) FILTER (WHERE key = 'column_index') = 2
+                 AND count(*) FILTER (WHERE key = 'size_bytes') = 2
+                 AND min(value::UBIGINT) FILTER (WHERE key = 'size_bytes') > 0
+            THEN 'true' ELSE 'false' END
+FROM json_tree(read_text('__TEST_DIR__/build_profile.json')::JSON);
 ----
 true

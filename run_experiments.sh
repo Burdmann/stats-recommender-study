@@ -9,95 +9,78 @@ bin_dir="./duckdb/build/release"
 # ---------------------------- EXAMPLES ---------------------------------
 # ./run_experiments.sh sql_queries_combined.sql combined_experiment/ 390656 1 1000 1
 # ./run_experiments.sh sql_queries_yellow_tripdata_2024.sql taxi_experiment/ 1171504 1 15 100
-# ./run_experiments.sh sql_queries_flights.sql experiment_results/flights/ 1171504 1 26 100
+# ./run_experiments.sh sql_queries_flights.sql experiment_results/flights 392272 1 26 100
 # -----------------------------------------------------------------------
 
-mkdir -p $folder/1x
-mkdir -p $folder/10x
-mkdir -p $folder/50x
-mkdir -p $folder/200x
-mkdir -p $folder/log
-mkdir -p $folder/processed
+# mkdir -p $folder/1x
+# mkdir -p $folder/10x
+# mkdir -p $folder/50x
+# mkdir -p $folder/200x
+# for size in "1x" "10x" "50x" "200x"; do
+#         mkdir -p $folder/log//profiler$size/cluster
+#         mkdir -p $folder/log//profiler$size/bloom
+#         mkdir -p $folder/log//profiler$size/greedy_simple
+#         mkdir -p $folder/log//profiler$size/greedy
+# done
+# mkdir -p $folder/processed
 
-mkdir profiler
+# rm test.db
+# ./analyser.sh $folder/analysis $sql_file
 
-rm test.db
-./analyser.sh $folder/analysis $sql_file
+# for i in 1 10 50 200; do
+#         python3 assigners/greedy_simple.py $folder/analysis/final.csv $folder/$i"x"/assignment_simple.csv $(($base_size * $i))
+#         python3 assigners/greedy.py $folder/analysis/final.csv $folder/$i"x"/assignment.csv $(($base_size * $i))
+# done
 
-python3 assigners/greedy_simple.py $folder/analysis/final.csv $folder/1x/assignment_simple.csv $base_size
-python3 assigners/greedy.py $folder/analysis/final.csv $folder/1x/assignment.csv $base_size
+run_inner() {
+        mkdir -p profiler/tables
+        $1
+        rm -r $folder/log/$2
+        mkdir -p $folder/log/$2
+        mv profiler $folder/log/$2
+        rm test.db
+}
 
-python3 assigners/greedy_simple.py $folder/analysis/final.csv $folder/10x/assignment_simple.csv $(($base_size * 10))
-python3 assigners/greedy.py $folder/analysis/final.csv $folder/10x/assignment.csv $(($base_size * 10))
+run_adaptive() {
+        run_inner "$bin_dir/duckdb -statistic-file $1 -f $sql_file" $2
+}
+run() {
+        run_inner "$bin_dir/duckdb -statistic $1 -f $sql_file" $2
+}
 
-python3 assigners/greedy_simple.py $folder/analysis/final.csv $folder/50x/assignment_simple.csv $(($base_size * 50))
-python3 assigners/greedy.py $folder/analysis/final.csv $folder/50x/assignment.csv $(($base_size * 50))
+# # this is just to avoid a cold run, the data from this run is thrown away
+# mkdir profiler
+# $bin_dir/duckdb -statistic 9 -f $sql_file
+# rm test.db
+# rm -r profiler
 
-python3 assigners/greedy_simple.py $folder/analysis/final.csv $folder/200x/assignment_simple.csv $(($base_size * 200))
-python3 assigners/greedy.py $folder/analysis/final.csv $folder/200x/assignment.csv $(($base_size * 200))
 
-# this is just to avoid a cold run, the data from this run is thrown away
-$bin_dir/duckdb -statistic 9 -f $sql_file 2> /dev/null
-rm test.db
+run 1 "1x/cluster"
+run 9 "1x/bloom"
+run_adaptive $folder/1x/assignment_simple.csv "1x/greedy_simple"
+run_adaptive $folder/1x/assignment.csv "1x/greedy"
 
-cat template.csv > $folder/log/min_max.log
-cat template.csv > $folder/log/bloom_1.log
-cat template.csv > $folder/log/greedy_simple_1.log
-cat template.csv > $folder/log/greedy_1.log
-$bin_dir/duckdb -statistic 1 -f $sql_file 2>> $folder/log/min_max.log
-rm test.db
-$bin_dir/duckdb -statistic 9 -f $sql_file 2>> $folder/log/bloom_1.log
-rm test.db
-$bin_dir/duckdb -statistic-file $folder/1x/assignment_simple.csv -f $sql_file 2>> $folder/log/greedy_simple_1.log
-rm test.db
-$bin_dir/duckdb -statistic-file $folder/1x/assignment.csv -f $sql_file 2>> $folder/log/greedy_1.log
+run 2 "10x/cluster"
+run 5 "10x/bloom"
+run_adaptive $folder/10x/assignment_simple.csv "10x/greedy_simple"
+run_adaptive $folder/10x/assignment.csv "10x/greedy"
 
-cat template.csv > $folder/log/cluster_10.log
-cat template.csv > $folder/log/bloom_10.log
-cat template.csv > $folder/log/greedy_simple_10.log
-cat template.csv > $folder/log/greedy_10.log
-rm test.db
-$bin_dir/duckdb -statistic 2 -f $sql_file 2>> $folder/log/cluster_10.log
-rm test.db
-$bin_dir/duckdb -statistic 5 -f $sql_file 2>> $folder/log/bloom_10.log
-rm test.db
-$bin_dir/duckdb -statistic-file $folder/10x/assignment_simple.csv -f $sql_file 2>> $folder/log/greedy_simple_10.log
-rm test.db
-$bin_dir/duckdb -statistic-file $folder/10x/assignment.csv -f $sql_file 2>> $folder/log/greedy_10.log
+run 3 "50x/cluster"
+run 6 "50x/bloom"
+run_adaptive $folder/50x/assignment_simple.csv "50x/greedy_simple"
+run_adaptive $folder/50x/assignment.csv "50x/greedy"
 
-cat template.csv > $folder/log/cluster_50.log
-cat template.csv > $folder/log/bloom_50.log
-cat template.csv > $folder/log/greedy_simple_50.log
-cat template.csv > $folder/log/greedy_50.log
-rm test.db
-$bin_dir/duckdb -statistic 3 -f $sql_file 2>> $folder/log/cluster_50.log
-rm test.db
-$bin_dir/duckdb -statistic 6 -f $sql_file 2>> $folder/log/bloom_50.log
-rm test.db
-$bin_dir/duckdb -statistic-file $folder/50x/assignment_simple.csv -f $sql_file 2>> $folder/log/greedy_simple_50.log
-rm test.db
-$bin_dir/duckdb -statistic-file $folder/50x/assignment.csv -f $sql_file 2>> $folder/log/greedy_50.log
+run 4 "200x/cluster"
+run 7 "200x/bloom"
+run_adaptive $folder/200x/assignment_simple.csv "200x/greedy_simple"
+run_adaptive $folder/200x/assignment.csv "200x/greedy"
 
-cat template.csv > $folder/log/cluster_200.log
-cat template.csv > $folder/log/bloom_200.log
-cat template.csv > $folder/log/greedy_simple_200.log
-cat template.csv > $folder/log/greedy_200.log
-rm test.db
-$bin_dir/duckdb -statistic 4 -f $sql_file 2>> $folder/log/cluster_200.log
-rm test.db
-$bin_dir/duckdb -statistic 7 -f $sql_file 2>> $folder/log/bloom_200.log
-rm test.db
-$bin_dir/duckdb -statistic-file $folder/200x/assignment_simple.csv -f $sql_file 2>> $folder/log/greedy_simple_200.log
-rm test.db
-$bin_dir/duckdb -statistic-file $folder/200x/assignment.csv -f $sql_file 2>> $folder/log/greedy_200.log
-rm test.db
-
-python3 data_processor.py $num_tables $num_queries $num_iterations MIN_MAX $folder/log/min_max.log BLOOM_1 $folder/log/bloom_1.log GREEDY_SIMPLE_1 $folder/log/greedy_simple_1.log GREEDY_1 $folder/log/greedy_1.log \
-        CLUSTER_10 $folder/log/cluster_10.log BLOOM_10 $folder/log/bloom_10.log GREEDY_SIMPLE_10 $folder/log/greedy_simple_10.log GREEDY_10 $folder/log/greedy_10.log \
-        CLUSTER_50 $folder/log/cluster_50.log BLOOM_50 $folder/log/bloom_50.log GREEDY_SIMPLE_50 $folder/log/greedy_simple_50.log GREEDY_50 $folder/log/greedy_50.log \
-        CLUSTER_200 $folder/log/cluster_200.log BLOOM_200 $folder/log/bloom_200.log GREEDY_SIMPLE_200 $folder/log/greedy_simple_200.log GREEDY_200 $folder/log/greedy_200.log
+python3 data_processor_profiler.py $num_tables $num_queries $num_iterations MIN_MAX $folder/log/1x/cluster/profiler BLOOM_1 $folder/log/1x/bloom/profiler GREEDY_SIMPLE_1 $folder/log/1x/greedy_simple/profiler GREEDY_1 $folder/log/1x/greedy/profiler \
+        CLUSTER_10 $folder/log/10x/cluster/profiler BLOOM_10 $folder/log/10x/bloom/profiler GREEDY_SIMPLE_10 $folder/log/10x/greedy_simple/profiler GREEDY_10 $folder/log/10x/greedy/profiler \
+        CLUSTER_50 $folder/log/50x/cluster/profiler BLOOM_50 $folder/log/50x/bloom/profiler GREEDY_SIMPLE_50 $folder/log/50x/greedy_simple/profiler GREEDY_50 $folder/log/50x/greedy/profiler \
+        CLUSTER_200 $folder/log/200x/cluster/profiler BLOOM_200 $folder/log/200x/bloom/profiler GREEDY_SIMPLE_200 $folder/log/200x/greedy_simple/profiler GREEDY_200 $folder/log/200x/greedy/profiler
 
 mv pruning.csv $folder/processed/
 mv query_time.csv $folder/processed/
 mv size.csv $folder/processed/
-# mv ingestion.csv $folder/processed/
+mv ingestion.csv $folder/processed/
