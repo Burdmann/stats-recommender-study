@@ -188,6 +188,8 @@ public:
 	idx_t vector_index;
 	//! The maximum row within the row group
 	idx_t max_row_group_row;
+	//! Whether this row group has returned any rows during the current scan
+	bool row_group_has_qualifying_rows;
 	//! Child column scans
 	unsafe_unique_array<ColumnScanState> column_scans;
 	//! Row group segment tree

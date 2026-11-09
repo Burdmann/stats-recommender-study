@@ -26,6 +26,8 @@ public:
 	static thread_local bool track_stat_eval_time;
 	static thread_local uint64_t actual_rows_scanned;
 	static thread_local bool track_actual_rows_scanned;
+	static thread_local uint64_t rows_in_qualifying_partitions;
+	static thread_local bool track_rows_in_qualifying_partitions;
 	static thread_local vector<StatisticSizeInfo> statistic_sizes;
 	static thread_local bool track_statistic_sizes;
 

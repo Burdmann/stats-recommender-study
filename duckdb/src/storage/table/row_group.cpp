@@ -257,6 +257,7 @@ bool RowGroup::InitializeScanWithOffset(CollectionScanState &state, idx_t vector
 
 	state.row_group = this;
 	state.vector_index = vector_offset;
+	state.row_group_has_qualifying_rows = false;
 	state.max_row_group_row =
 	    this->start > state.max_row ? 0 : MinValue<idx_t>(this->count, state.max_row - this->start);
 	auto row_number = start + vector_offset * STANDARD_VECTOR_SIZE;
@@ -282,6 +283,7 @@ bool RowGroup::InitializeScan(CollectionScanState &state) {
 	}
 	state.row_group = this;
 	state.vector_index = 0;
+	state.row_group_has_qualifying_rows = false;
 	state.max_row_group_row =
 	    this->start > state.max_row ? 0 : MinValue<idx_t>(this->count, state.max_row - this->start);
 	if (state.max_row_group_row == 0) {
@@ -742,6 +744,10 @@ void RowGroup::TemplatedScan(TransactionData transaction, CollectionScanState &s
 
 			D_ASSERT(approved_tuple_count > 0);
 			count = approved_tuple_count;
+		}
+		if (Util::track_rows_in_qualifying_partitions && !state.row_group_has_qualifying_rows) {
+			Util::rows_in_qualifying_partitions += state.row_group->count;
+			state.row_group_has_qualifying_rows = true;
 		}
 		result.SetCardinality(count);
 		state.vector_index++;

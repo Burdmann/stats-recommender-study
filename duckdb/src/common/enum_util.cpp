@@ -2782,6 +2782,9 @@ const StringUtil::EnumStringLiteral *GetMetricsTypeValues() {
 		{ static_cast<uint32_t>(MetricsType::OPERATOR_ROWS_SCANNED), "OPERATOR_ROWS_SCANNED" },
 		{ static_cast<uint32_t>(MetricsType::ACTUAL_ROWS_SCANNED), "ACTUAL_ROWS_SCANNED" },
 		{ static_cast<uint32_t>(MetricsType::CUMULATIVE_ACTUAL_ROWS_SCANNED), "CUMULATIVE_ACTUAL_ROWS_SCANNED" },
+		{ static_cast<uint32_t>(MetricsType::ROWS_IN_QUALIFYING_PARTITIONS), "ROWS_IN_QUALIFYING_PARTITIONS" },
+		{ static_cast<uint32_t>(MetricsType::CUMULATIVE_ROWS_IN_QUALIFYING_PARTITIONS),
+		  "CUMULATIVE_ROWS_IN_QUALIFYING_PARTITIONS" },
 		{ static_cast<uint32_t>(MetricsType::OPERATOR_TIMING), "OPERATOR_TIMING" },
 		{ static_cast<uint32_t>(MetricsType::CUSTOM_STATISTICS_TIME), "CUSTOM_STATISTICS_TIME" },
 		{ static_cast<uint32_t>(MetricsType::CUMULATIVE_CUSTOM_STATISTICS_TIME), "CUMULATIVE_CUSTOM_STATISTICS_TIME" },
@@ -2836,12 +2839,12 @@ const StringUtil::EnumStringLiteral *GetMetricsTypeValues() {
 
 template<>
 const char* EnumUtil::ToChars<MetricsType>(MetricsType value) {
-	return StringUtil::EnumToString(GetMetricsTypeValues(), 56, "MetricsType", static_cast<uint32_t>(value));
+	return StringUtil::EnumToString(GetMetricsTypeValues(), 58, "MetricsType", static_cast<uint32_t>(value));
 }
 
 template<>
 MetricsType EnumUtil::FromString<MetricsType>(const char *value) {
-	return static_cast<MetricsType>(StringUtil::StringToEnum(GetMetricsTypeValues(), 56, "MetricsType", value));
+	return static_cast<MetricsType>(StringUtil::StringToEnum(GetMetricsTypeValues(), 58, "MetricsType", value));
 }
 
 const StringUtil::EnumStringLiteral *GetMultiFileColumnMappingModeValues() {
