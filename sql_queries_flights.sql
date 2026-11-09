@@ -116,7 +116,7 @@ CREATE TABLE flights (
 
 PRAGMA enable_profiling='json';
 PRAGMA profiling_output='profiler/tables/flights.json';
-PRAGMA custom_profiling_settings = '{"STATISTICS_SIZE": "true"}';
+PRAGMA custom_profiling_settings = '{"STATISTICS_SIZE": "true","EXTRA_INFO": "true"}';
 COPY flights FROM 'flights/On_Time_Reporting_Carrier_On_Time_Performance_(1987_present)_2025_*.csv' (FORMAT 'csv', delimiter ',', header 1);
 RESET custom_profiling_settings;
 PRAGMA enable_profiling='json';

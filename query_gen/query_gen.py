@@ -21,7 +21,9 @@ for x in template.split("?"):
 templatep.pop()
 template = templatep
 
-duckdb.execute(f"CREATE TABLE tbl AS SELECT * FROM '{table}';")
+duckdb.execute("ATTACH 'test.db';")
+duckdb.execute("USE test;")
+# duckdb.execute(f"CREATE OR REPLACE TABLE tbl AS SELECT * FROM '{table}';")
 
 def _gen(col):
     return duckdb.execute(f"SELECT \"{col}\" FROM (SELECT DISTINCT \"{col}\" FROM tbl) USING SAMPLE 1;").fetchone()[0]
