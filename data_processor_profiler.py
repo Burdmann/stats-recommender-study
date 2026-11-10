@@ -48,7 +48,7 @@ for i,(stat,dir) in enumerate(zip(names,in_folders)):
         if not file.endswith(".json"):
             continue
         d=json.load(open(f"{dir}/{file}"))
-        query = file.split(".")[0]
+        query = file.rsplit(".", 2)[0].replace(".", "")
         queries.add(query)
 
         time,stats_eval_time,scanned = d["latency"],d["cumulative_custom_statistics_time"],d["cumulative_actual_rows_scanned"]
@@ -69,7 +69,7 @@ for query in queries:
     duckdb.execute(f"INSERT INTO Result_time VALUES ('Time','s','{query}',{",".join([str(avg(time[query])) for time in total_times])});")
     # duckdb.execute(f"INSERT INTO Result_cpu_time VALUES ('Time','s','{query}',{",".join([str(avg(time[query])) for time in cpu_times])});")
     duckdb.execute(f"INSERT INTO Result_stats_eval_time VALUES ('Time','s','{query}',{",".join([str(avg(time[query])) for time in stats_eval_times])});")
-    duckdb.execute(f"INSERT INTO Result_pruning VALUES ('Partitions scanned',NULL,'{query}',{",".join([str(avg(scanned[query])) for scanned in rows_scanned])});")
+    duckdb.execute(f"INSERT INTO Result_pruning VALUES ('Rows scanned',NULL,'{query}',{",".join([str(avg(scanned[query])) for scanned in rows_scanned])});")
     duckdb.execute(f"INSERT INTO Result_contributing_rows VALUES ('Rows in qualifying partitions','rows','{query}',{",".join([str(avg(rows[query])) for rows in rows_in_qualifying_partitions])});")
 for table in tables[0]:
     # if (len(set([tables[j][i] for j in range(NUM_STATS)]))) != 1:

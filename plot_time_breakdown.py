@@ -2,6 +2,7 @@ import argparse
 import csv
 import math
 import re
+import textwrap
 from pathlib import Path
 
 import matplotlib
@@ -88,7 +89,7 @@ def parse_query_groups(group_specs, available_queries, parser):
                 f"invalid group {specification!r}; expected NAME=QUERY,QUERY"
             )
         name, query_list = specification.split("=", 1)
-        name = name.strip()
+        name = name.strip().replace(r"\n", "\n")
         members = [query.strip() for query in query_list.split(",")]
         if not name or not query_list.strip() or any(not query for query in members):
             parser.error(
@@ -112,6 +113,10 @@ def parse_query_groups(group_specs, available_queries, parser):
         seen_names.add(name)
         seen_queries.update(members)
     return groups
+
+
+def wrap_query_label(label, width=18):
+    return "\n".join(textwrap.fill(line, width=width) for line in label.split("\n"))
 
 
 def aggregate_query_groups(groups, configurations, total_times, stats_times):
@@ -187,7 +192,7 @@ def plot_configuration_group(
     cluster_width = 0.8
     bar_width = cluster_width / len(configurations)
     figure_width = max(14, len(queries) * 0.55)
-    figure, axis = plt.subplots(figsize=(figure_width, 8))
+    figure, axis = plt.subplots(figsize=(figure_width, 7))
     palette = plt.get_cmap("tab10")
     configuration_colors = [
         palette(index % palette.N) for index in range(len(configurations))
@@ -229,10 +234,18 @@ def plot_configuration_group(
         )
 
     axis.set_xticks(query_positions)
-    axis.set_xticklabels(queries, rotation=45, ha="right")
+    axis.set_xticklabels(
+        [wrap_query_label(query) for query in queries],
+        rotation=45,
+        ha="right",
+    )
     axis.set_xlabel("Query")
     axis.set_ylabel("Time (ms)")
     axis.set_title(f"Query time breakdown ({group_name})")
+    axis.tick_params(axis="both", labelsize=13)
+    axis.xaxis.label.set_size(15)
+    axis.yaxis.label.set_size(15)
+    axis.title.set_size(17)
     axis.grid(axis="y", alpha=0.25)
     axis.set_axisbelow(True)
 
@@ -247,8 +260,10 @@ def plot_configuration_group(
         ],
         title="Configuration",
         loc="upper center",
-        bbox_to_anchor=(0.5, 0.99),
+        bbox_to_anchor=(0.25, 0.99),
         ncol=min(len(configurations), 4),
+        fontsize=12,
+        title_fontsize=13,
     )
     figure.legend(
         handles=[
@@ -257,11 +272,13 @@ def plot_configuration_group(
         ],
         title="Time component",
         loc="upper center",
-        bbox_to_anchor=(0.5, 0.91),
+        bbox_to_anchor=(0.75, 0.99),
         ncol=2,
+        fontsize=12,
+        title_fontsize=13,
     )
 
-    figure.tight_layout(rect=(0, 0, 1, 0.84))
+    figure.tight_layout(rect=(0, 0, 1, 0.88))
     output_path = output_dir / f"query_time_breakdown_{output_name}.png"
     figure.savefig(output_path, dpi=160)
     plt.close(figure)
@@ -286,7 +303,8 @@ def main():
         metavar="NAME=QUERY,QUERY",
         help=(
             "plot the listed queries as one named group (repeatable); when groups "
-            "are provided, queries not listed are omitted"
+            "are provided, queries not listed are omitted; use \\n in a group name "
+            "to force a line break"
         ),
     )
     parser.add_argument(

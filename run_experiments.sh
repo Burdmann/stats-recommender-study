@@ -25,16 +25,16 @@ mkdir -p $folder/200x
 mkdir -p $folder/processed
 
 rm test.db
-# ./analyser.sh $folder/analysis $sql_file
+./analyser.sh $folder/analysis $sql_file
 
-# scales=(1 10 50 200)
-# sizes=("$size1" "$size2" "$size3" "$size4")
-# for index in "${!scales[@]}"; do
-#         scale=${scales[$index]}
-#         size=${sizes[$index]}
-#         python3 assigners/greedy_simple.py "$folder/analysis/final.csv" "$folder/${scale}x/assignment_simple.csv" "$size"
-#         python3 assigners/greedy.py "$folder/analysis/final.csv" "$folder/${scale}x/assignment.csv" "$size"
-# done
+scales=(1 10 50 200)
+sizes=("$size1" "$size2" "$size3" "$size4")
+for index in "${!scales[@]}"; do
+        scale=${scales[$index]}
+        size=${sizes[$index]}
+        python3 assigners/greedy_simple.py "$folder/analysis/final.csv" "$folder/${scale}x/assignment_simple.csv" "$size"
+        python3 assigners/greedy.py "$folder/analysis/final.csv" "$folder/${scale}x/assignment.csv" "$size"
+done
 
 run_inner() {
         mkdir -p profiler/tables
@@ -59,25 +59,25 @@ rm test.db
 rm -r profiler
 
 
-# run 1 "1x/cluster"
-# run 9 "1x/bloom"
-# run_adaptive $folder/1x/assignment_simple.csv "1x/greedy_simple"
-# run_adaptive $folder/1x/assignment.csv "1x/greedy"
+run 1 "1x/cluster"
+run 9 "1x/bloom"
+run_adaptive $folder/1x/assignment_simple.csv "1x/greedy_simple"
+run_adaptive $folder/1x/assignment.csv "1x/greedy"
 
-# run 2 "10x/cluster"
-# run 5 "10x/bloom"
-# run_adaptive $folder/10x/assignment_simple.csv "10x/greedy_simple"
-# run_adaptive $folder/10x/assignment.csv "10x/greedy"
+run 2 "10x/cluster"
+run 5 "10x/bloom"
+run_adaptive $folder/10x/assignment_simple.csv "10x/greedy_simple"
+run_adaptive $folder/10x/assignment.csv "10x/greedy"
 
-# run 3 "50x/cluster"
-# run 6 "50x/bloom"
-# run_adaptive $folder/50x/assignment_simple.csv "50x/greedy_simple"
-# run_adaptive $folder/50x/assignment.csv "50x/greedy"
+run 3 "50x/cluster"
+run 6 "50x/bloom"
+run_adaptive $folder/50x/assignment_simple.csv "50x/greedy_simple"
+run_adaptive $folder/50x/assignment.csv "50x/greedy"
 
-# run 4 "200x/cluster"
-# run 7 "200x/bloom"
-# run_adaptive $folder/200x/assignment_simple.csv "200x/greedy_simple"
-# run_adaptive $folder/200x/assignment.csv "200x/greedy"
+run 4 "200x/cluster"
+run 7 "200x/bloom"
+run_adaptive $folder/200x/assignment_simple.csv "200x/greedy_simple"
+run_adaptive $folder/200x/assignment.csv "200x/greedy"
 
 run 8 "dictionary/dictionary"
 
