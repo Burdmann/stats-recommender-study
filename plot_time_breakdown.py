@@ -168,8 +168,16 @@ def parse_configurations(configuration_specs, available_configurations, parser):
     return configurations, labels
 
 
-def plot_size_group(
-    size, configurations, configuration_labels, queries, total_times, stats_times, unit, output_dir
+def plot_configuration_group(
+    group_name,
+    output_name,
+    configurations,
+    configuration_labels,
+    queries,
+    total_times,
+    stats_times,
+    unit,
+    output_dir,
 ):
     if not configurations:
         return None
@@ -224,7 +232,7 @@ def plot_size_group(
     axis.set_xticklabels(queries, rotation=45, ha="right")
     axis.set_xlabel("Query")
     axis.set_ylabel("Time (ms)")
-    axis.set_title(f"Query time breakdown ({size}x)")
+    axis.set_title(f"Query time breakdown ({group_name})")
     axis.grid(axis="y", alpha=0.25)
     axis.set_axisbelow(True)
 
@@ -254,7 +262,7 @@ def plot_size_group(
     )
 
     figure.tight_layout(rect=(0, 0, 1, 0.84))
-    output_path = output_dir / f"query_time_breakdown_{size}x.png"
+    output_path = output_dir / f"query_time_breakdown_{output_name}.png"
     figure.savefig(output_path, dpi=160)
     plt.close(figure)
     return output_path
@@ -326,9 +334,28 @@ def main():
     for size in SIZE_GROUPS:
         if not groups[size]:
             continue
-        output_path = plot_size_group(
-            size,
+        output_path = plot_configuration_group(
+            f"{size}x",
+            f"{size}x",
             groups[size],
+            configuration_labels,
+            plot_queries,
+            plot_total_times,
+            plot_stats_times,
+            total_unit,
+            args.folder,
+        )
+        print(f"Saved {output_path}")
+
+    dictionary_configurations = [
+        configuration for configuration in selected_configurations
+        if configuration == "DICTIONARY"
+    ]
+    if dictionary_configurations:
+        output_path = plot_configuration_group(
+            "DICTIONARY",
+            "dictionary",
+            dictionary_configurations,
             configuration_labels,
             plot_queries,
             plot_total_times,

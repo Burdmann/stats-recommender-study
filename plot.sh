@@ -1,0 +1,51 @@
+python3 plot_time_breakdown.py experiment_results/flights/processed \
+  --group "temporal range query=q1" \
+  --group "range query=q9" \
+  --group "point query (low NDV)=q7,q8" \
+  --group "point query (medium NDV)=q2,q3" \
+  --group "point query (high NDV)=q5,q6" \
+  --group "point queries multi-column=q4,q16,q17,q19,q21" \
+  --group "open-ended ranges=q10,q11" \
+  --group "temporal range + point query=q12,q13,q14,q15,q18" \
+  --group "temporal range + muliple point queries=q20" \
+  --group "unclusted range + point query=q22,q23,q24" \
+  --group "conjunction range + queries=q25" \
+  --group "conjunction range + open-ended range=q26" \
+  --configuration "MIN_MAX=Min/max" \
+  --configuration "BLOOM_1=Bloom filter" \
+  --configuration "GREEDY_1=Greedy" \
+  --configuration "CLUSTER_10=Min/max clusters" \
+  --configuration "BLOOM_10=Bloom filter" \
+  --configuration "GREEDY_10=Greedy" \
+  --configuration "CLUSTER_50=Min/max clusters" \
+  --configuration "BLOOM_50=Bloom filter" \
+  --configuration "GREEDY_50=Greedy" \
+  --configuration "CLUSTER_200=Min/max clusters" \
+  --configuration "BLOOM_200=Bloom filter" \
+  --configuration "GREEDY_200=Greedy" \
+  --configuration "DICTIONARY=Dictionary"
+
+python3 plot_time_breakdown.py experiment_results/github/processed \
+  --group "temporal range query=q1,q2,q3" \
+  --group "point query (low NDV)=q4,q5,q6" \
+  --group "point query (medium NDV)=q7,q8,q9" \
+  --group "point query (high NDV)=q10,q11,q12,q13" \
+  --group "point query (near-unique)=q14,q15" \
+  --group "point queries multi-column=q16,q17,q18,q19" \
+  --group "temporal range + point query=q20,q21,q22,q23" \
+  --group "numeric range query=q26,q27,q28" \
+  --group "string queries=q29,q30" \
+  --configuration "MIN_MAX=Min/max" \
+  --configuration "BLOOM_1=Bloom filter" \
+  --configuration "GREEDY_1=Greedy" \
+  --configuration "CLUSTER_10=Min/max clusters" \
+  --configuration "BLOOM_10=Bloom filter" \
+  --configuration "GREEDY_10=Greedy" \
+  --configuration "CLUSTER_50=Min/max clusters" \
+  --configuration "BLOOM_50=Bloom filter" \
+  --configuration "GREEDY_50=Greedy" \
+  --configuration "CLUSTER_200=Min/max clusters" \
+  --configuration "BLOOM_200=Bloom filter" \
+  --configuration "GREEDY_200=Greedy" \
+  --configuration "DICTIONARY=Dictionary"
+

@@ -17,9 +17,11 @@ def avg(l):
 
 NUM_STATS = len(in_folders)
 
-times = [defaultdict(list) for _ in range(NUM_STATS)]
+# cpu_times = [defaultdict(list) for _ in range(NUM_STATS)]
+total_times = [defaultdict(list) for _ in range(NUM_STATS)]
 stats_eval_times = [defaultdict(list) for _ in range(NUM_STATS)]
 rows_scanned = [defaultdict(list) for _ in range(NUM_STATS)]
+rows_in_qualifying_partitions = [defaultdict(list) for _ in range(NUM_STATS)]
 sizes = [{} for _ in range(NUM_STATS)]
 max_sizes = [{} for _ in range(NUM_STATS)]
 tables = [set() for _ in range(NUM_STATS)]
@@ -49,20 +51,26 @@ for i,(stat,dir) in enumerate(zip(names,in_folders)):
         query = file.split(".")[0]
         queries.add(query)
 
-        time,stats_eval_time,scanned = d["cpu_time"],d["cumulative_custom_statistics_time"],d["cumulative_actual_rows_scanned"]
-        times[i][query].append(time)
+        time,stats_eval_time,scanned = d["latency"],d["cumulative_custom_statistics_time"],d["cumulative_actual_rows_scanned"]
+        total_times[i][query].append(time)
+        # cpu_times[i][query].append(cpu_time)
         stats_eval_times[i][query].append(stats_eval_time)
         rows_scanned[i][query].append(scanned)
+        rows_in_qualifying_partitions[i][query].append(d["cumulative_rows_in_qualifying_partitions"])
 
 
 duckdb.execute(f"CREATE TABLE Result_time (Measurement VARCHAR, Unit VARCHAR, Query VARCHAR, {", ".join([f'"{name}" DOUBLE' for name in names])});")
+# duckdb.execute(f"CREATE TABLE Result_cpu_time (Measurement VARCHAR, Unit VARCHAR, Query VARCHAR, {", ".join([f'"{name}" DOUBLE' for name in names])});")
 duckdb.execute(f"CREATE TABLE Result_stats_eval_time (Measurement VARCHAR, Unit VARCHAR, Query VARCHAR, {", ".join([f'"{name}" DOUBLE' for name in names])});")
 duckdb.execute(f"CREATE TABLE Result_pruning (Measurement VARCHAR, Unit VARCHAR, Query VARCHAR, {", ".join([f'"{name}" DOUBLE' for name in names])});")
+duckdb.execute(f"CREATE TABLE Result_contributing_rows (Measurement VARCHAR, Unit VARCHAR, Query VARCHAR, {", ".join([f'"{name}" DOUBLE' for name in names])});")
 duckdb.execute(f"CREATE TABLE Result_size (Measurement VARCHAR, Unit VARCHAR, Table_name VARCHAR, {", ".join([f'"{name}" INT64' for name in names])});")
 for query in queries:
-    duckdb.execute(f"INSERT INTO Result_time VALUES ('Time','s','{query}',{",".join([str(avg(time[query])) for time in times])});")
+    duckdb.execute(f"INSERT INTO Result_time VALUES ('Time','s','{query}',{",".join([str(avg(time[query])) for time in total_times])});")
+    # duckdb.execute(f"INSERT INTO Result_cpu_time VALUES ('Time','s','{query}',{",".join([str(avg(time[query])) for time in cpu_times])});")
     duckdb.execute(f"INSERT INTO Result_stats_eval_time VALUES ('Time','s','{query}',{",".join([str(avg(time[query])) for time in stats_eval_times])});")
     duckdb.execute(f"INSERT INTO Result_pruning VALUES ('Partitions scanned',NULL,'{query}',{",".join([str(avg(scanned[query])) for scanned in rows_scanned])});")
+    duckdb.execute(f"INSERT INTO Result_contributing_rows VALUES ('Rows in qualifying partitions','rows','{query}',{",".join([str(avg(rows[query])) for rows in rows_in_qualifying_partitions])});")
 for table in tables[0]:
     # if (len(set([tables[j][i] for j in range(NUM_STATS)]))) != 1:
     #     raise "tables are not in the same order in given input files"
@@ -72,9 +80,12 @@ for table in tables[0]:
 duckdb.execute("CREATE OR REPLACE TABLE Result_time AS SELECT * FROM Result_time ORDER BY CAST(REGEXP_EXTRACT(Query, '^q([0-9]+)', 1) AS INTEGER), COALESCE(TRY_CAST(REGEXP_EXTRACT(Query, '_([0-9]+)$', 1) AS INTEGER),999999)")
 duckdb.execute("CREATE OR REPLACE TABLE Result_stats_eval_time AS SELECT * FROM Result_stats_eval_time ORDER BY CAST(REGEXP_EXTRACT(Query, '^q([0-9]+)', 1) AS INTEGER), COALESCE(TRY_CAST(REGEXP_EXTRACT(Query, '_([0-9]+)$', 1) AS INTEGER),999999)")
 duckdb.execute("CREATE OR REPLACE TABLE Result_pruning AS SELECT * FROM Result_pruning ORDER BY CAST(REGEXP_EXTRACT(Query, '^q([0-9]+)', 1) AS INTEGER), COALESCE(TRY_CAST(REGEXP_EXTRACT(Query, '_([0-9]+)$', 1) AS INTEGER),999999)")
+duckdb.execute("CREATE OR REPLACE TABLE Result_contributing_rows AS SELECT * FROM Result_contributing_rows ORDER BY CAST(REGEXP_EXTRACT(Query, '^q([0-9]+)', 1) AS INTEGER), COALESCE(TRY_CAST(REGEXP_EXTRACT(Query, '_([0-9]+)$', 1) AS INTEGER),999999)")
 
-duckdb.execute("COPY Result_time TO 'query_time.csv';")
+duckdb.execute("COPY Result_time TO 'total_time.csv';")
 duckdb.execute("COPY Result_stats_eval_time TO 'stats_eval_time.csv';")
+# duckdb.execute("COPY Result_cpu_time TO 'cpu_time.csv';")
 duckdb.execute("COPY Result_pruning TO 'pruning.csv';")
+duckdb.execute("COPY Result_contributing_rows TO 'contributing_rows.csv';")
 duckdb.execute("COPY Result_size TO 'size.csv';")
 # duckdb.execute("COPY Result_ingestion TO 'ingestion.csv';")

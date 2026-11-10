@@ -45,11 +45,6 @@ public:
 			nstats->valid = false;
 			nstats->dictionary.clear();
 			nstats->dictionary.rehash(1);
-// printf("DISCARDED DICTIONARY\n");
-#ifndef DEBUG
-			fprintf(stderr, "%lx,%lu,%lu,DISCARDED_DICTIONARY,\"{\"\"stats\"\":\"\"%p\"\"}\"\n", Util::session_id,
-			        Util::command_count, Util::GetTime(), stats);
-#endif
 		}
 	}
 	inline static FilterPropagateResult Query(AdditionalStats<T> *stats, ExpressionType &comparison_type,
