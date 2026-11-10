@@ -10,6 +10,12 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 
+from plot_colors import (
+    APPROACH_COLORS,
+    add_color_argument,
+    color_for,
+    parse_color_overrides,
+)
 from plot_time_breakdown import (
     UNIT_TO_MILLISECONDS,
     parse_configurations,
@@ -155,19 +161,28 @@ def make_parser(kind):
         type=Path,
         help="directory for generated PNGs (defaults to the result folder)",
     )
+    add_color_argument(parser)
     return parser
 
 
-def plot_group(kind, output_path, group_name, series, configurations, labels, lower_bound=None):
+def plot_group(
+    kind,
+    output_path,
+    group_name,
+    series,
+    configurations,
+    labels,
+    color_overrides,
+    lower_bound=None,
+):
     figure, axis = plt.subplots(figsize=(11, 6.5))
-    colors = plt.get_cmap("tab20")
     selectivities = sorted(series)
 
     for index, configuration in enumerate(configurations):
         axis.plot(
             selectivities,
             [series[value][configuration] for value in selectivities],
-            color=colors(index % colors.N),
+            color=color_for(configuration, color_overrides, APPROACH_COLORS),
             marker="o",
             linewidth=1.8,
             markersize=5,
@@ -225,6 +240,7 @@ def run_plotter(kind):
     selected_configurations, labels = parse_configurations(
         args.configuration, configurations, parser
     )
+    color_overrides = parse_color_overrides(args.color, configurations, parser)
     groups = parse_query_groups(args.group, sorted(query_ids), parser)
     grouped_values = aggregate_group(groups, query_ids, values, configurations, parser)
 
@@ -271,6 +287,7 @@ def run_plotter(kind):
             grouped_values[name],
             selected_configurations,
             labels,
+            color_overrides,
             lower_bounds[name] if lower_bounds is not None else None,
         )
         print(f"Saved {output_path}")

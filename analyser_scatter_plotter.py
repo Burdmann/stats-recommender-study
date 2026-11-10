@@ -3,6 +3,8 @@ import csv
 
 import matplotlib.pyplot as plt
 
+from plot_colors import add_color_argument, color_for, parse_color_overrides
+
 STATISTIC_COLORS = {
 	"NONE": "gray",
 	"MIN_MAX": "lightcoral",
@@ -22,6 +24,7 @@ def main():
 	)
 	parser.add_argument("csv_file", help="CSV file containing size and pruning_power columns")
 	parser.add_argument("output", help="Image file the plot should be written to")
+	add_color_argument(parser)
 	args = parser.parse_args()
 
 	try:
@@ -47,13 +50,15 @@ def main():
 	except OSError as error:
 		parser.error(str(error))
 
+	colors = parse_color_overrides(args.color, points_by_statistic, parser)
+
 	plt.figure(figsize=(8, 6))
 	for statistic, (sizes, pruning_powers) in points_by_statistic.items():
 		plt.scatter(
 			sizes,
 			pruning_powers,
 			label=statistic,
-			color=STATISTIC_COLORS.get(statistic),
+			color=color_for(statistic, colors, STATISTIC_COLORS),
 		)
 	x_min, x_max = plt.xlim()
 	plt.xlim(x_min, x_min + (x_max - x_min))

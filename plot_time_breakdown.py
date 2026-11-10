@@ -13,6 +13,13 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import to_rgb
 from matplotlib.patches import Patch
 
+from plot_colors import (
+    APPROACH_COLORS,
+    add_color_argument,
+    color_for,
+    parse_color_overrides,
+)
+
 
 SIZE_GROUPS = ("1", "10", "50", "200")
 UNIT_TO_MILLISECONDS = {"s": 1000.0, "ms": 1.0, "us": 0.001, "µs": 0.001}
@@ -183,6 +190,7 @@ def plot_configuration_group(
     stats_times,
     unit,
     output_dir,
+    color_overrides,
 ):
     if not configurations:
         return None
@@ -193,10 +201,10 @@ def plot_configuration_group(
     bar_width = cluster_width / len(configurations)
     figure_width = max(14, len(queries) * 0.55)
     figure, axis = plt.subplots(figsize=(figure_width, 7))
-    palette = plt.get_cmap("tab10")
-    configuration_colors = [
-        palette(index % palette.N) for index in range(len(configurations))
-    ]
+    configuration_colors = {
+        configuration: color_for(configuration, color_overrides, APPROACH_COLORS)
+        for configuration in configurations
+    }
 
     for index, configuration in enumerate(configurations):
         offsets = [
@@ -214,7 +222,7 @@ def plot_configuration_group(
                 )
             remainder_values.append(total_value - stats_value)
 
-        color = configuration_colors[index]
+        color = configuration_colors[configuration]
         axis.bar(
             offsets,
             [value * to_milliseconds for value in remainder_values],
@@ -252,7 +260,7 @@ def plot_configuration_group(
     figure.legend(
         handles=[
             Patch(
-                facecolor=configuration_colors[index],
+                facecolor=configuration_colors[configuration],
                 edgecolor="#333333",
                 label=configuration_labels[configuration],
             )
@@ -317,6 +325,7 @@ def main():
             "original names"
         ),
     )
+    add_color_argument(parser)
     args = parser.parse_args()
 
     total_times, configurations, total_unit = read_timings(
@@ -338,6 +347,7 @@ def main():
     selected_configurations, configuration_labels = parse_configurations(
         args.configuration, configurations, parser
     )
+    color_overrides = parse_color_overrides(args.color, configurations, parser)
 
     query_groups = parse_query_groups(args.group, list(total_times), parser)
     try:
@@ -362,6 +372,7 @@ def main():
             plot_stats_times,
             total_unit,
             args.folder,
+            color_overrides,
         )
         print(f"Saved {output_path}")
 
@@ -380,6 +391,7 @@ def main():
             plot_stats_times,
             total_unit,
             args.folder,
+            color_overrides,
         )
         print(f"Saved {output_path}")
 

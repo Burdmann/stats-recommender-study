@@ -23,8 +23,8 @@ plot_pair experiment_results/flights/processed \
   --group "temporal range\n+ point query=q12,q13,q14,q15,q18" \
   --group "temporal range\n+ muliple point queries=q20" \
   --group "unclusted range\n+ point query=q22,q23,q24" \
-  --group "conjunction range\n+ queries=q25" \
-  --group "conjunction range\n+ open-ended range=q26" \
+  --group "range + range=q25" \
+  --group "range\n+ open-ended range=q26" \
   --configuration "MIN_MAX=Min/max" \
   --configuration "BLOOM_1=Bloom filter" \
   --configuration "GREEDY_1=Greedy" \
@@ -66,7 +66,7 @@ plot_pair experiment_results/github/processed \
 plot_selectivity_pair experiment_results/flights_line_plot \
   --group "range=q9,q10,q11" \
   --group "range + point=q22,q23,q24" \
-  --group "range conjunction=q25,q26" \
+  --group "range + range=q25,q26" \
   --configuration "MIN_MAX=Min/max" \
   --configuration "BLOOM_1=Bloom filter" \
   --configuration "GREEDY_1=Greedy"

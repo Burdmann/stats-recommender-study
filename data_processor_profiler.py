@@ -3,6 +3,7 @@ import sys
 import os
 from collections import defaultdict
 import json
+import math
 
 NUM_TABLES = int(sys.argv[1])
 NUM_QUERIES = int(sys.argv[2])
@@ -15,12 +16,43 @@ def avg(l):
         return 0
     return sum(l)/len(l)
 
+
+def table_scan_cardinality(profile):
+    pending = [profile]
+    scan_nodes = []
+    has_empty_result = False
+    while pending:
+        node = pending.pop()
+        if not isinstance(node, dict):
+            continue
+        if node.get("operator_type") == "TABLE_SCAN":
+            scan_nodes.append(node)
+        elif node.get("operator_type") == "EMPTY_RESULT":
+            has_empty_result = True
+        pending.extend(node.get("children", []))
+
+    if not scan_nodes and has_empty_result:
+        return 0
+    if len(scan_nodes) != 1:
+        raise ValueError(f"expected one TABLE_SCAN operator, found {len(scan_nodes)}")
+
+    cardinality = scan_nodes[0].get("operator_cardinality")
+    if (
+        not isinstance(cardinality, (int, float))
+        or not math.isfinite(cardinality)
+        or cardinality < 0
+    ):
+        raise ValueError(f"invalid TABLE_SCAN operator_cardinality: {cardinality!r}")
+    return cardinality
+
+
 NUM_STATS = len(in_folders)
 
 # cpu_times = [defaultdict(list) for _ in range(NUM_STATS)]
 total_times = [defaultdict(list) for _ in range(NUM_STATS)]
 stats_eval_times = [defaultdict(list) for _ in range(NUM_STATS)]
 rows_scanned = [defaultdict(list) for _ in range(NUM_STATS)]
+cardinalities = [defaultdict(list) for _ in range(NUM_STATS)]
 rows_in_qualifying_partitions = [defaultdict(list) for _ in range(NUM_STATS)]
 sizes = [{} for _ in range(NUM_STATS)]
 max_sizes = [{} for _ in range(NUM_STATS)]
@@ -52,10 +84,12 @@ for i,(stat,dir) in enumerate(zip(names,in_folders)):
         queries.add(query)
 
         time,stats_eval_time,scanned = d["latency"],d["cumulative_custom_statistics_time"],d["cumulative_actual_rows_scanned"]
+        cardinality = table_scan_cardinality(d)
         total_times[i][query].append(time)
         # cpu_times[i][query].append(cpu_time)
         stats_eval_times[i][query].append(stats_eval_time)
         rows_scanned[i][query].append(scanned)
+        cardinalities[i][query].append(cardinality)
         rows_in_qualifying_partitions[i][query].append(d["cumulative_rows_in_qualifying_partitions"])
 
 
@@ -63,6 +97,7 @@ duckdb.execute(f"CREATE TABLE Result_time (Measurement VARCHAR, Unit VARCHAR, Qu
 # duckdb.execute(f"CREATE TABLE Result_cpu_time (Measurement VARCHAR, Unit VARCHAR, Query VARCHAR, {", ".join([f'"{name}" DOUBLE' for name in names])});")
 duckdb.execute(f"CREATE TABLE Result_stats_eval_time (Measurement VARCHAR, Unit VARCHAR, Query VARCHAR, {", ".join([f'"{name}" DOUBLE' for name in names])});")
 duckdb.execute(f"CREATE TABLE Result_pruning (Measurement VARCHAR, Unit VARCHAR, Query VARCHAR, {", ".join([f'"{name}" DOUBLE' for name in names])});")
+duckdb.execute(f"CREATE TABLE Result_scan_cardinality (Measurement VARCHAR, Unit VARCHAR, Query VARCHAR, {", ".join([f'"{name}" DOUBLE' for name in names])});")
 duckdb.execute(f"CREATE TABLE Result_contributing_rows (Measurement VARCHAR, Unit VARCHAR, Query VARCHAR, {", ".join([f'"{name}" DOUBLE' for name in names])});")
 duckdb.execute(f"CREATE TABLE Result_size (Measurement VARCHAR, Unit VARCHAR, Table_name VARCHAR, {", ".join([f'"{name}" INT64' for name in names])});")
 for query in queries:
@@ -70,6 +105,7 @@ for query in queries:
     # duckdb.execute(f"INSERT INTO Result_cpu_time VALUES ('Time','s','{query}',{",".join([str(avg(time[query])) for time in cpu_times])});")
     duckdb.execute(f"INSERT INTO Result_stats_eval_time VALUES ('Time','s','{query}',{",".join([str(avg(time[query])) for time in stats_eval_times])});")
     duckdb.execute(f"INSERT INTO Result_pruning VALUES ('Rows scanned',NULL,'{query}',{",".join([str(avg(scanned[query])) for scanned in rows_scanned])});")
+    duckdb.execute(f"INSERT INTO Result_scan_cardinality VALUES ('TABLE_SCAN operator cardinality','rows','{query}',{",".join([str(avg(cardinality[query])) for cardinality in cardinalities])});")
     duckdb.execute(f"INSERT INTO Result_contributing_rows VALUES ('Rows in qualifying partitions','rows','{query}',{",".join([str(avg(rows[query])) for rows in rows_in_qualifying_partitions])});")
 for table in tables[0]:
     # if (len(set([tables[j][i] for j in range(NUM_STATS)]))) != 1:
@@ -80,12 +116,14 @@ for table in tables[0]:
 duckdb.execute("CREATE OR REPLACE TABLE Result_time AS SELECT * FROM Result_time ORDER BY CAST(REGEXP_EXTRACT(Query, '^q([0-9]+)', 1) AS INTEGER), COALESCE(TRY_CAST(REGEXP_EXTRACT(Query, '_([0-9]+)$', 1) AS INTEGER),999999)")
 duckdb.execute("CREATE OR REPLACE TABLE Result_stats_eval_time AS SELECT * FROM Result_stats_eval_time ORDER BY CAST(REGEXP_EXTRACT(Query, '^q([0-9]+)', 1) AS INTEGER), COALESCE(TRY_CAST(REGEXP_EXTRACT(Query, '_([0-9]+)$', 1) AS INTEGER),999999)")
 duckdb.execute("CREATE OR REPLACE TABLE Result_pruning AS SELECT * FROM Result_pruning ORDER BY CAST(REGEXP_EXTRACT(Query, '^q([0-9]+)', 1) AS INTEGER), COALESCE(TRY_CAST(REGEXP_EXTRACT(Query, '_([0-9]+)$', 1) AS INTEGER),999999)")
+duckdb.execute("CREATE OR REPLACE TABLE Result_scan_cardinality AS SELECT * FROM Result_scan_cardinality ORDER BY CAST(REGEXP_EXTRACT(Query, '^q([0-9]+)', 1) AS INTEGER), COALESCE(TRY_CAST(REGEXP_EXTRACT(Query, '_([0-9]+)$', 1) AS INTEGER),999999)")
 duckdb.execute("CREATE OR REPLACE TABLE Result_contributing_rows AS SELECT * FROM Result_contributing_rows ORDER BY CAST(REGEXP_EXTRACT(Query, '^q([0-9]+)', 1) AS INTEGER), COALESCE(TRY_CAST(REGEXP_EXTRACT(Query, '_([0-9]+)$', 1) AS INTEGER),999999)")
 
 duckdb.execute("COPY Result_time TO 'total_time.csv';")
 duckdb.execute("COPY Result_stats_eval_time TO 'stats_eval_time.csv';")
 # duckdb.execute("COPY Result_cpu_time TO 'cpu_time.csv';")
 duckdb.execute("COPY Result_pruning TO 'pruning.csv';")
+duckdb.execute("COPY Result_scan_cardinality TO 'scan_cardinality.csv';")
 duckdb.execute("COPY Result_contributing_rows TO 'contributing_rows.csv';")
 duckdb.execute("COPY Result_size TO 'size.csv';")
 # duckdb.execute("COPY Result_ingestion TO 'ingestion.csv';")

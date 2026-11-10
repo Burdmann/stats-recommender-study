@@ -52,7 +52,7 @@ run() {
         run_inner "$bin_dir/duckdb -statistic $1 -f $sql_file" $2
 }
 
-# this is just to avoid a cold run, the data from this run is thrown away
+# # this is just to avoid a cold run, the data from this run is thrown away
 mkdir profiler
 $bin_dir/duckdb -statistic 9 -f $sql_file
 rm test.db
@@ -88,6 +88,7 @@ python3 data_processor_profiler.py $num_tables $num_queries $num_iterations MIN_
         DICTIONARY $folder/log/dictionary/dictionary/profiler
 
 mv pruning.csv $folder/processed/
+mv scan_cardinality.csv $folder/processed/
 mv contributing_rows.csv $folder/processed/
 mv total_time.csv $folder/processed/
 mv stats_eval_time.csv $folder/processed/

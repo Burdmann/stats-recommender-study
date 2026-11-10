@@ -11,6 +11,12 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 
+from plot_colors import (
+    APPROACH_COLORS,
+    add_color_argument,
+    color_for,
+    parse_color_overrides,
+)
 from plot_time_breakdown import (
     SIZE_GROUPS,
     configuration_groups,
@@ -64,9 +70,16 @@ def read_values(path: Path, parser: argparse.ArgumentParser):
     return values, configurations
 
 
-def aggregate_query_groups(groups, configurations, pruning_values, contributing_rows):
+def aggregate_query_groups(
+    groups,
+    configurations,
+    pruning_values,
+    contributing_rows,
+    scan_cardinalities,
+):
     grouped_pruning = {}
     grouped_lower_bounds = {}
+    grouped_cardinalities = {}
     for name, members in groups:
         grouped_pruning[name] = {
             configuration: sum(
@@ -78,7 +91,11 @@ def aggregate_query_groups(groups, configurations, pruning_values, contributing_
             sum(contributing_rows[query].values()) / len(contributing_rows[query])
             for query in members
         ) / len(members)
-    return grouped_pruning, grouped_lower_bounds
+        grouped_cardinalities[name] = sum(
+            sum(scan_cardinalities[query].values()) / len(scan_cardinalities[query])
+            for query in members
+        ) / len(members)
+    return grouped_pruning, grouped_lower_bounds, grouped_cardinalities
 
 
 def plot_configuration_group(
@@ -89,7 +106,9 @@ def plot_configuration_group(
     queries,
     pruning_values,
     lower_bounds,
+    query_cardinalities,
     output_dir,
+    color_overrides,
 ):
     if not configurations:
         return None
@@ -99,10 +118,10 @@ def plot_configuration_group(
     bar_width = cluster_width / len(configurations)
     figure_width = max(14, len(queries) * 0.55)
     figure, axis = plt.subplots(figsize=(figure_width, 7))
-    palette = plt.get_cmap("tab10")
-    configuration_colors = [
-        palette(index % palette.N) for index in range(len(configurations))
-    ]
+    configuration_colors = {
+        configuration: color_for(configuration, color_overrides, APPROACH_COLORS)
+        for configuration in configurations
+    }
 
     for index, configuration in enumerate(configurations):
         offsets = [
@@ -113,7 +132,7 @@ def plot_configuration_group(
             offsets,
             [pruning_values[query][configuration] for query in queries],
             width=bar_width * 0.9,
-            color=configuration_colors[index],
+            color=configuration_colors[configuration],
             edgecolor="#333333",
             linewidth=0.35,
         )
@@ -126,6 +145,15 @@ def plot_configuration_group(
         marker="D",
         s=55,
         zorder=5,
+    )
+    axis.scatter(
+        query_positions,
+        [query_cardinalities[query] for query in queries],
+        color="#F2C14E",
+        marker="_",
+        s=180,
+        linewidths=2.5,
+        zorder=6,
     )
     axis.set_xticks(query_positions)
     axis.set_xticklabels(
@@ -145,7 +173,7 @@ def plot_configuration_group(
 
     legend_handles = [
         Patch(
-            facecolor=configuration_colors[index],
+            facecolor=configuration_colors[configuration],
             edgecolor="#333333",
             label=configuration_labels[configuration],
         )
@@ -161,6 +189,18 @@ def plot_configuration_group(
             markeredgecolor="#222222",
             marker="D",
             label="Minimum possible",
+        )
+    )
+    legend_handles.append(
+        Line2D(
+            [0],
+            [0],
+            color="#F2C14E",
+            linestyle="None",
+            marker="_",
+            markersize=14,
+            markeredgewidth=2.5,
+            label="Average query cardinality",
         )
     )
     figure.legend(
@@ -186,7 +226,10 @@ def main():
     parser.add_argument(
         "folder",
         type=Path,
-        help="folder containing pruning.csv and contributing_rows.csv",
+        help=(
+            "folder containing pruning.csv, contributing_rows.csv, and "
+            "scan_cardinality.csv"
+        ),
     )
     parser.add_argument(
         "--group",
@@ -208,22 +251,35 @@ def main():
             "original names"
         ),
     )
+    add_color_argument(parser)
     args = parser.parse_args()
 
     pruning_values, configurations = read_values(args.folder / "pruning.csv", parser)
     contributing_rows, contributing_configurations = read_values(
         args.folder / "contributing_rows.csv", parser
     )
+    scan_cardinalities, cardinality_configurations = read_values(
+        args.folder / "scan_cardinality.csv", parser
+    )
     if configurations != contributing_configurations:
         parser.error("pruning.csv and contributing_rows.csv configurations differ")
+    if configurations != cardinality_configurations:
+        parser.error("pruning.csv and scan_cardinality.csv configurations differ")
     if pruning_values.keys() != contributing_rows.keys():
         parser.error("pruning.csv and contributing_rows.csv query rows differ")
+    if pruning_values.keys() != scan_cardinalities.keys():
+        parser.error("pruning.csv and scan_cardinality.csv query rows differ")
     selected_configurations, configuration_labels = parse_configurations(
         args.configuration, configurations, parser
     )
+    color_overrides = parse_color_overrides(args.color, configurations, parser)
     query_groups = parse_query_groups(args.group, list(pruning_values), parser)
-    grouped_pruning, grouped_lower_bounds = aggregate_query_groups(
-        query_groups, configurations, pruning_values, contributing_rows
+    grouped_pruning, grouped_lower_bounds, grouped_cardinalities = aggregate_query_groups(
+        query_groups,
+        configurations,
+        pruning_values,
+        contributing_rows,
+        scan_cardinalities,
     )
     plot_queries = [name for name, _ in query_groups]
 
@@ -239,7 +295,9 @@ def main():
             plot_queries,
             grouped_pruning,
             grouped_lower_bounds,
+            grouped_cardinalities,
             args.folder,
+            color_overrides,
         )
         print(f"Saved {output_path}")
 
@@ -257,7 +315,9 @@ def main():
             plot_queries,
             grouped_pruning,
             grouped_lower_bounds,
+            grouped_cardinalities,
             args.folder,
+            color_overrides,
         )
         print(f"Saved {output_path}")
 
