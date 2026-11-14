@@ -11,3 +11,9 @@ make STATS=DictionaryAdditionalStats ADDITIONAL_STATS_SCALE_LEVEL=1 && mv $bin_d
 make STATS=ClusterAdditionalStats ADDITIONAL_STATS_SCALE_LEVEL=2 && mv $bin_dir/duckdb $bin_dir/duckdb_cluster_1000
 make STATS=BloomAdditionalStats ADDITIONAL_STATS_SCALE_LEVEL=2 && mv $bin_dir/duckdb $bin_dir/duckdb_bloom_1000
 make STATS=DictionaryAdditionalStats ADDITIONAL_STATS_SCALE_LEVEL=2 && mv $bin_dir/duckdb $bin_dir/duckdb_dictionary_1000
+make STATS=OccupancyAdditionalStats ADDITIONAL_STATS_SCALE_LEVEL=0 && mv $bin_dir/duckdb $bin_dir/duckdb_occupancy_10
+make STATS=NullspaceAdditionalStats ADDITIONAL_STATS_SCALE_LEVEL=0 && mv $bin_dir/duckdb $bin_dir/duckdb_nullspace_10
+make STATS=OccupancyAdditionalStats ADDITIONAL_STATS_SCALE_LEVEL=1 && mv $bin_dir/duckdb $bin_dir/duckdb_occupancy_100
+make STATS=NullspaceAdditionalStats ADDITIONAL_STATS_SCALE_LEVEL=1 && mv $bin_dir/duckdb $bin_dir/duckdb_nullspace_100
+make STATS=OccupancyAdditionalStats ADDITIONAL_STATS_SCALE_LEVEL=2 && mv $bin_dir/duckdb $bin_dir/duckdb_occupancy_1000
+make STATS=NullspaceAdditionalStats ADDITIONAL_STATS_SCALE_LEVEL=2 && mv $bin_dir/duckdb $bin_dir/duckdb_nullspace_1000

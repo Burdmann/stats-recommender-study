@@ -24,6 +24,10 @@ template <class T>
 class AlwaysPruneAdditionalStats;
 template <class T>
 class DictionaryAdditionalStats;
+template <class T>
+class OccupancyAdditionalStats;
+template <class T>
+class NullspaceAdditionalStats;
 
 enum class ADDITIONAL_STATS_TYPE : uint8_t {
 	ERROR = 0,
@@ -32,6 +36,8 @@ enum class ADDITIONAL_STATS_TYPE : uint8_t {
 	BLOOM = 3,
 	DICTIONARY = 4,
 	ALWAYS_PRUNE = 5,
+	OCCUPANCY = 6,
+	NULLSPACE = 7,
 };
 
 template <class T>

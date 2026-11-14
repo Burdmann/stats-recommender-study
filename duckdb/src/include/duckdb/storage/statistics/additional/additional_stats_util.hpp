@@ -12,6 +12,8 @@
 #include "duckdb/storage/statistics/additional/bloom_additional_stats.hpp"
 #include "duckdb/storage/statistics/additional/always_prune_additional_stats.hpp"
 #include "duckdb/storage/statistics/additional/dictionary_additional_stats.hpp"
+#include "duckdb/storage/statistics/additional/occupancy_additional_stats.hpp"
+#include "duckdb/storage/statistics/additional/nullspace_additional_stats.hpp"
 #include "duckdb/common/serializer/serializer.hpp"
 #include "duckdb/common/serializer/deserializer.hpp"
 
@@ -51,6 +53,14 @@ public:
 			break;
 		case ADDITIONAL_STATS_TYPE::ALWAYS_PRUNE:
 			astats = new AlwaysPruneAdditionalStats<T>(empty);
+			astats->Deserialise(astats, deserializer);
+			break;
+		case ADDITIONAL_STATS_TYPE::OCCUPANCY:
+			astats = new OccupancyAdditionalStats<T>(empty);
+			astats->Deserialise(astats, deserializer);
+			break;
+		case ADDITIONAL_STATS_TYPE::NULLSPACE:
+			astats = new NullspaceAdditionalStats<T>(empty);
 			astats->Deserialise(astats, deserializer);
 			break;
 		}
