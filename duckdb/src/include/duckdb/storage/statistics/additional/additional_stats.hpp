@@ -27,6 +27,10 @@ template <class T, unsigned int N>
 class DictionaryAdditionalStats;
 template <class T, unsigned int N, unsigned int M>
 class HashedNGramAdditionalStats;
+template <class T, uint PRUNING_CODEC_WORDS>
+class OccupancyAdditionalStats;
+template <class T, uint PRUNING_CODEC_WORDS>
+class NullspaceAdditionalStats;
 
 template <class T>
 class AdditionalStats {

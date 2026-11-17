@@ -14,6 +14,15 @@ The `experiments/` folder contains bash scripts and SQL files used to run experi
 
 For a full list of changes, see the bottom of the page
 
+Two further statistics come close to the space lower bound of approximate membership (see [pruning_codec.hpp](./duckdb/src/include/duckdb/storage/statistics/additional/pruning_codec.hpp)), using the same space as the Bloom filters:
+
+- `NullspaceAdditionalStats` (point queries): keys are hashed into buckets; per bucket it stores nonzero vectors `v` with `a(x) . v = 0` over GF(2)/GF(3) for every key `x`, and prunes a query `q` if `a(q) . v != 0`. A non-member passes a GF(2) layer with probability 1/2 at 1 bit per key, and a GF(3) layer with probability 1/3 at log2(3) bits per key.
+- `OccupancyAdditionalStats` (range and point queries): the occupied cells of an equal-width grid over the values, Golomb-coded, with the finest cell width that fits. A range is pruned if all cells it touches are empty.
+
+`experiments/run_experiments_optimal.sh` measures their pruning on the unsorted micro benchmark next to min/max and Bloom filters.
+
+`<Level>` should be one of `0`,`1`, or `2`, where 0 corresponds to the smallest metadata-size (10x the of min/max), 1 is the middle configuration at 100x the size, and 2 is the largest configuration, iwth 1000x the metadata-size used by min/max indexes.
+
 ## Compiling Source-code
 
 Navigate to the duckdb folder and run `make`, the binary can subsequently be found as `duckdb/build/release/duckdb`

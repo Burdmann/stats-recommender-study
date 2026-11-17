@@ -13,6 +13,8 @@
 #include "duckdb/storage/statistics/additional/cluster_additional_stats.hpp"
 #include "duckdb/storage/statistics/additional/bloom_additional_stats.hpp"
 #include "duckdb/storage/statistics/additional/dictionary_additional_stats.hpp"
+#include "duckdb/storage/statistics/additional/nullspace_additional_stats.hpp"
+#include "duckdb/storage/statistics/additional/occupancy_additional_stats.hpp"
 #include <functional>
 
 namespace duckdb {
@@ -37,6 +39,18 @@ template <class T>
 using DICTIONARY = DictionaryAdditionalStats<T, 300>;
 template <class T>
 using BLOOM_TINY = BloomAdditionalStats<T, 2, 1, 1>;
+template <class T>
+using NULLSPACE_SMALL = NullspaceAdditionalStats<T, 20>;
+template <class T>
+using NULLSPACE_MEDIUM = NullspaceAdditionalStats<T, 100>;
+template <class T>
+using NULLSPACE_LARGE = NullspaceAdditionalStats<T, 400>;
+template <class T>
+using OCCUPANCY_SMALL = OccupancyAdditionalStats<T, 20>;
+template <class T>
+using OCCUPANCY_MEDIUM = OccupancyAdditionalStats<T, 100>;
+template <class T>
+using OCCUPANCY_LARGE = OccupancyAdditionalStats<T, 400>;
 
 enum class STATISTIC_TYPE : int8_t {
 	ERROR = -1,
@@ -49,7 +63,13 @@ enum class STATISTIC_TYPE : int8_t {
 	BLOOM_MEDIUM = 6,
 	BLOOM_LARGE = 7,
 	DICTIONARY = 8,
-	BLOOM_TINY = 9
+	BLOOM_TINY = 9,
+	NULLSPACE_SMALL = 10,
+	NULLSPACE_MEDIUM = 11,
+	NULLSPACE_LARGE = 12,
+	OCCUPANCY_SMALL = 13,
+	OCCUPANCY_MEDIUM = 14,
+	OCCUPANCY_LARGE = 15
 };
 
 struct StatisticsSetKeyHash {
@@ -102,6 +122,24 @@ public:
 		case STATISTIC_TYPE::BLOOM_TINY:
 			res = new BLOOM_TINY<T>(data);
 			break;
+		case STATISTIC_TYPE::NULLSPACE_SMALL:
+			res = new NULLSPACE_SMALL<T>(data);
+			break;
+		case STATISTIC_TYPE::NULLSPACE_MEDIUM:
+			res = new NULLSPACE_MEDIUM<T>(data);
+			break;
+		case STATISTIC_TYPE::NULLSPACE_LARGE:
+			res = new NULLSPACE_LARGE<T>(data);
+			break;
+		case STATISTIC_TYPE::OCCUPANCY_SMALL:
+			res = new OCCUPANCY_SMALL<T>(data);
+			break;
+		case STATISTIC_TYPE::OCCUPANCY_MEDIUM:
+			res = new OCCUPANCY_MEDIUM<T>(data);
+			break;
+		case STATISTIC_TYPE::OCCUPANCY_LARGE:
+			res = new OCCUPANCY_LARGE<T>(data);
+			break;
 		default:
 			return NULL;
 		}
@@ -145,6 +183,18 @@ public:
 			return DICTIONARY<T>::Query(stats, comparison_type, constant);
 		case STATISTIC_TYPE::BLOOM_TINY:
 			return BLOOM_TINY<T>::Query(stats, comparison_type, constant);
+		case STATISTIC_TYPE::NULLSPACE_SMALL:
+			return NULLSPACE_SMALL<T>::Query(stats, comparison_type, constant);
+		case STATISTIC_TYPE::NULLSPACE_MEDIUM:
+			return NULLSPACE_MEDIUM<T>::Query(stats, comparison_type, constant);
+		case STATISTIC_TYPE::NULLSPACE_LARGE:
+			return NULLSPACE_LARGE<T>::Query(stats, comparison_type, constant);
+		case STATISTIC_TYPE::OCCUPANCY_SMALL:
+			return OCCUPANCY_SMALL<T>::Query(stats, comparison_type, constant);
+		case STATISTIC_TYPE::OCCUPANCY_MEDIUM:
+			return OCCUPANCY_MEDIUM<T>::Query(stats, comparison_type, constant);
+		case STATISTIC_TYPE::OCCUPANCY_LARGE:
+			return OCCUPANCY_LARGE<T>::Query(stats, comparison_type, constant);
 		default:
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 		}
@@ -174,6 +224,18 @@ public:
 			return DICTIONARY<T>::QueryRange(stats, start, end);
 		case STATISTIC_TYPE::BLOOM_TINY:
 			return BLOOM_TINY<T>::QueryRange(stats, start, end);
+		case STATISTIC_TYPE::NULLSPACE_SMALL:
+			return NULLSPACE_SMALL<T>::QueryRange(stats, start, end);
+		case STATISTIC_TYPE::NULLSPACE_MEDIUM:
+			return NULLSPACE_MEDIUM<T>::QueryRange(stats, start, end);
+		case STATISTIC_TYPE::NULLSPACE_LARGE:
+			return NULLSPACE_LARGE<T>::QueryRange(stats, start, end);
+		case STATISTIC_TYPE::OCCUPANCY_SMALL:
+			return OCCUPANCY_SMALL<T>::QueryRange(stats, start, end);
+		case STATISTIC_TYPE::OCCUPANCY_MEDIUM:
+			return OCCUPANCY_MEDIUM<T>::QueryRange(stats, start, end);
+		case STATISTIC_TYPE::OCCUPANCY_LARGE:
+			return OCCUPANCY_LARGE<T>::QueryRange(stats, start, end);
 		default:
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 		}
@@ -203,6 +265,18 @@ public:
 			return DICTIONARY<T>::Size(stats);
 		case STATISTIC_TYPE::BLOOM_TINY:
 			return BLOOM_TINY<T>::Size(stats);
+		case STATISTIC_TYPE::NULLSPACE_SMALL:
+			return NULLSPACE_SMALL<T>::Size(stats);
+		case STATISTIC_TYPE::NULLSPACE_MEDIUM:
+			return NULLSPACE_MEDIUM<T>::Size(stats);
+		case STATISTIC_TYPE::NULLSPACE_LARGE:
+			return NULLSPACE_LARGE<T>::Size(stats);
+		case STATISTIC_TYPE::OCCUPANCY_SMALL:
+			return OCCUPANCY_SMALL<T>::Size(stats);
+		case STATISTIC_TYPE::OCCUPANCY_MEDIUM:
+			return OCCUPANCY_MEDIUM<T>::Size(stats);
+		case STATISTIC_TYPE::OCCUPANCY_LARGE:
+			return OCCUPANCY_LARGE<T>::Size(stats);
 		default:
 			return 0;
 		}
@@ -232,6 +306,18 @@ public:
 			return DICTIONARY<T>::GetStaticName();
 		case STATISTIC_TYPE::BLOOM_TINY:
 			return BLOOM_TINY<T>::GetStaticName();
+		case STATISTIC_TYPE::NULLSPACE_SMALL:
+			return NULLSPACE_SMALL<T>::GetStaticName();
+		case STATISTIC_TYPE::NULLSPACE_MEDIUM:
+			return NULLSPACE_MEDIUM<T>::GetStaticName();
+		case STATISTIC_TYPE::NULLSPACE_LARGE:
+			return NULLSPACE_LARGE<T>::GetStaticName();
+		case STATISTIC_TYPE::OCCUPANCY_SMALL:
+			return OCCUPANCY_SMALL<T>::GetStaticName();
+		case STATISTIC_TYPE::OCCUPANCY_MEDIUM:
+			return OCCUPANCY_MEDIUM<T>::GetStaticName();
+		case STATISTIC_TYPE::OCCUPANCY_LARGE:
+			return OCCUPANCY_LARGE<T>::GetStaticName();
 		default:
 			return "error";
 		}

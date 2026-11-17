@@ -11,6 +11,8 @@
 #include "duckdb/storage/statistics/additional/cluster_additional_stats.hpp"
 #include "duckdb/storage/statistics/additional/bloom_additional_stats.hpp"
 #include "duckdb/storage/statistics/additional/dictionary_additional_stats.hpp"
+#include "duckdb/storage/statistics/additional/occupancy_additional_stats.hpp"
+#include "duckdb/storage/statistics/additional/nullspace_additional_stats.hpp"
 #include "duckdb/common/serializer/serializer.hpp"
 #include "duckdb/common/serializer/deserializer.hpp"
 #include "duckdb/storage/statistics/additional/stats_set.hpp"
@@ -28,8 +30,9 @@ public:
 		auto additional_stats_type = (STATISTIC_TYPE)deserializer.ReadProperty<int8_t>(1000, "additional_stats_type");
 		std::vector<T> empty;
 		AdditionalStats<T> *astats;
-		astats = StatisticsSet::construct(empty, additional_stats_type);
-		astats->Deserialise(astats, deserializer);
+
+		throw throw std::runtime_error("Deserialisation not implemented yet");
+
 		return astats;
 	}
 };
