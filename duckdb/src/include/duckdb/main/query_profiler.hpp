@@ -45,6 +45,7 @@ struct OperatorInformation {
 	double time = 0;
 	double custom_statistics_time = 0;
 	idx_t actual_rows_scanned = 0;
+	idx_t filter_input_rows = 0;
 	idx_t rows_in_qualifying_partitions = 0;
 	vector<StatisticSizeInfo> statistic_sizes;
 	idx_t elements_returned = 0;
@@ -65,6 +66,10 @@ struct OperatorInformation {
 
 	void AddActualRowsScanned(idx_t n_rows) {
 		actual_rows_scanned += n_rows;
+	}
+
+	void AddFilterInputRows(idx_t n_rows) {
+		filter_input_rows += n_rows;
 	}
 
 	void AddRowsInQualifyingPartitions(idx_t n_rows) {
@@ -128,10 +133,12 @@ private:
 	Profiler op;
 	uint64_t custom_statistics_time_start = 0;
 	uint64_t actual_rows_scanned_start = 0;
+	uint64_t filter_input_rows_start = 0;
 	uint64_t rows_in_qualifying_partitions_start = 0;
 	bool statistic_sizes_timer_active = false;
 	bool custom_statistics_timer_active = false;
 	bool actual_rows_scanned_timer_active = false;
+	bool filter_input_rows_timer_active = false;
 	bool rows_in_qualifying_partitions_timer_active = false;
 	//! The stack of Physical Operators that are currently active
 	optional_ptr<const PhysicalOperator> active_operator;

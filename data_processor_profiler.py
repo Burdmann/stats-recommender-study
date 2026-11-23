@@ -83,7 +83,7 @@ for i,(stat,dir) in enumerate(zip(names,in_folders)):
         query = file.rsplit(".", 2)[0].replace(".", "")
         queries.add(query)
 
-        time,stats_eval_time,scanned = d["latency"],d["cumulative_custom_statistics_time"],d["cumulative_actual_rows_scanned"]
+        time,stats_eval_time,scanned = d["latency"],d["cumulative_custom_statistics_time"],d["cumulative_filter_input_rows"]
         cardinality = table_scan_cardinality(d)
         total_times[i][query].append(time)
         # cpu_times[i][query].append(cpu_time)

@@ -52,6 +52,8 @@ profiler_settings_t ProfilingInfo::DefaultSettings() {
 	        MetricsType::OPERATOR_ROWS_SCANNED,
 	        MetricsType::ACTUAL_ROWS_SCANNED,
 	        MetricsType::CUMULATIVE_ACTUAL_ROWS_SCANNED,
+	        MetricsType::FILTER_INPUT_ROWS,
+	        MetricsType::CUMULATIVE_FILTER_INPUT_ROWS,
 	        MetricsType::ROWS_IN_QUALIFYING_PARTITIONS,
 	        MetricsType::CUMULATIVE_ROWS_IN_QUALIFYING_PARTITIONS,
 	        MetricsType::OPERATOR_TIMING,
@@ -68,6 +70,7 @@ profiler_settings_t ProfilingInfo::DefaultRootSettings() {
 	return {MetricsType::QUERY_NAME, MetricsType::BLOCKED_THREAD_TIME, MetricsType::LATENCY,
 	        MetricsType::CUMULATIVE_CUSTOM_STATISTICS_TIME,
 	        MetricsType::CUMULATIVE_ACTUAL_ROWS_SCANNED,
+	        MetricsType::CUMULATIVE_FILTER_INPUT_ROWS,
 	        MetricsType::CUMULATIVE_ROWS_IN_QUALIFYING_PARTITIONS,
 	        MetricsType::ROWS_RETURNED};
 }
@@ -75,8 +78,8 @@ profiler_settings_t ProfilingInfo::DefaultRootSettings() {
 profiler_settings_t ProfilingInfo::DefaultOperatorSettings() {
 	return {MetricsType::OPERATOR_CARDINALITY, MetricsType::OPERATOR_ROWS_SCANNED, MetricsType::OPERATOR_TIMING,
 	        MetricsType::CUSTOM_STATISTICS_TIME, MetricsType::ACTUAL_ROWS_SCANNED,
-	        MetricsType::ROWS_IN_QUALIFYING_PARTITIONS, MetricsType::OPERATOR_NAME, MetricsType::OPERATOR_TYPE,
-	        MetricsType::STATISTICS_SIZE};
+	        MetricsType::FILTER_INPUT_ROWS, MetricsType::ROWS_IN_QUALIFYING_PARTITIONS,
+	        MetricsType::OPERATOR_NAME, MetricsType::OPERATOR_TYPE, MetricsType::STATISTICS_SIZE};
 }
 
 void ProfilingInfo::ResetMetrics() {
@@ -115,6 +118,8 @@ void ProfilingInfo::ResetMetrics() {
 		case MetricsType::OPERATOR_ROWS_SCANNED:
 		case MetricsType::ACTUAL_ROWS_SCANNED:
 		case MetricsType::CUMULATIVE_ACTUAL_ROWS_SCANNED:
+		case MetricsType::FILTER_INPUT_ROWS:
+		case MetricsType::CUMULATIVE_FILTER_INPUT_ROWS:
 		case MetricsType::ROWS_IN_QUALIFYING_PARTITIONS:
 		case MetricsType::CUMULATIVE_ROWS_IN_QUALIFYING_PARTITIONS:
 		case MetricsType::SYSTEM_PEAK_BUFFER_MEMORY:
@@ -156,6 +161,9 @@ void ProfilingInfo::Expand(profiler_settings_t &settings, const MetricsType metr
 		return;
 	case MetricsType::CUMULATIVE_ACTUAL_ROWS_SCANNED:
 		settings.insert(MetricsType::ACTUAL_ROWS_SCANNED);
+		return;
+	case MetricsType::CUMULATIVE_FILTER_INPUT_ROWS:
+		settings.insert(MetricsType::FILTER_INPUT_ROWS);
 		return;
 	case MetricsType::CUMULATIVE_ROWS_IN_QUALIFYING_PARTITIONS:
 		settings.insert(MetricsType::ROWS_IN_QUALIFYING_PARTITIONS);
@@ -305,6 +313,8 @@ void ProfilingInfo::WriteMetricsToJSON(yyjson_mut_doc *doc, yyjson_mut_val *dest
 		case MetricsType::OPERATOR_ROWS_SCANNED:
 		case MetricsType::ACTUAL_ROWS_SCANNED:
 		case MetricsType::CUMULATIVE_ACTUAL_ROWS_SCANNED:
+		case MetricsType::FILTER_INPUT_ROWS:
+		case MetricsType::CUMULATIVE_FILTER_INPUT_ROWS:
 		case MetricsType::ROWS_IN_QUALIFYING_PARTITIONS:
 		case MetricsType::CUMULATIVE_ROWS_IN_QUALIFYING_PARTITIONS:
 		case MetricsType::SYSTEM_PEAK_BUFFER_MEMORY:

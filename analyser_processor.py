@@ -22,7 +22,7 @@ for idx,(in_file,name) in enumerate(zip(in_files,names)):
                     SELECT sizes.table_name AS table_name, sizes.rowgroup AS rowgroup,sizes.col AS col,{idx} as statistic,'{name}' AS statistic_alias,size,COALESCE(pruning_power,0)
                     FROM (
                         sizes LEFT JOIN (
-                            SELECT Data->>'table_id' AS table_name, CAST(Data->'rowgroup' AS INT) AS rowgroup,CAST(Data->'column' AS INT) AS col, countif(CAST(Data->'result' AS INT) = 2) AS pruning_power
+                            SELECT Data->>'table_id' AS table_name, CAST(Data->'rowgroup' AS INT) AS rowgroup,CAST(Data->'column' AS INT) AS col, countif(CAST(Data->'result' AS INT) IN (2,4)) AS pruning_power
                             FROM tbl
                             WHERE Type='EVAL_STATISTICS'
                             GROUP BY (table_name,rowgroup,col)

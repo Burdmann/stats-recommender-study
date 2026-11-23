@@ -451,7 +451,8 @@ bool RowGroup::CheckZonemap(ScanFilterInfo &filters) {
 			    duckdb::Util::session_id, duckdb::Util::command_count, duckdb::Util::GetTime(),
 			    table_identifier.c_str(), this->index, base_column_index, Util::GetTime(), (unsigned int)prune_result);
 		}
-		if (prune_result == FilterPropagateResult::FILTER_ALWAYS_FALSE) {
+		if (prune_result == FilterPropagateResult::FILTER_ALWAYS_FALSE ||
+		    prune_result == FilterPropagateResult::FILTER_FALSE_OR_NULL) {
 			return false;
 		}
 		if (filter.filter_type == TableFilterType::OPTIONAL_FILTER) {
@@ -547,7 +548,8 @@ bool RowGroup::CheckZonemapSegments(CollectionScanState &state) {
 
 		// state.column_scans[column_idx].current->stats.statistics.is_segment = true;
 		auto prune_result = GetColumn(base_column_idx).CheckZonemap(state.column_scans[column_idx], filter);
-		if (prune_result != FilterPropagateResult::FILTER_ALWAYS_FALSE) {
+		if (prune_result != FilterPropagateResult::FILTER_ALWAYS_FALSE &&
+		    prune_result != FilterPropagateResult::FILTER_FALSE_OR_NULL) {
 			continue;
 		}
 
@@ -676,6 +678,7 @@ void RowGroup::TemplatedScan(TransactionData transaction, CollectionScanState &s
 			//! get runtime statistics
 			auto adaptive_filter = filter_info.GetAdaptiveFilter();
 			auto filter_state = filter_info.BeginFilter();
+			bool filter_input_rows_counted = false;
 			if (has_filters) {
 				D_ASSERT(ALLOW_UPDATES);
 				auto &filter_list = filter_info.GetFilterList();
@@ -698,6 +701,7 @@ void RowGroup::TemplatedScan(TransactionData transaction, CollectionScanState &s
 						continue;
 					}
 					auto &col_data = GetColumn(column_idx);
+					filter_input_rows_counted = true;
 					col_data.Filter(transaction, state.vector_index, state.column_scans[scan_idx], result_vector, sel,
 					                approved_tuple_count, filter.filter, table_filter_state);
 				}
@@ -707,6 +711,10 @@ void RowGroup::TemplatedScan(TransactionData transaction, CollectionScanState &s
 					}
 					result.data[table_filter.scan_column_index].Slice(sel, approved_tuple_count);
 				}
+			}
+			if (filter_input_rows_counted && Util::track_filter_input_rows) {
+				// Count each row once per vector, even when multiple filter columns are read.
+				Util::filter_input_rows += max_count;
 			}
 			if (approved_tuple_count == 0) {
 				// all rows were filtered out by the table filters

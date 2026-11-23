@@ -2782,6 +2782,8 @@ const StringUtil::EnumStringLiteral *GetMetricsTypeValues() {
 		{ static_cast<uint32_t>(MetricsType::OPERATOR_ROWS_SCANNED), "OPERATOR_ROWS_SCANNED" },
 		{ static_cast<uint32_t>(MetricsType::ACTUAL_ROWS_SCANNED), "ACTUAL_ROWS_SCANNED" },
 		{ static_cast<uint32_t>(MetricsType::CUMULATIVE_ACTUAL_ROWS_SCANNED), "CUMULATIVE_ACTUAL_ROWS_SCANNED" },
+		{ static_cast<uint32_t>(MetricsType::FILTER_INPUT_ROWS), "FILTER_INPUT_ROWS" },
+		{ static_cast<uint32_t>(MetricsType::CUMULATIVE_FILTER_INPUT_ROWS), "CUMULATIVE_FILTER_INPUT_ROWS" },
 		{ static_cast<uint32_t>(MetricsType::ROWS_IN_QUALIFYING_PARTITIONS), "ROWS_IN_QUALIFYING_PARTITIONS" },
 		{ static_cast<uint32_t>(MetricsType::CUMULATIVE_ROWS_IN_QUALIFYING_PARTITIONS),
 		  "CUMULATIVE_ROWS_IN_QUALIFYING_PARTITIONS" },

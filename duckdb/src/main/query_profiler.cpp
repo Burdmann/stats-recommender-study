@@ -287,6 +287,10 @@ void QueryProfiler::EndQuery() {
 				GetCumulativeMetric<idx_t>(*root, MetricsType::CUMULATIVE_ACTUAL_ROWS_SCANNED,
 				                           MetricsType::ACTUAL_ROWS_SCANNED);
 			}
+			if (info.Enabled(settings, MetricsType::CUMULATIVE_FILTER_INPUT_ROWS)) {
+				GetCumulativeMetric<idx_t>(*root, MetricsType::CUMULATIVE_FILTER_INPUT_ROWS,
+				                           MetricsType::FILTER_INPUT_ROWS);
+			}
 			if (info.Enabled(settings, MetricsType::CUMULATIVE_ROWS_IN_QUALIFYING_PARTITIONS)) {
 				GetCumulativeMetric<idx_t>(*root, MetricsType::CUMULATIVE_ROWS_IN_QUALIFYING_PARTITIONS,
 				                           MetricsType::ROWS_IN_QUALIFYING_PARTITIONS);
@@ -429,9 +433,11 @@ OperatorProfiler::OperatorProfiler(ClientContext &context) : context(context) {
 void OperatorProfiler::StartOperator(optional_ptr<const PhysicalOperator> phys_op) {
 	Util::track_stat_eval_time = false;
 	Util::track_actual_rows_scanned = false;
+	Util::track_filter_input_rows = false;
 	Util::track_rows_in_qualifying_partitions = false;
 	custom_statistics_timer_active = false;
 	actual_rows_scanned_timer_active = false;
+	filter_input_rows_timer_active = false;
 	rows_in_qualifying_partitions_timer_active = false;
 	if (!enabled) {
 		Util::track_statistic_sizes = false;
@@ -460,6 +466,11 @@ void OperatorProfiler::StartOperator(optional_ptr<const PhysicalOperator> phys_o
 			actual_rows_scanned_start = Util::actual_rows_scanned;
 			actual_rows_scanned_timer_active = true;
 			Util::track_actual_rows_scanned = true;
+		}
+		if (ProfilingInfo::Enabled(settings, MetricsType::FILTER_INPUT_ROWS)) {
+			filter_input_rows_start = Util::filter_input_rows;
+			filter_input_rows_timer_active = true;
+			Util::track_filter_input_rows = true;
 		}
 		if (ProfilingInfo::Enabled(settings, MetricsType::ROWS_IN_QUALIFYING_PARTITIONS)) {
 			rows_in_qualifying_partitions_start = Util::rows_in_qualifying_partitions;
@@ -504,6 +515,12 @@ void OperatorProfiler::EndOperator(optional_ptr<DataChunk> chunk) {
 				GetOperatorInfo(*active_operator).AddActualRowsScanned(actual_rows_scanned);
 				actual_rows_scanned_timer_active = false;
 			}
+			if (filter_input_rows_timer_active) {
+				Util::track_filter_input_rows = false;
+				auto filter_input_rows = Util::filter_input_rows - filter_input_rows_start;
+				GetOperatorInfo(*active_operator).AddFilterInputRows(filter_input_rows);
+				filter_input_rows_timer_active = false;
+			}
 			if (rows_in_qualifying_partitions_timer_active) {
 				Util::track_rows_in_qualifying_partitions = false;
 				auto rows_in_qualifying_partitions =
@@ -539,6 +556,7 @@ void OperatorProfiler::EndOperator(optional_ptr<DataChunk> chunk) {
 	}
 	Util::track_stat_eval_time = false;
 	Util::track_actual_rows_scanned = false;
+	Util::track_filter_input_rows = false;
 	Util::track_rows_in_qualifying_partitions = false;
 	active_operator = nullptr;
 }
@@ -647,6 +665,10 @@ void QueryProfiler::Flush(OperatorProfiler &profiler) {
 		if (op.type == PhysicalOperatorType::TABLE_SCAN &&
 		    ProfilingInfo::Enabled(profiler.settings, MetricsType::ACTUAL_ROWS_SCANNED)) {
 			info.MetricSum<idx_t>(MetricsType::ACTUAL_ROWS_SCANNED, node.second.actual_rows_scanned);
+		}
+		if (op.type == PhysicalOperatorType::TABLE_SCAN &&
+		    ProfilingInfo::Enabled(profiler.settings, MetricsType::FILTER_INPUT_ROWS)) {
+			info.MetricSum<idx_t>(MetricsType::FILTER_INPUT_ROWS, node.second.filter_input_rows);
 		}
 		if (op.type == PhysicalOperatorType::TABLE_SCAN &&
 		    ProfilingInfo::Enabled(profiler.settings, MetricsType::ROWS_IN_QUALIFYING_PARTITIONS)) {

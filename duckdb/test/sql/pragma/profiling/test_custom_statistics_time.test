@@ -1,5 +1,5 @@
 # name: test/sql/pragma/profiling/test_custom_statistics_time.test
-# description: Test custom-statistics profiling metrics and build-time statistic sizes.
+# description: Test custom scan metrics and build-time statistic sizes.
 # group: [profiling]
 
 require json
@@ -17,16 +17,17 @@ statement ok
 PRAGMA custom_profiling_settings='{"STATISTICS_SIZE": "true"}';
 
 statement ok
-CREATE TABLE test_scan AS SELECT i * 2 AS i FROM range(245760) tbl(i);
+CREATE TABLE test_scan AS SELECT i * 2 AS i, i * 3 AS j FROM range(245760) tbl(i);
 
 statement ok
 PRAGMA profiling_output = '__TEST_DIR__/scan_profile.json';
 
 statement ok
-PRAGMA custom_profiling_settings='{"CUSTOM_STATISTICS_TIME": "true", "CUMULATIVE_CUSTOM_STATISTICS_TIME": "true", "ACTUAL_ROWS_SCANNED": "true", "CUMULATIVE_ACTUAL_ROWS_SCANNED": "true", "ROWS_IN_QUALIFYING_PARTITIONS": "true", "CUMULATIVE_ROWS_IN_QUALIFYING_PARTITIONS": "true", "STATISTICS_SIZE": "true"}';
+PRAGMA custom_profiling_settings='{"CUSTOM_STATISTICS_TIME": "true", "CUMULATIVE_CUSTOM_STATISTICS_TIME": "true", "ACTUAL_ROWS_SCANNED": "true", "CUMULATIVE_ACTUAL_ROWS_SCANNED": "true", "FILTER_INPUT_ROWS": "true", "CUMULATIVE_FILTER_INPUT_ROWS": "true", "ROWS_IN_QUALIFYING_PARTITIONS": "true", "CUMULATIVE_ROWS_IN_QUALIFYING_PARTITIONS": "true", "STATISTICS_SIZE": "true"}';
 
 statement ok
-SELECT sum(i) FROM test_scan WHERE i BETWEEN 130000 AND 130010;
+SELECT sum(i) FROM test_scan
+WHERE i BETWEEN 130000 AND 130010 AND j BETWEEN 195000 AND 195015;
 
 statement ok
 PRAGMA profiling_output = '__TEST_DIR__/filtered_profile.json';
@@ -48,6 +49,10 @@ SELECT CASE WHEN count(*) FILTER (WHERE key = 'custom_statistics_time') = 1
                  AND max(value::DOUBLE) FILTER (WHERE key = 'cumulative_custom_statistics_time') > 0
                  AND max(value::UBIGINT) FILTER (WHERE key = 'actual_rows_scanned') = 122880
                  AND max(value::UBIGINT) FILTER (WHERE key = 'cumulative_actual_rows_scanned') = 122880
+                 AND max(value::UBIGINT) FILTER (WHERE key = 'filter_input_rows') =
+                     max(value::UBIGINT) FILTER (WHERE key = 'actual_rows_scanned')
+                 AND max(value::UBIGINT) FILTER (WHERE key = 'cumulative_filter_input_rows') =
+                     max(value::UBIGINT) FILTER (WHERE key = 'cumulative_actual_rows_scanned')
                  AND max(value::UBIGINT) FILTER (WHERE key = 'cumulative_rows_in_qualifying_partitions') = 122880
                  AND count(*) FILTER (WHERE key = 'statistics_size') = 0
             THEN 'true' ELSE 'false' END
@@ -71,11 +76,11 @@ true
 
 query I
 SELECT CASE WHEN count(*) FILTER (WHERE key = 'statistics_size') > 0
-                 AND count(*) FILTER (WHERE key = 'partition_index') = 2
+                 AND count(*) FILTER (WHERE key = 'partition_index') = 4
                  AND min(value::UBIGINT) FILTER (WHERE key = 'partition_index') = 0
                  AND max(value::UBIGINT) FILTER (WHERE key = 'partition_index') = 1
-                 AND count(*) FILTER (WHERE key = 'column_index') = 2
-                 AND count(*) FILTER (WHERE key = 'size_bytes') = 2
+                 AND count(*) FILTER (WHERE key = 'column_index') = 4
+                 AND count(*) FILTER (WHERE key = 'size_bytes') = 4
                  AND min(value::UBIGINT) FILTER (WHERE key = 'size_bytes') > 0
             THEN 'true' ELSE 'false' END
 FROM json_tree(read_text('__TEST_DIR__/build_profile.json')::JSON);
