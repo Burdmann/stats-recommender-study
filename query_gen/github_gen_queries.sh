@@ -49,4 +49,3 @@ python3 query_gen/query_gen.py "gha/github.csv" "SELECT COUNT(*) FROM github WHE
 python3 query_gen/query_gen.py "gha/github.csv" "SELECT COUNT(*) FROM github WHERE payload_distinct_size BETWEEN ? AND ? AND actor_id = ?;" $count "profiler/q28" "payload_distinct_size" 0 0.01 "payload_distinct_size" 0 0.01 "actor_id" 1 -1
 python3 query_gen/query_gen.py "gha/github.csv" "SELECT COUNT(*) FROM github WHERE payload_ref = ?;" $count "profiler/q29" "payload_ref" 0 -1
 python3 query_gen/query_gen.py "gha/github.csv" "SELECT COUNT(*) FROM github WHERE payload_ref LIKE ? || '%';" $count "profiler/q30" "payload_ref" 0 -1
-python3 query_gen/query_gen.py "gha/github.csv" "SELECT COUNT(*) FROM github WHERE payload LIKE '%' || ? || '%';" $count "profiler/q31" "payload" 0 -1

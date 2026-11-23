@@ -16,6 +16,7 @@ bin_dir="./duckdb/build/release"
 # ./run_experiments.sh sql_queries_flights_line_plot.sql experiment_results/flights_line_plot 1 32 100 2999340 23252580 113266980 450820980
 # ./run_experiments.sh sql_queries_github.sql experiment_results/github 1 30 100 267680 2057312 10011232 39838432
 # ./run_experiments.sh sql_queries_github_line_plot.sql experiment_results/github_line_plot 1 20 100 267680 2057312 10011232 39838432
+# ./run_experiments.sh sql_queries_unsorted.sql experiment_results/unsorted 1 1 1000 585984 4101888 19728128 78326528
 # -----------------------------------------------------------------------
 
 mkdir -p $folder/1x
@@ -25,7 +26,7 @@ mkdir -p $folder/200x
 mkdir -p $folder/processed
 
 rm test.db
-./analyser.sh $folder/analysis $sql_file
+# ./analyser.sh $folder/analysis $sql_file
 
 scales=(1 10 50 200)
 sizes=("$size1" "$size2" "$size3" "$size4")
@@ -59,33 +60,63 @@ rm test.db
 rm -r profiler
 
 
-run 1 "1x/cluster"
-run 9 "1x/bloom"
+# run 1 "1x/cluster"
+# run 9 "1x/bloom"
+# run 10 "1x/nullspace"
+# run 14 "1x/occupancy"
 run_adaptive $folder/1x/assignment_simple.csv "1x/greedy_simple"
 run_adaptive $folder/1x/assignment.csv "1x/greedy"
 
-run 2 "10x/cluster"
-run 5 "10x/bloom"
+# run 2 "10x/cluster"
+# run 5 "10x/bloom"
+# run 11 "10x/nullspace"
+# run 15 "10x/occupancy"
 run_adaptive $folder/10x/assignment_simple.csv "10x/greedy_simple"
 run_adaptive $folder/10x/assignment.csv "10x/greedy"
 
-run 3 "50x/cluster"
-run 6 "50x/bloom"
+# run 3 "50x/cluster"
+# run 6 "50x/bloom"
+# run 12 "50x/nullspace"
+# run 16 "50x/occupancy"
 run_adaptive $folder/50x/assignment_simple.csv "50x/greedy_simple"
 run_adaptive $folder/50x/assignment.csv "50x/greedy"
 
-run 4 "200x/cluster"
-run 7 "200x/bloom"
+# run 4 "200x/cluster"
+# run 7 "200x/bloom"
+# run 13 "200x/nullspace"
+# run 17 "200x/occupancy"
 run_adaptive $folder/200x/assignment_simple.csv "200x/greedy_simple"
 run_adaptive $folder/200x/assignment.csv "200x/greedy"
 
-run 8 "dictionary/dictionary"
+# run 8 "dictionary/dictionary"
 
-python3 data_processor_profiler.py $num_tables $num_queries $num_iterations MIN_MAX $folder/log/1x/cluster/profiler BLOOM_1 $folder/log/1x/bloom/profiler GREEDY_SIMPLE_1 $folder/log/1x/greedy_simple/profiler GREEDY_1 $folder/log/1x/greedy/profiler \
-        CLUSTER_10 $folder/log/10x/cluster/profiler BLOOM_10 $folder/log/10x/bloom/profiler GREEDY_SIMPLE_10 $folder/log/10x/greedy_simple/profiler GREEDY_10 $folder/log/10x/greedy/profiler \
-        CLUSTER_50 $folder/log/50x/cluster/profiler BLOOM_50 $folder/log/50x/bloom/profiler GREEDY_SIMPLE_50 $folder/log/50x/greedy_simple/profiler GREEDY_50 $folder/log/50x/greedy/profiler \
-        CLUSTER_200 $folder/log/200x/cluster/profiler BLOOM_200 $folder/log/200x/bloom/profiler GREEDY_SIMPLE_200 $folder/log/200x/greedy_simple/profiler GREEDY_200 $folder/log/200x/greedy/profiler \
-        DICTIONARY $folder/log/dictionary/dictionary/profiler
+python3 data_processor_profiler.py \
+        "$num_tables" "$num_queries" "$num_iterations" \
+        MIN_MAX "$folder/log/1x/cluster/profiler" \
+        BLOOM_1 "$folder/log/1x/bloom/profiler" \
+        NULLSPACE_1 "$folder/log/1x/nullspace/profiler" \
+        OCCUPANCY_1 "$folder/log/1x/occupancy/profiler" \
+        GREEDY_SIMPLE_1 "$folder/log/1x/greedy_simple/profiler" \
+        GREEDY_1 "$folder/log/1x/greedy/profiler" \
+        CLUSTER_10 "$folder/log/10x/cluster/profiler" \
+        BLOOM_10 "$folder/log/10x/bloom/profiler" \
+        NULLSPACE_10 "$folder/log/10x/nullspace/profiler" \
+        OCCUPANCY_10 "$folder/log/10x/occupancy/profiler" \
+        GREEDY_SIMPLE_10 "$folder/log/10x/greedy_simple/profiler" \
+        GREEDY_10 "$folder/log/10x/greedy/profiler" \
+        CLUSTER_50 "$folder/log/50x/cluster/profiler" \
+        BLOOM_50 "$folder/log/50x/bloom/profiler" \
+        NULLSPACE_50 "$folder/log/50x/nullspace/profiler" \
+        OCCUPANCY_50 "$folder/log/50x/occupancy/profiler" \
+        GREEDY_SIMPLE_50 "$folder/log/50x/greedy_simple/profiler" \
+        GREEDY_50 "$folder/log/50x/greedy/profiler" \
+        CLUSTER_200 "$folder/log/200x/cluster/profiler" \
+        BLOOM_200 "$folder/log/200x/bloom/profiler" \
+        NULLSPACE_200 "$folder/log/200x/nullspace/profiler" \
+        OCCUPANCY_200 "$folder/log/200x/occupancy/profiler" \
+        GREEDY_SIMPLE_200 "$folder/log/200x/greedy_simple/profiler" \
+        GREEDY_200 "$folder/log/200x/greedy/profiler" \
+        DICTIONARY "$folder/log/dictionary/dictionary/profiler"
 
 mv pruning.csv $folder/processed/
 mv scan_cardinality.csv $folder/processed/

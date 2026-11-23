@@ -6,7 +6,8 @@ file=$2
 # ./analyser.sh taxi_experiment/analysis sql_queries_yellow_tripdata_2024.sql
 # -----------------------------------------------------------------------
 
-for i in $(seq 0 9);
+# for i in 10 14;
+for i in $(seq 0 17);
 do
     echo $i
     mkdir -p $out_dir
@@ -17,6 +18,24 @@ do
     rm -r profiler
 done
 
-python3 analyser_processor.py $out_dir/final.csv "NONE" $out_dir/0.log "MIN_MAX" $out_dir/1.log "CLUSTER_SMALL" $out_dir/2.log "CLUSTER_MEDIUM" $out_dir/3.log "CLUSTER_LARGE" $out_dir/4.log "BLOOM_SMALL" $out_dir/5.log "BLOOM_MEDIUM" $out_dir/6.log "BLOOM_LARGE" $out_dir/7.log "DICTIONARY" $out_dir/8.log "BLOOM_TINY" $out_dir/9.log
+python3 analyser_processor.py $out_dir/final.csv \
+	"NONE" $out_dir/0.log \
+	"MIN_MAX" $out_dir/1.log \
+	"CLUSTER_SMALL" $out_dir/2.log \
+	"CLUSTER_MEDIUM" $out_dir/3.log \
+	"CLUSTER_LARGE" $out_dir/4.log \
+	"BLOOM_SMALL" $out_dir/5.log \
+	"BLOOM_MEDIUM" $out_dir/6.log \
+	"BLOOM_LARGE" $out_dir/7.log \
+	"DICTIONARY" $out_dir/8.log \
+	"BLOOM_TINY" $out_dir/9.log \
+	"NULLSPACE_TINY" $out_dir/10.log \
+	"NULLSPACE_SMALL" $out_dir/11.log \
+	"NULLSPACE_MEDIUM" $out_dir/12.log \
+	"NULLSPACE_LARGE" $out_dir/13.log \
+	"OCCUPANCY_TINY" $out_dir/14.log \
+	"OCCUPANCY_SMALL" $out_dir/15.log \
+	"OCCUPANCY_MEDIUM" $out_dir/16.log \
+	"OCCUPANCY_LARGE" $out_dir/17.log
 rm test.db
 python3 analyser_scatter_plotter.py $out_dir/final.csv final.png

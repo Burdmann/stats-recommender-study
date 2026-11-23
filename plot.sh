@@ -12,6 +12,30 @@ plot_selectivity_pair() {
   python3 plot_pruning_selectivity.py "$folder" "$@"
 }
 
+plot_pair experiment_results/unsorted/processed \
+  --group "point query=q1" \
+  --configuration "MIN_MAX=Min/max" \
+  --configuration "BLOOM_1=Bloom filter" \
+  --configuration "GREEDY_1=Greedy" \
+  --configuration "NULLSPACE_1=Nullspace" \
+  --configuration "OCCUPANCY_1=Occupancy" \
+  --configuration "CLUSTER_10=Min/max clusters" \
+  --configuration "BLOOM_10=Bloom filter" \
+  --configuration "GREEDY_10=Greedy" \
+  --configuration "NULLSPACE_10=Nullspace" \
+  --configuration "OCCUPANCY_10=Occupancy" \
+  --configuration "CLUSTER_50=Min/max clusters" \
+  --configuration "BLOOM_50=Bloom filter" \
+  --configuration "GREEDY_50=Greedy" \
+  --configuration "NULLSPACE_50=Nullspace" \
+  --configuration "OCCUPANCY_50=Occupancy" \
+  --configuration "CLUSTER_200=Min/max clusters" \
+  --configuration "BLOOM_200=Bloom filter" \
+  --configuration "GREEDY_200=Greedy" \
+  --configuration "NULLSPACE_200=Nullspace" \
+  --configuration "OCCUPANCY_200=Occupancy" \
+  --configuration "DICTIONARY=Dictionary"
+
 plot_pair experiment_results/flights/processed \
   --group "temporal\nrange query=q1" \
   --group "range query=q9" \
@@ -28,15 +52,23 @@ plot_pair experiment_results/flights/processed \
   --configuration "MIN_MAX=Min/max" \
   --configuration "BLOOM_1=Bloom filter" \
   --configuration "GREEDY_1=Greedy" \
+  --configuration "NULLSPACE_1=Nullspace" \
+  --configuration "OCCUPANCY_1=Occupancy" \
   --configuration "CLUSTER_10=Min/max clusters" \
   --configuration "BLOOM_10=Bloom filter" \
   --configuration "GREEDY_10=Greedy" \
+  --configuration "NULLSPACE_10=Nullspace" \
+  --configuration "OCCUPANCY_10=Occupancy" \
   --configuration "CLUSTER_50=Min/max clusters" \
   --configuration "BLOOM_50=Bloom filter" \
   --configuration "GREEDY_50=Greedy" \
+  --configuration "NULLSPACE_50=Nullspace" \
+  --configuration "OCCUPANCY_50=Occupancy" \
   --configuration "CLUSTER_200=Min/max clusters" \
   --configuration "BLOOM_200=Bloom filter" \
   --configuration "GREEDY_200=Greedy" \
+  --configuration "NULLSPACE_200=Nullspace" \
+  --configuration "OCCUPANCY_200=Occupancy" \
   --configuration "DICTIONARY=Dictionary"
 
 plot_pair experiment_results/github/processed \
@@ -52,15 +84,23 @@ plot_pair experiment_results/github/processed \
   --configuration "MIN_MAX=Min/max" \
   --configuration "BLOOM_1=Bloom filter" \
   --configuration "GREEDY_1=Greedy" \
+  --configuration "NULLSPACE_1=Nullspace" \
+  --configuration "OCCUPANCY_1=Occupancy" \
   --configuration "CLUSTER_10=Min/max clusters" \
   --configuration "BLOOM_10=Bloom filter" \
   --configuration "GREEDY_10=Greedy" \
+  --configuration "NULLSPACE_10=Nullspace" \
+  --configuration "OCCUPANCY_10=Occupancy" \
   --configuration "CLUSTER_50=Min/max clusters" \
   --configuration "BLOOM_50=Bloom filter" \
   --configuration "GREEDY_50=Greedy" \
+  --configuration "NULLSPACE_50=Nullspace" \
+  --configuration "OCCUPANCY_50=Occupancy" \
   --configuration "CLUSTER_200=Min/max clusters" \
   --configuration "BLOOM_200=Bloom filter" \
   --configuration "GREEDY_200=Greedy" \
+  --configuration "NULLSPACE_200=Nullspace" \
+  --configuration "OCCUPANCY_200=Occupancy" \
   --configuration "DICTIONARY=Dictionary"
 
 plot_selectivity_pair experiment_results/flights_line_plot \
@@ -69,7 +109,15 @@ plot_selectivity_pair experiment_results/flights_line_plot \
   --group "range + range=q25,q26" \
   --configuration "MIN_MAX=Min/max" \
   --configuration "BLOOM_1=Bloom filter" \
-  --configuration "GREEDY_1=Greedy"
+  --configuration "GREEDY_1=Greedy" \
+  --configuration "NULLSPACE_1=Nullspace" \
+  --configuration "OCCUPANCY_1=Occupancy" \
+  --configuration "NULLSPACE_10=Nullspace" \
+  --configuration "OCCUPANCY_10=Occupancy" \
+  --configuration "NULLSPACE_50=Nullspace" \
+  --configuration "OCCUPANCY_50=Occupancy" \
+  --configuration "NULLSPACE_200=Nullspace" \
+  --configuration "OCCUPANCY_200=Occupancy"
 
 plot_selectivity_pair experiment_results/github_line_plot \
   --group "range (low NDV)=q24" \
@@ -77,4 +125,12 @@ plot_selectivity_pair experiment_results/github_line_plot \
   --group "range + point=q26,q27,q28" \
   --configuration "MIN_MAX=Min/max" \
   --configuration "BLOOM_1=Bloom filter" \
-  --configuration "GREEDY_1=Greedy"
+  --configuration "GREEDY_1=Greedy" \
+  --configuration "NULLSPACE_1=Nullspace" \
+  --configuration "OCCUPANCY_1=Occupancy" \
+  --configuration "NULLSPACE_10=Nullspace" \
+  --configuration "OCCUPANCY_10=Occupancy" \
+  --configuration "NULLSPACE_50=Nullspace" \
+  --configuration "OCCUPANCY_50=Occupancy" \
+  --configuration "NULLSPACE_200=Nullspace" \
+  --configuration "OCCUPANCY_200=Occupancy"
