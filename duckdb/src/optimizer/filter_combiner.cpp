@@ -426,6 +426,11 @@ FilterPushdownResult FilterCombiner::TryPushdownPrefixFilter(TableFilterSet &tab
 		return FilterPushdownResult::NO_PUSHDOWN;
 	}
 	auto &column_index = column_ids[column_ref.binding.column_index];
+	//! Keep the prefix expression as an optional filter so additional (e.g. n-gram) statistics can prune on it
+	auto prefix_expression = expr.Copy();
+	ReplaceWithBoundReference(prefix_expression);
+	table_filters.PushFilter(column_index,
+	                         make_uniq<OptionalFilter>(make_uniq<ExpressionFilter>(std::move(prefix_expression))));
 	//! Replace prefix with a set of comparisons
 	auto lower_bound = make_uniq<ConstantFilter>(ExpressionType::COMPARE_GREATERTHANOREQUALTO, Value(prefix_string));
 	table_filters.PushFilter(column_index, std::move(lower_bound));
@@ -465,7 +470,11 @@ FilterPushdownResult FilterCombiner::TryPushdownLikeFilter(TableFilterSet &table
 		return FilterPushdownResult::PUSHED_DOWN_FULLY;
 	}
 	auto &like_string = StringValue::Get(constant_value_expr.value);
-	if (like_string[0] == '%' || like_string[0] == '_') {
+	auto like_expression = expr.Copy();
+	ReplaceWithBoundReference(like_expression);
+	auto expression_filter = make_uniq<ExpressionFilter>(std::move(like_expression));
+	table_filters.PushFilter(column_index, make_uniq<OptionalFilter>(std::move(expression_filter)));
+	if (!like_string.empty() && (like_string[0] == '%' || like_string[0] == '_')) {
 		//! If the like starts with a special character we have no fixed prefix so nothing to pushdown
 		return FilterPushdownResult::NO_PUSHDOWN;
 	}

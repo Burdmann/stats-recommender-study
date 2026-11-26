@@ -1,8 +1,12 @@
 #include "duckdb/planner/filter/expression_filter.hpp"
+#include "duckdb/planner/expression/bound_constant_expression.hpp"
+#include "duckdb/planner/expression/bound_function_expression.hpp"
 #include "duckdb/planner/expression_iterator.hpp"
 #include "duckdb/planner/expression/bound_reference_expression.hpp"
 #include "duckdb/common/types/data_chunk.hpp"
 #include "duckdb/execution/expression_executor.hpp"
+#include "duckdb/storage/statistics/additional/stats_set.hpp"
+#include "duckdb/common/types/string_type.hpp"
 
 namespace duckdb {
 
@@ -27,7 +31,29 @@ bool ExpressionFilter::EvaluateWithConstant(ExpressionExecutor &executor, const 
 }
 
 FilterPropagateResult ExpressionFilter::CheckStatistics(BaseStatistics &stats) const {
-	// we cannot prune based on arbitrary expressions currently
+	if (expr->GetExpressionClass() == ExpressionClass::BOUND_FUNCTION &&
+	    stats.GetType().InternalType() == PhysicalType::VARCHAR && stats.additional_stats != nullptr) {
+		auto &function = expr->Cast<BoundFunctionExpression>();
+		auto &name = function.function.name;
+		bool is_like = name == "~~";
+		// LikeOptimizationRule rewrites wildcard-free LIKE patterns into these functions before pushdown
+		bool is_substring = name == "prefix" || name == "suffix" || name == "contains";
+		if ((is_like || is_substring) && function.children.size() == 2 &&
+		    function.children[0]->GetExpressionClass() == ExpressionClass::BOUND_REF &&
+		    function.children[1]->GetExpressionClass() == ExpressionClass::BOUND_CONSTANT) {
+			auto &pattern = function.children[1]->Cast<BoundConstantExpression>().value;
+			if (!pattern.IsNull()) {
+				auto &additional_stats = *((AdditionalStats<std::string> *)stats.additional_stats);
+				auto &pattern_str = StringValue::Get(pattern);
+				auto result = is_like ? StatisticsSet::QueryLike(&additional_stats, pattern_str)
+				                      : StatisticsSet::QueryContains(&additional_stats, pattern_str);
+				if (result == FilterPropagateResult::FILTER_ALWAYS_FALSE && stats.CanHaveNull()) {
+					return FilterPropagateResult::FILTER_FALSE_OR_NULL;
+				}
+				return result;
+			}
+		}
+	}
 	return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 }
 

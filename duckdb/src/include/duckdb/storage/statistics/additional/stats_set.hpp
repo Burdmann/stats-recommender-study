@@ -13,9 +13,12 @@
 #include "duckdb/storage/statistics/additional/cluster_additional_stats.hpp"
 #include "duckdb/storage/statistics/additional/bloom_additional_stats.hpp"
 #include "duckdb/storage/statistics/additional/dictionary_additional_stats.hpp"
+#include "duckdb/storage/statistics/additional/hashed_ngram_additional_stats.hpp"
 #include "duckdb/storage/statistics/additional/nullspace_additional_stats.hpp"
 #include "duckdb/storage/statistics/additional/occupancy_additional_stats.hpp"
 #include <functional>
+#include <string>
+#include <type_traits>
 
 namespace duckdb {
 
@@ -55,8 +58,20 @@ template <class T>
 using OCCUPANCY_MEDIUM = OccupancyAdditionalStats<T, 100>;
 template <class T>
 using OCCUPANCY_LARGE = OccupancyAdditionalStats<T, 400>;
+template <class T>
+using HASHED_NGRAM_TINY = typename std::conditional<std::is_same<T, std::string>::value,
+                                                    HashedNGramAdditionalStats<T, 3, 2, 1>, NONE<T>>::type;
+template <class T>
+using HASHED_NGRAM_SMALL = typename std::conditional<std::is_same<T, std::string>::value,
+                                                     HashedNGramAdditionalStats<T, 3, 20, 1>, NONE<T>>::type;
+template <class T>
+using HASHED_NGRAM_MEDIUM = typename std::conditional<std::is_same<T, std::string>::value,
+                                                      HashedNGramAdditionalStats<T, 3, 100, 1>, NONE<T>>::type;
+template <class T>
+using HASHED_NGRAM_LARGE = typename std::conditional<std::is_same<T, std::string>::value,
+                                                     HashedNGramAdditionalStats<T, 3, 400, 3>, NONE<T>>::type;
 
-#define MAX_STAT 17
+#define MAX_STAT 21
 
 enum class STATISTIC_TYPE : int8_t {
 	ERROR = -1,
@@ -77,7 +92,11 @@ enum class STATISTIC_TYPE : int8_t {
 	OCCUPANCY_TINY = 14,
 	OCCUPANCY_SMALL = 15,
 	OCCUPANCY_MEDIUM = 16,
-	OCCUPANCY_LARGE = 17
+	OCCUPANCY_LARGE = 17,
+	HASHED_NGRAM_TINY = 18,
+	HASHED_NGRAM_SMALL = 19,
+	HASHED_NGRAM_MEDIUM = 20,
+	HASHED_NGRAM_LARGE = 21
 };
 
 struct StatisticsSetKeyHash {
@@ -93,6 +112,36 @@ public:
 	static STATISTIC_TYPE default_type;
 	static std::unordered_map<std::tuple<std::string, unsigned int, unsigned int>, STATISTIC_TYPE, StatisticsSetKeyHash>
 	    mapping;
+
+	static inline FilterPropagateResult QueryLike(AdditionalStats<std::string> *stats, const std::string &pattern) {
+		switch (stats->type) {
+		case STATISTIC_TYPE::HASHED_NGRAM_TINY:
+			return HASHED_NGRAM_TINY<std::string>::QueryLike(stats, pattern);
+		case STATISTIC_TYPE::HASHED_NGRAM_SMALL:
+			return HASHED_NGRAM_SMALL<std::string>::QueryLike(stats, pattern);
+		case STATISTIC_TYPE::HASHED_NGRAM_MEDIUM:
+			return HASHED_NGRAM_MEDIUM<std::string>::QueryLike(stats, pattern);
+		case STATISTIC_TYPE::HASHED_NGRAM_LARGE:
+			return HASHED_NGRAM_LARGE<std::string>::QueryLike(stats, pattern);
+		default:
+			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
+		}
+	}
+
+	static inline FilterPropagateResult QueryContains(AdditionalStats<std::string> *stats, const std::string &literal) {
+		switch (stats->type) {
+		case STATISTIC_TYPE::HASHED_NGRAM_TINY:
+			return HASHED_NGRAM_TINY<std::string>::QueryContains(stats, literal);
+		case STATISTIC_TYPE::HASHED_NGRAM_SMALL:
+			return HASHED_NGRAM_SMALL<std::string>::QueryContains(stats, literal);
+		case STATISTIC_TYPE::HASHED_NGRAM_MEDIUM:
+			return HASHED_NGRAM_MEDIUM<std::string>::QueryContains(stats, literal);
+		case STATISTIC_TYPE::HASHED_NGRAM_LARGE:
+			return HASHED_NGRAM_LARGE<std::string>::QueryContains(stats, literal);
+		default:
+			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
+		}
+	}
 
 	template <class T>
 	static inline AdditionalStats<T> *construct(std::vector<T> &data, STATISTIC_TYPE type) {
@@ -154,6 +203,18 @@ public:
 		case STATISTIC_TYPE::OCCUPANCY_LARGE:
 			res = new OCCUPANCY_LARGE<T>(data);
 			break;
+		case STATISTIC_TYPE::HASHED_NGRAM_TINY:
+			res = new HASHED_NGRAM_TINY<T>(data);
+			break;
+		case STATISTIC_TYPE::HASHED_NGRAM_SMALL:
+			res = new HASHED_NGRAM_SMALL<T>(data);
+			break;
+		case STATISTIC_TYPE::HASHED_NGRAM_MEDIUM:
+			res = new HASHED_NGRAM_MEDIUM<T>(data);
+			break;
+		case STATISTIC_TYPE::HASHED_NGRAM_LARGE:
+			res = new HASHED_NGRAM_LARGE<T>(data);
+			break;
 		default:
 			return NULL;
 		}
@@ -213,6 +274,14 @@ public:
 			return OCCUPANCY_MEDIUM<T>::Query(stats, comparison_type, constant);
 		case STATISTIC_TYPE::OCCUPANCY_LARGE:
 			return OCCUPANCY_LARGE<T>::Query(stats, comparison_type, constant);
+		case STATISTIC_TYPE::HASHED_NGRAM_TINY:
+			return HASHED_NGRAM_TINY<T>::Query(stats, comparison_type, constant);
+		case STATISTIC_TYPE::HASHED_NGRAM_SMALL:
+			return HASHED_NGRAM_SMALL<T>::Query(stats, comparison_type, constant);
+		case STATISTIC_TYPE::HASHED_NGRAM_MEDIUM:
+			return HASHED_NGRAM_MEDIUM<T>::Query(stats, comparison_type, constant);
+		case STATISTIC_TYPE::HASHED_NGRAM_LARGE:
+			return HASHED_NGRAM_LARGE<T>::Query(stats, comparison_type, constant);
 		default:
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 		}
@@ -258,6 +327,14 @@ public:
 			return OCCUPANCY_MEDIUM<T>::QueryRange(stats, start, end);
 		case STATISTIC_TYPE::OCCUPANCY_LARGE:
 			return OCCUPANCY_LARGE<T>::QueryRange(stats, start, end);
+		case STATISTIC_TYPE::HASHED_NGRAM_TINY:
+			return HASHED_NGRAM_TINY<T>::QueryRange(stats, start, end);
+		case STATISTIC_TYPE::HASHED_NGRAM_SMALL:
+			return HASHED_NGRAM_SMALL<T>::QueryRange(stats, start, end);
+		case STATISTIC_TYPE::HASHED_NGRAM_MEDIUM:
+			return HASHED_NGRAM_MEDIUM<T>::QueryRange(stats, start, end);
+		case STATISTIC_TYPE::HASHED_NGRAM_LARGE:
+			return HASHED_NGRAM_LARGE<T>::QueryRange(stats, start, end);
 		default:
 			return FilterPropagateResult::NO_PRUNING_POSSIBLE;
 		}
@@ -303,6 +380,14 @@ public:
 			return OCCUPANCY_MEDIUM<T>::Size(stats);
 		case STATISTIC_TYPE::OCCUPANCY_LARGE:
 			return OCCUPANCY_LARGE<T>::Size(stats);
+		case STATISTIC_TYPE::HASHED_NGRAM_TINY:
+			return HASHED_NGRAM_TINY<T>::Size(stats);
+		case STATISTIC_TYPE::HASHED_NGRAM_SMALL:
+			return HASHED_NGRAM_SMALL<T>::Size(stats);
+		case STATISTIC_TYPE::HASHED_NGRAM_MEDIUM:
+			return HASHED_NGRAM_MEDIUM<T>::Size(stats);
+		case STATISTIC_TYPE::HASHED_NGRAM_LARGE:
+			return HASHED_NGRAM_LARGE<T>::Size(stats);
 		default:
 			return 0;
 		}
@@ -348,6 +433,14 @@ public:
 			return OCCUPANCY_MEDIUM<T>::GetStaticName();
 		case STATISTIC_TYPE::OCCUPANCY_LARGE:
 			return OCCUPANCY_LARGE<T>::GetStaticName();
+		case STATISTIC_TYPE::HASHED_NGRAM_TINY:
+			return HASHED_NGRAM_TINY<T>::GetStaticName();
+		case STATISTIC_TYPE::HASHED_NGRAM_SMALL:
+			return HASHED_NGRAM_SMALL<T>::GetStaticName();
+		case STATISTIC_TYPE::HASHED_NGRAM_MEDIUM:
+			return HASHED_NGRAM_MEDIUM<T>::GetStaticName();
+		case STATISTIC_TYPE::HASHED_NGRAM_LARGE:
+			return HASHED_NGRAM_LARGE<T>::GetStaticName();
 		default:
 			return "error";
 		}

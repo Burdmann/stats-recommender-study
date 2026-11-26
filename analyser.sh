@@ -7,7 +7,7 @@ file=$2
 # -----------------------------------------------------------------------
 
 # for i in 10 14;
-for i in $(seq 0 17);
+for i in $(seq 0 21);
 do
     echo $i
     mkdir -p $out_dir
@@ -36,6 +36,10 @@ python3 analyser_processor.py $out_dir/final.csv \
 	"OCCUPANCY_TINY" $out_dir/14.log \
 	"OCCUPANCY_SMALL" $out_dir/15.log \
 	"OCCUPANCY_MEDIUM" $out_dir/16.log \
-	"OCCUPANCY_LARGE" $out_dir/17.log
+	"OCCUPANCY_LARGE" $out_dir/17.log \
+	"NGRAM_TINY" $out_dir/18.log \
+	"NGRAM_SMALL" $out_dir/19.log \
+	"NGRAM_MEDIUM" $out_dir/20.log \
+	"NGRAM_LARGE" $out_dir/21.log
 rm test.db
 python3 analyser_scatter_plotter.py $out_dir/final.csv final.png

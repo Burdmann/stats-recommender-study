@@ -25,7 +25,7 @@ template <class T>
 class AlwaysPruneAdditionalStats;
 template <class T, unsigned int N>
 class DictionaryAdditionalStats;
-template <class T, unsigned int N, unsigned int M>
+template <class T, unsigned int N, unsigned int M, unsigned int K>
 class HashedNGramAdditionalStats;
 template <class T, uint PRUNING_CODEC_WORDS>
 class OccupancyAdditionalStats;
